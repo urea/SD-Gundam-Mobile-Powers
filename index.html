@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-T8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Powers App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', Meiryo, sans-serif;
+    }
+    
+    /* Kira card border styles */
+    @keyframes rainbow-flow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .kira-border-animated, .kira-preview-border {
+        border: solid transparent; /* Fallback, gets overridden by ::before margin */
+        border-radius: inherit; /* Inherit from parent like rounded-md */
+        position: relative;
+        background-clip: padding-box !important; /* Ensures background of the card itself doesn't overlap our pseudo-element border */
+    }
+
+    .kira-border-animated::before, .kira-preview-border::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        z-index: -1; /* Behind the card content */
+        border-radius: inherit; /* Match parent's border-radius */
+        background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet, red); /* Added red at the end for smooth loop */
+        background-size: 200% 200%; /* To make the gradient flow */
+        animation: rainbow-flow 4s linear infinite;
+    }
+    
+    .kira-border-animated {
+        border-width: 2px; /* For larger cards */
+    }
+    .kira-border-animated::before {
+        margin: -2px; /* Creates the border effect by expanding the pseudo-element */
+    }
+
+    .kira-preview-border {
+        border-width: 1px; /* For smaller card previews */
+    }
+    .kira-preview-border::before {
+        margin: -1px; /* Creates the border effect */
+    }
+
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.0.1"
+  }
+}
+</script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
