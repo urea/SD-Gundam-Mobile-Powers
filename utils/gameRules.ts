@@ -46,7 +46,7 @@ export const canPlayCCard = (
   currentGameState: GameState,
 ): boolean => {
   if (card.type !== 'C') return false;
-  const hasBattlefieldM = actorState.battlefield.some(fieldCard => fieldCard.type === 'M');
+  const hasBattlefieldM = actorState.battlefield.some(isActiveMCard);
   const canPlayWithoutOwnM = card.cardNumber.startsWith('C-011');
   if (!hasBattlefieldM && !canPlayWithoutOwnM) return false;
   return isCCardTerrainPlayable(card, currentGameState.battlefieldTerrainAttribute);
@@ -66,11 +66,9 @@ const isActiveMCard = (card: Card): boolean => card.type === 'M' && !card.isDest
 
 const getBattlefieldPower = (battlefield: Card[], ownerName: string): number => {
   const mCards = battlefield.filter(isActiveMCard);
-  const baseAndTagTotal = mCards.reduce((total, card) => {
-    return total + (parseInt(card.points, 10) || 0) + calculateTagBonus(card, mCards);
-  }, 0);
-  const comboTotal = checkCombos(mCards, ownerName).achievedCombos.reduce((total, combo) => total + combo.points, 0);
-  return baseAndTagTotal + comboTotal;
+  const baseTotal = mCards.reduce((total, card) => total + (parseInt(card.points, 10) || 0), 0);
+  const selectedCombo = checkCombos(mCards, ownerName).achievedCombos[0];
+  return baseTotal + (selectedCombo?.points || 0);
 };
 
 const chooseHighestPointMCard = (cards: Card[]): Card | undefined => {
@@ -248,8 +246,9 @@ export const applyCCardEffect = (
     }
     const actor = getActor();
     const nextBattlefield = actor.battlefield.filter(card => card.cardNumber !== target.cardNumber);
+    const squadCard = { ...target, isDestroyed: undefined, isTapped: undefined };
     const nextActor = setBattlefieldWithPowerDelta(
-      { ...actor, squad: [...actor.squad, target] },
+      { ...actor, squad: [...actor.squad, squadCard] },
       nextBattlefield,
       actorOwnerName,
     );
@@ -397,7 +396,7 @@ export const getPhaseInstruction = (
       const canPlaceMCard = playerHand.some(c => c.type === 'M');
       const squadFull = playerSquad.length >= 3;
       if (squadFull) return '編成: 完了。CPUの番を待機中...';
-      return canPlaceMCard ? '編成: 手札のMカード1枚を小隊に配置' : '編成: Mカードなし。手札の1枚を捨て札へ';
+      return canPlaceMCard ? '編成: 手札のMカード1枚を小隊に配置' : '編成: Mカードなし。手札の1枚を敗戦フィールドへ';
     }
     case 'COUNTER_SUPPORT_PLAYER_DRAW':
       return 'カウンター/支援: カードをドロー中...';
@@ -436,38 +435,6 @@ export const getPhaseInstruction = (
     default:
       return phase;
   }
-};
-
-export interface TagBonusDetail {
-  tag: string;
-  otherCardName: string;
-}
-
-export const getTagBonusDetails = (card: Card, friendlyBattlefield: Card[]): TagBonusDetail[] => {
-  if (!isActiveMCard(card) || !card.tags) return [];
-  const cardTags = card.tags.split(' ').filter(Boolean);
-  if (cardTags.length === 0) return [];
-
-  const details: TagBonusDetail[] = [];
-  friendlyBattlefield.forEach(otherCard => {
-    if (otherCard.cardNumber === card.cardNumber && otherCard.type === card.type) return;
-    if (isActiveMCard(otherCard) && otherCard.tags) {
-      const otherCardTags = otherCard.tags.split(' ').filter(Boolean);
-      cardTags.forEach(cardTag => {
-        if (otherCardTags.includes(cardTag)) {
-          details.push({
-            tag: cardTag,
-            otherCardName: otherCard.cardNameOmm || otherCard.cardName,
-          });
-        }
-      });
-    }
-  });
-  return details;
-};
-
-export const calculateTagBonus = (card: Card, friendlyBattlefield: Card[]): number => {
-  return getTagBonusDetails(card, friendlyBattlefield).length;
 };
 
 export const getBaseCardNumber = (cardNumber: string): string => {
@@ -557,10 +524,15 @@ export const checkCombos = (
     }
   });
 
-  const finalCombos = Array.from(uniqueComboMap.values());
+  const finalCombos = Array.from(uniqueComboMap.values())
+    .sort((a, b) => {
+      const pointDiff = b.points - a.points;
+      return pointDiff !== 0 ? pointDiff : a.name.localeCompare(b.name, 'ja');
+    })
+    .slice(0, 1);
   finalCombos.forEach(combo => {
     logMessages.push({
-      message: `${playerName}「${combo.name}」成立！ (+${combo.points}P)`,
+      message: `${playerName}「${combo.name}」成立、採用！ (+${combo.points}P)`,
       source: playerName === 'プレイヤー' ? 'PLAYER' : 'CPU',
       timestamp: Date.now(),
     });

@@ -37,6 +37,7 @@ interface GameTableLayoutProps {
   phaseInstructionText: string;
   player: PlayerState;
   playerCCardTargetableNumbers?: Set<string>;
+  playedCCards: PlayedCCardSummary[];
   selectedCard: Card | null;
   unilateralDeploymentWinner: PlayerType | null;
   winner: PlayerType | null;
@@ -119,7 +120,7 @@ const getCardDisplayName = (card: Card): string => card.cardNameOmm || card.card
 
 const findRecentCombatStartIndex = (gameLog: LogEntry[]): number => {
   for (let index = gameLog.length - 1; index >= 0; index--) {
-    if (gameLog[index].message.includes('タグボーナス計算後')) {
+    if (gameLog[index].message.includes('攻撃ポイント計算後')) {
       return index;
     }
   }
@@ -270,7 +271,7 @@ const BattleCalculationSummary: React.FC<{
   onPreviewStart: (card: Card) => void;
 }> = ({ battleSummary, onPreviewEnd, onPreviewStart }) => {
   if (!battleSummary) return null;
-  const calculationLogs = [...battleSummary.tagLogs, ...battleSummary.cCardLogs].slice(0, 6);
+  const calculationLogs = battleSummary.cCardLogs.slice(0, 6);
 
   return (
     <div className="game-battle-summary" aria-label="戦闘計算サマリ">
@@ -288,7 +289,7 @@ const BattleCalculationSummary: React.FC<{
             <p key={`${message}-${index}`}>{message}</p>
           ))
         ) : (
-          <p>タグ/C/S補正なし</p>
+          <p>C/S補正なし</p>
         )}
       </section>
       <BattleSummarySide
@@ -629,6 +630,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   phaseInstructionText,
   player,
   playerCCardTargetableNumbers,
+  playedCCards,
   selectedCard,
   unilateralDeploymentWinner,
   winner,
@@ -673,7 +675,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   const hasRecentCombo = gameLog.slice(-4).some(logEntry => logEntry.message.includes('成立'));
   const shouldShowFieldCounterCards = phase.startsWith('COUNTER_SUPPORT') || phase.startsWith('COMBAT');
   const fieldPlayedCCards = shouldShowFieldCounterCards
-    ? createFieldPlayedCCardSummaries(player, cpu, gameLog)
+    ? playedCCards
     : [];
   const gameStageClass = phase.startsWith('FORMATION')
     ? 'game-stage-formation'
@@ -939,7 +941,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
                   小隊へ
                 </button>
                 <button
-                  aria-label="選択したカードを手札から捨て札へ送る（編成時）"
+                  aria-label="選択したカードを手札から敗戦フィールドへ送る（編成時Mカード配置不可）"
                   className="game-action-button game-action-discard"
                   disabled={
                     !selectedCard ||
@@ -948,7 +950,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
                   }
                   onClick={() => onPlayerAction('DISCARD_TO_DEFEAT_PILE', selectedCard!)}
                 >
-                  捨てる
+                  敗戦へ
                 </button>
               </>
             )}

@@ -82,7 +82,7 @@ export const getCPUFormationAction = async (gameState: GameState): Promise<CPUAc
 
   // Fallback: No action possible (e.g., hand empty - should ideally not happen in this phase)
   reasoning = 'Rule-based: Hand empty or no valid discard action.';
-  return { action: 'NO_ACTION', reasoning };
+  return { action: 'DISCARD_TO_DEFEAT', reasoning };
 };
 
 export const getCPUTerrainSelectionAction = async (gameState: GameState): Promise<CPUAction> => {
@@ -96,7 +96,7 @@ export const getCPUTerrainSelectionAction = async (gameState: GameState): Promis
 
   if (cpuState.hand.length === 0) {
     reasoning += "No cards in hand to select terrain.";
-    return { action: 'NO_ACTION', reasoning }; // Should not happen if draw phase is correct
+    return { action: 'SELECT_TERRAIN', reasoning }; // Should not happen if draw phase is correct
   }
 
   for (const potentialTerrainCard of cpuState.hand) {
@@ -185,7 +185,7 @@ export const getCPUCounterSupportAction = async (gameState: GameState): Promise<
   
   const chobhamCard = playableCCards.find(c => c.cardNumber.startsWith('C-012'));
   if (chobhamCard && cpuState.battlefield.filter(c => c.type === 'M').length > 0 && (cpuState.combatPoints <= playerState.combatPoints + 3)){
-    reasoning += `Play ${chobhamCard.cardNameOmm || chobhamCard.cardName} to boost an M-card's points.`;
+    reasoning += `Play ${chobhamCard.cardNameOmm || chobhamCard.cardName} to return an M-card to squad.`;
     return { action: 'PLAY_C_CARD', cardId: chobhamCard.cardNumber, reasoning };
   }
 
@@ -195,37 +195,29 @@ export const getCPUCounterSupportAction = async (gameState: GameState): Promise<
     return { action: 'PLAY_C_CARD', cardId: priorityCard.cardNumber, reasoning };
   }
 
-  // If no "good" C-card play, consider discarding if hand is large or to cycle.
-  if (cpuState.hand.length > 4) {
-    let cardToDiscard: Card | undefined;
-    // Prefer discarding C-cards that are not playable now
-    const unplayableCCards = cpuState.hand.filter(c => c.type === 'C' && !playableCCards.find(pc => pc.cardNumber === c.cardNumber));
-    if (unplayableCCards.length > 0) {
-      cardToDiscard = unplayableCCards.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber))[0]; 
-      reasoning += `Discard unplayable C-card (${cardToDiscard.cardNameOmm || cardToDiscard.cardName}) due to hand size.`;
-    } else if (playableCCards.length < cpuState.hand.filter(c => c.type === 'C').length) {
-        // Discard other C cards
-        const otherCCards = cpuState.hand.filter(c => c.type === 'C' && !playableCCards.find(pc => pc.cardNumber === c.cardNumber));
-        if(otherCCards.length > 0) cardToDiscard = otherCCards.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber))[0];
-        else cardToDiscard = playableCCards.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber))[0]; 
-        if(cardToDiscard) reasoning += `Discard C-card (${cardToDiscard.cardNameOmm || cardToDiscard.cardName}) due to hand size/strategy.`;
-
-    } else if (cpuState.hand.filter(c => c.type === 'M').length > 0) {
-      const mCardsInHand = cpuState.hand.filter(c => c.type === 'M').sort((a, b) => {
-        const pointsA = parseInt(a.points) || 0;
-        const pointsB = parseInt(b.points) || 0;
-        if (pointsA !== pointsB) return pointsA - pointsB;
-        return a.cardNumber.localeCompare(b.cardNumber);
-      });
-      cardToDiscard = mCardsInHand[0];
-      reasoning += `Discard lowest point M-card (${cardToDiscard.cardNameOmm || cardToDiscard.cardName}) due to hand size.`;
-    }
-
-    if (cardToDiscard) {
-      return { action: 'DISCARD_FROM_HAND', cardId: cardToDiscard.cardNumber, reasoning };
-    }
+  let cardToDiscard: Card | undefined;
+  const unplayableCCards = cpuState.hand.filter(c => c.type === 'C' && !playableCCards.find(pc => pc.cardNumber === c.cardNumber));
+  if (unplayableCCards.length > 0) {
+    cardToDiscard = unplayableCCards.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber))[0];
+    reasoning += `Discard unplayable C-card (${cardToDiscard.cardNameOmm || cardToDiscard.cardName}) to keep hand at seven.`;
+  } else if (cpuState.hand.filter(c => c.type === 'M').length > 0) {
+    const mCardsInHand = cpuState.hand.filter(c => c.type === 'M').sort((a, b) => {
+      const pointsA = parseInt(a.points) || 0;
+      const pointsB = parseInt(b.points) || 0;
+      if (pointsA !== pointsB) return pointsA - pointsB;
+      return a.cardNumber.localeCompare(b.cardNumber);
+    });
+    cardToDiscard = mCardsInHand[0];
+    reasoning += `Discard lowest point M-card (${cardToDiscard.cardNameOmm || cardToDiscard.cardName}) to keep hand at seven.`;
+  } else if (cpuState.hand.length > 0) {
+    cardToDiscard = [...cpuState.hand].sort((a,b) => a.cardNumber.localeCompare(b.cardNumber))[0];
+    reasoning += `Discard ${cardToDiscard.cardNameOmm || cardToDiscard.cardName} to keep hand at seven.`;
   }
 
-  reasoning += "No beneficial C-card play or need to discard.";
-  return { action: 'NO_ACTION', reasoning };
+  if (cardToDiscard) {
+    return { action: 'DISCARD_FROM_HAND', cardId: cardToDiscard.cardNumber, reasoning };
+  }
+
+  reasoning += "No card in hand to discard.";
+  return { action: 'DISCARD_FROM_HAND', reasoning };
 };

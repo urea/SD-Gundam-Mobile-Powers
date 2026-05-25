@@ -23,6 +23,7 @@ export interface Card {
   imageUrl?: string; // Optional: URL or path to the card image
   fieldOrder?: number; // Preserves the original squad order in mixed field displays.
   isDestroyed?: boolean; // Keeps a destroyed card visible on the battlefield until combat cleanup.
+  isTapped?: boolean; // Marks an undeployed M-card waiting in the squad for one turn.
 }
 
 export interface Combo {
@@ -126,10 +127,11 @@ export interface GameState {
   isCPUMoving: boolean; // To show CPU thinking/acting indicator
   counterSupportTurnOrder: PlayerType[] | null;
   currentCounterSupportActorIndex: number;
+  playedCCards: PlayedCCardSummary[]; // C cards stay public until combat resolution cleanup.
 }
 
 export interface CPUAction {
-  action: 'PLAY_M_CARD' | 'DISCARD_TO_DEFEAT' | 'PLAY_C_CARD' | 'SELECT_TERRAIN' | 'NO_ACTION' | 'DISCARD_FROM_HAND'; // Added DISCARD_FROM_HAND
+  action: 'PLAY_M_CARD' | 'DISCARD_TO_DEFEAT' | 'PLAY_C_CARD' | 'SELECT_TERRAIN' | 'DISCARD_FROM_HAND';
   cardId?: string; // card.cardNumber of the card to play or discard
   targetCardId?: string; // For C-Cards that target
   reasoning?: string; // Optional: CPU decision explanation
