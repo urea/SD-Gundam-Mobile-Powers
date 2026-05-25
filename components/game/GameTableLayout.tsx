@@ -1,5 +1,5 @@
 import React from 'react';
-import { BattleSummary, Card, CombatSideSummary, GamePhase, LogEntry, PlayerState, PlayerType } from '../../types';
+import { BattleSummary, Card, CombatSideSummary, GamePhase, LogEntry, PlayedCCardSummary, PlayerState, PlayerType } from '../../types';
 import { isKiraCard } from '../../utils/gameRules';
 import { GameCard } from './GameCard';
 
@@ -115,6 +115,51 @@ const getFormulaParts = (summary: CombatSideSummary): string[] => {
   return parts;
 };
 
+const getCardDisplayName = (card: Card): string => card.cardNameOmm || card.cardName;
+
+const findRecentCombatStartIndex = (gameLog: LogEntry[]): number => {
+  for (let index = gameLog.length - 1; index >= 0; index--) {
+    if (gameLog[index].message.includes('タグボーナス計算後')) {
+      return index;
+    }
+  }
+  return Math.max(0, gameLog.length - 18);
+};
+
+const createFieldPlayedCCardSummaries = (
+  player: PlayerState,
+  cpu: PlayerState,
+  gameLog: LogEntry[],
+): PlayedCCardSummary[] => {
+  const startIndex = findRecentCombatStartIndex(gameLog);
+  const played: PlayedCCardSummary[] = [];
+
+  gameLog.slice(startIndex).forEach(logEntry => {
+    const match = logEntry.message.match(/^(プレイヤー|CPU)が (.+) を使用。$/);
+    if (!match) return;
+
+    const owner: PlayerType = match[1] === 'プレイヤー' ? 'PLAYER' : 'CPU';
+    const usedName = match[2];
+    const discardPile = owner === 'PLAYER' ? player.discardPile : cpu.discardPile;
+    const card = [...discardPile]
+      .reverse()
+      .find(discardedCard => discardedCard.type === 'C' && getCardDisplayName(discardedCard) === usedName);
+
+    if (!card) return;
+
+    played.push({
+      owner,
+      cardNumber: card.cardNumber,
+      name: getCardDisplayName(card),
+      imageUrl: card.imageUrl,
+      effect: card.effect || card.textAbility || '',
+      sourceCard: card,
+    });
+  });
+
+  return played;
+};
+
 const BattleSummarySide: React.FC<{
   label: string;
   onPreviewEnd: () => void;
@@ -163,6 +208,61 @@ const BattleSummarySide: React.FC<{
     </div>
   </section>
 );
+
+const FieldCounterCards: React.FC<{
+  playedCCards: PlayedCCardSummary[];
+  onPreviewEnd: () => void;
+  onPreviewStart: (card: Card) => void;
+}> = ({ playedCCards, onPreviewEnd, onPreviewStart }) => {
+  const renderSide = (owner: PlayerType, label: string) => {
+    const cards = playedCCards.filter(card => card.owner === owner);
+
+    return (
+      <section className={`game-counter-side ${owner === 'PLAYER' ? 'game-counter-side-player' : 'game-counter-side-cpu'}`}>
+        <div className="game-counter-title">
+          <span>{label}</span>
+          <span>使用C</span>
+        </div>
+        <div className="game-counter-list">
+          {cards.length > 0 ? (
+            cards.map((card, index) => (
+              <button
+                aria-label={`${label}が使用したCカード ${card.name} の画像を表示`}
+                className="game-counter-card"
+                key={`${owner}-${card.cardNumber}-${index}`}
+                title={card.effect ? `${card.name}: ${card.effect}` : card.name}
+                type="button"
+                onBlur={onPreviewEnd}
+                onFocus={() => onPreviewStart(card.sourceCard)}
+                onMouseEnter={() => onPreviewStart(card.sourceCard)}
+                onMouseLeave={onPreviewEnd}
+              >
+                {card.imageUrl ? (
+                  <img alt="" src={card.imageUrl} />
+                ) : (
+                  <span className="game-counter-fallback">C</span>
+                )}
+                <span className="game-counter-copy">
+                  <strong>{card.name}</strong>
+                  <span>{card.effect || '-'}</span>
+                </span>
+              </button>
+            ))
+          ) : (
+            <span className="game-counter-empty">未使用</span>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  return (
+    <div className="game-counter-node" aria-label="戦場の使用Cカード">
+      {renderSide('PLAYER', 'PLAYER')}
+      {renderSide('CPU', 'CPU')}
+    </div>
+  );
+};
 
 const BattleCalculationSummary: React.FC<{
   battleSummary: BattleSummary | null | undefined;
@@ -568,6 +668,10 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     cpu.battlefield.map(card => card.cardNumber).join(','),
   ].join('|');
   const hasRecentCombo = gameLog.slice(-4).some(logEntry => logEntry.message.includes('成立'));
+  const shouldShowFieldCounterCards = phase.startsWith('COUNTER_SUPPORT') || phase.startsWith('COMBAT');
+  const fieldPlayedCCards = shouldShowFieldCounterCards
+    ? createFieldPlayedCCardSummaries(player, cpu, gameLog)
+    : [];
   const gameStageClass = phase.startsWith('FORMATION')
     ? 'game-stage-formation'
     : phase.startsWith('DEPLOYMENT')
@@ -716,13 +820,20 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           <span className="game-score-value">{cpu.combatPoints}</span>
         </div>
 
-        <div className="game-log-node" role="log" aria-live="polite">
-          {gameLog.slice(-2).map((logEntry, index) => (
-            <p key={`${logEntry.timestamp}-${index}`}>
-              {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
-              {logEntry.message}
-            </p>
-          ))}
+        <div className="game-center-info-node">
+          <FieldCounterCards
+            playedCCards={fieldPlayedCCards}
+            onPreviewEnd={() => setPreviewCard(null)}
+            onPreviewStart={setPreviewCard}
+          />
+          <div className="game-log-node" role="log" aria-live="polite">
+            {gameLog.slice(-2).map((logEntry, index) => (
+              <p key={`${logEntry.timestamp}-${index}`}>
+                {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
+                {logEntry.message}
+              </p>
+            ))}
+          </div>
         </div>
 
         <div className="game-selected-node">

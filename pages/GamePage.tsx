@@ -502,6 +502,7 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-score-node,
   .game-terrain-node,
+  .game-counter-side,
   .game-log-node,
   .game-selected-node {
     border-radius: 7px;
@@ -544,8 +545,102 @@ const customScrollbarAndAnimationStyles = `
     font-size: 0.68rem;
     color: #64748b;
   }
-  .game-log-node {
+  .game-center-info-node {
     grid-column: 2 / 5;
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+  .game-counter-node {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+  .game-counter-side {
+    min-width: 0;
+    min-height: 2.55rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.18rem 0.32rem;
+  }
+  .game-counter-side-player {
+    border-color: rgba(14, 165, 233, 0.34);
+    background: rgba(239, 246, 255, 0.92);
+  }
+  .game-counter-side-cpu {
+    border-color: rgba(248, 113, 113, 0.34);
+    background: rgba(254, 242, 242, 0.92);
+  }
+  .game-counter-title {
+    display: flex;
+    flex-direction: column;
+    color: #475569;
+    font-size: 0.52rem;
+    font-weight: 900;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .game-counter-list {
+    min-width: 0;
+    display: grid;
+    align-items: center;
+  }
+  .game-counter-card {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 1.55rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 5px;
+    color: #334155;
+    text-align: left;
+  }
+  .game-counter-card img,
+  .game-counter-fallback {
+    width: 1.55rem;
+    aspect-ratio: 5 / 7;
+    border-radius: 4px;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.14);
+  }
+  .game-counter-fallback {
+    display: grid;
+    place-items: center;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+  .game-counter-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.04rem;
+    line-height: 1.12;
+  }
+  .game-counter-copy strong,
+  .game-counter-copy span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .game-counter-copy strong {
+    font-size: 0.62rem;
+    font-weight: 900;
+  }
+  .game-counter-copy span,
+  .game-counter-empty {
+    color: #64748b;
+    font-size: 0.58rem;
+  }
+  .game-counter-empty {
+    font-weight: 800;
+  }
+  .game-log-node {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1539,6 +1634,35 @@ const customScrollbarAndAnimationStyles = `
     }
     .game-terrain-node {
       padding: 0.15rem 0.3rem;
+    }
+    .game-center-info-node {
+      grid-column: 2 / 5;
+      gap: 0.16rem;
+    }
+    .game-counter-node {
+      gap: 0.16rem;
+    }
+    .game-counter-side {
+      min-height: 2.15rem;
+      gap: 0.18rem;
+      padding: 0.12rem 0.2rem;
+    }
+    .game-counter-title {
+      font-size: 0.47rem;
+    }
+    .game-counter-card {
+      grid-template-columns: 1.25rem minmax(0, 1fr);
+      gap: 0.18rem;
+    }
+    .game-counter-card img,
+    .game-counter-fallback {
+      width: 1.25rem;
+    }
+    .game-counter-copy strong {
+      font-size: 0.56rem;
+    }
+    .game-counter-copy span {
+      display: none;
     }
     .game-log-node {
       display: none;
