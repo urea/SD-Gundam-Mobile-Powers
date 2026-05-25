@@ -1,11 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Page } from '../App';
 import { GameSetupModal, RANDOM_PRESET_INTERNAL_ID } from '../components/GameSetupModal'; // Ensuring relative path and import special ID
-import { cpuDeckPresets, PredefinedDeck } from '../data/cpuDecks';
-import { parseMobilePowersTsvData, tsvData as allCardsTsvData } from '../components/RulePage';
-import { Card } from '../types';
-import { createFullCardInstancePool } from '../utils/deckCodeUtils';
+import { cpuDeckPresets } from '../data/cpuDecks';
 
 
 interface MainMenuProps {
@@ -15,7 +12,7 @@ interface MainMenuProps {
 export const MainMenu: React.FC<MainMenuProps> = ({ onNavigate }) => {
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
 
-  const buttonStyle = "w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-4 px-6 rounded-lg shadow-lg transform transition-all duration-150 hover:scale-105 text-xl text-center focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-opacity-50";
+  const buttonStyle = "w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 lg:py-4 px-5 lg:px-6 rounded-lg shadow-lg transform transition-all duration-150 hover:scale-[1.03] text-base lg:text-xl text-center focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-opacity-50";
   
   const handleOpenGameSetupModal = () => {
     setIsGameSetupModalOpen(true);
@@ -86,16 +83,23 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNavigate }) => {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800 p-6 sm:p-8">
-        <header className="mb-10 sm:mb-12 text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-sky-700 tracking-tight">
-            モビルパワーズ
-          </h1>
-          <p className="text-lg sm:text-xl text-sky-600 mt-2">Mobile Powers App</p>
+      <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-slate-950 text-slate-800 p-3 lg:p-8">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30"
+          style={{ backgroundImage: "url('/assets/mobile-powers-main-bg.png')" }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
+        <header className="relative mb-3 lg:mb-8 text-center w-full max-w-5xl">
+          <img
+            src="/assets/mobile-powers-logo.png"
+            alt="SDガンダム モビルパワーズ シミュレーター"
+            className="mx-auto w-full max-w-4xl max-h-[30vh] lg:max-h-[40vh] object-contain drop-shadow-2xl"
+          />
         </header>
 
-        <main className="w-full max-w-md sm:max-w-lg">
-          <div className="grid grid-cols-1 gap-5 sm:gap-6">
+        <main className="relative w-full max-w-md sm:max-w-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 lg:gap-6">
             <button
               onClick={() => onNavigate('RULEBOOK')}
               className={buttonStyle}
@@ -129,7 +133,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNavigate }) => {
           </div>
         </main>
 
-        <footer className="mt-12 sm:mt-20 text-center text-sm text-slate-500">
+        <footer className="relative mt-3 lg:mt-14 text-center text-xs lg:text-sm text-slate-200/75">
           <p>&copy; {new Date().getFullYear()} Fan-made Mobile Powers Utility.</p>
         </footer>
       </div>

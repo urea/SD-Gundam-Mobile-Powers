@@ -102,7 +102,7 @@ export const tsvData = `Unique_Key	Card_Number	Card_Name	Card_Name_Omm	Type	Poin
 66	C-009	バーナード・ワイズマン	バーニィ	C		ジオン軍のバーニィは、ザクを知り尽くしている！！		宇陸	ジオン		●デッキを1枚めくり、それがMカードならポイント+2。Cカードならポイント-1。	St1	https://assets.st-note.com/img/1748399226-VgjHLfGo06lJPsTkQdUMyNWt.jpg
 67	C-010	ミハル・ラトキエ	ミハル	C		スパイ活動で情報をキャッチした！！		宇空	ジオン		●自分のMカードの地形適性が戦場の地形と同じならポイントを+2。	St1	https://assets.st-note.com/img/1748399226-clX2af1zeWmQsnh0O3ZtY4vo.jpg
 68	C-011	ミノフスキー粒子	ミノフスキー粒子	C		戦闘レーダーが効かなくなり索敵が混乱した！！		空陸	アイテム		●相手のMカードのポイントを-2。	St1	https://assets.st-note.com/img/1748399226-S38jMEoRliL4gBCJyY7efQxk.jpg
-69	C-012	チョバムアーマー	チョバムアーマー	C			宇海	アイテム		●自分のMカード1枚のポイントを+2する。	St1	https://assets.st-note.com/img/1748414581-vzrbWhcxfE6XjkeAVSaY8Q0q.jpg
+69	C-012	チョバムアーマー	チョバムアーマー	C				宇海	アイテム		●自分のMカード1枚のポイントを+2する。	St1	https://assets.st-note.com/img/1748414581-vzrbWhcxfE6XjkeAVSaY8Q0q.jpg
 70	C-013	Iフィールド	Iフィールド	C		ア・バオア・クーでの攻防をしのいだ！！		空海	アイテム		●相手のMSの攻撃ポイントを半分にできる威力を持つ！	St1	https://assets.st-note.com/img/1748399226-yblEX9xTMWYhBFom3KLP6z87.jpg
 71	C-014	補給部隊	補給部隊	C		後方から補給部隊が到着した！！		陸海	アイテム		●デッキを1枚めくり、それがMカードなら自分の戦場に出せる。	St1	https://assets.st-note.com/img/1748399226-yAvgWwSHGVbT5uKl8PzdXfCO.jpg
 72	C-015	魚雷	魚雷	C		水中から攻撃をかけて、発見された！！		宇海	アイテム		●相手の最前線の属性”海”を持つカードを1枚だけ破壊できる。	St1	https://assets.st-note.com/img/1748399226-9vJMwisl1xOU2f5onPFCBHR4.jpg

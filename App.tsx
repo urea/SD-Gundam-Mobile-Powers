@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RulePage } from './components/RulePage';
 import { GamePage } from './pages/GamePage';
 import { MainMenu } from './pages/MainMenu';
@@ -8,8 +8,31 @@ import { CardViewerPage } from './pages/CardViewerPage';
 
 export type Page = 'MAIN_MENU' | 'RULEBOOK' | 'GAME' | 'DECK_EDITOR' | 'CARD_VIEWER';
 
+const pageToHash: Record<Page, string> = {
+  MAIN_MENU: '',
+  RULEBOOK: '#/rulebook',
+  GAME: '#/game',
+  DECK_EDITOR: '#/deck-editor',
+  CARD_VIEWER: '#/card-viewer',
+};
+
+const pageFromHash = (hash: string): Page => {
+  switch (hash) {
+    case '#/rulebook':
+      return 'RULEBOOK';
+    case '#/game':
+      return 'GAME';
+    case '#/deck-editor':
+      return 'DECK_EDITOR';
+    case '#/card-viewer':
+      return 'CARD_VIEWER';
+    default:
+      return 'MAIN_MENU';
+  }
+};
+
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>('MAIN_MENU');
+  const [currentPage, setCurrentPage] = useState<Page>(() => pageFromHash(window.location.hash));
   const [playerDeckCodeForGame, setPlayerDeckCodeForGame] = useState<string | undefined>(undefined);
   const [cpuDeckCodeForGame, setCpuDeckCodeForGame] = useState<string | undefined>(undefined);
 
@@ -23,7 +46,32 @@ const App: React.FC = () => {
       setCpuDeckCodeForGame(undefined);
     }
     setCurrentPage(page);
+
+    const nextHash = pageToHash[page];
+    const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl !== currentUrl) {
+      window.history.pushState({ page }, '', nextUrl);
+    }
   };
+
+  useEffect(() => {
+    const syncPageFromLocation = () => {
+      const page = pageFromHash(window.location.hash);
+      if (page !== 'GAME') {
+        setPlayerDeckCodeForGame(undefined);
+        setCpuDeckCodeForGame(undefined);
+      }
+      setCurrentPage(page);
+    };
+
+    window.addEventListener('hashchange', syncPageFromLocation);
+    window.addEventListener('popstate', syncPageFromLocation);
+    return () => {
+      window.removeEventListener('hashchange', syncPageFromLocation);
+      window.removeEventListener('popstate', syncPageFromLocation);
+    };
+  }, []);
 
   if (currentPage === 'MAIN_MENU') {
     return <MainMenu onNavigate={navigateTo} />;

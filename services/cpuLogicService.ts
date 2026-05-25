@@ -1,5 +1,6 @@
 
 import { Card, GameState, CPUAction } from '../types';
+import { canPlayCCard } from '../utils/gameRules';
 
 // Helper function to simulate thinking time (UX only)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -153,25 +154,21 @@ export const getCPUCounterSupportAction = async (gameState: GameState): Promise<
   const currentTerrain = gameState.battlefieldTerrainAttribute;
   let reasoning = "Rule-based: ";
 
-  const playableCCards = cpuState.hand.filter(card => {
-    if (card.type !== 'C') return false;
-    // Generally requires M-Cards on field unless C-011 or effect override
-    if (cpuState.battlefield.filter(c => c.type === 'M').length === 0) {
-        if (card.cardNumber !== 'C-011' && !card.effect?.includes("Mカードがいなくても")) return false; 
-    }
+  const playableCCards = cpuState.hand.filter(card => canPlayCCard(card, cpuState, gameState));
 
-    if (!card.battlefieldTerrain || !currentTerrain) return false;
-    if (card.battlefieldTerrain.includes("宇陸海空")) return true;
-
-    let terrainMatch = false;
-    for (const cTerrain of card.battlefieldTerrain) {
-        if (currentTerrain.includes(cTerrain)) {
-            terrainMatch = true;
-            break;
-        }
-    }
-    return terrainMatch;
-  });
+  const byPriority = (cards: Card[]): Card | undefined => {
+    const priority = [
+      'C-006', 'C-015', 'C-016', 'C-014', 'C-013',
+      'C-011', 'C-005', 'C-004', 'C-003', 'C-002',
+      'C-001', 'C-012', 'C-010', 'C-007', 'C-009',
+      'C-008', 'C-017', 'C-018', 'C-019', 'C-020',
+    ];
+    return [...cards].sort((a, b) => {
+      const aIndex = priority.findIndex(prefix => a.cardNumber.startsWith(prefix));
+      const bIndex = priority.findIndex(prefix => b.cardNumber.startsWith(prefix));
+      return (aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex) - (bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex);
+    })[0];
+  };
 
   // Heuristic: Try to play a "good" C-card
   const gatoCard = playableCCards.find(c => c.cardNumber.startsWith('C-005'));
@@ -192,6 +189,11 @@ export const getCPUCounterSupportAction = async (gameState: GameState): Promise<
     return { action: 'PLAY_C_CARD', cardId: chobhamCard.cardNumber, reasoning };
   }
 
+  const priorityCard = byPriority(playableCCards);
+  if (priorityCard && cpuState.combatPoints <= playerState.combatPoints + 4) {
+    reasoning += `Play ${priorityCard.cardNameOmm || priorityCard.cardName} as the best available implemented C-card.`;
+    return { action: 'PLAY_C_CARD', cardId: priorityCard.cardNumber, reasoning };
+  }
 
   // If no "good" C-card play, consider discarding if hand is large or to cycle.
   if (cpuState.hand.length > 4) {

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CardDisplayTable, SortableCardKey } from '../components/CardDisplayTable';
 import { parseMobilePowersTsvData, tsvData } from '../components/RulePage';
 import { Card } from '../types';
@@ -30,11 +30,13 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
 
   // Filter states
   const [filterName, setFilterName] = useState('');
+  const [draftFilterName, setDraftFilterName] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'M' | 'C'>('ALL');
   const [uniqueFactions, setUniqueFactions] = useState<string[]>(['ALL']);
   const [filterFaction, setFilterFaction] = useState('ALL');
   const [filterTerrain, setFilterTerrain] = useState('');
   const [filterPoints, setFilterPoints] = useState('');
+  const [draftFilterPoints, setDraftFilterPoints] = useState('');
   const [filterTags, setFilterTags] = useState('');
 
   // Sort state
@@ -54,6 +56,19 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       });
       setUniqueFactions(['ALL', ...Array.from(factions).sort()]);
     }
+  }, [allCards]);
+
+  const terrainOptions = React.useMemo(() => {
+    const terrainOrder = ['宇', '空', '陸', '海'];
+    return terrainOrder.filter(terrain => allCards.some(card => card.displayTerrain.includes(terrain)));
+  }, [allCards]);
+
+  const tagOptions = React.useMemo(() => {
+    const tags = new Set<string>();
+    allCards.forEach(card => {
+      card.tags.split(/\s+/).map(tag => tag.trim()).filter(Boolean).forEach(tag => tags.add(tag));
+    });
+    return Array.from(tags).sort((a, b) => a.localeCompare(b, 'ja'));
   }, [allCards]);
 
   const openLargeCardModal = (card: DisplayCard) => {
@@ -86,12 +101,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       filtered = filtered.filter(card => card.factionAffiliation.includes(filterFaction));
     }
     if (filterTerrain) {
-      const terrainKeywords = filterTerrain.toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
-      if (terrainKeywords.length > 0) {
-        filtered = filtered.filter(card => {
-          return terrainKeywords.some(keyword => card.displayTerrain.toLowerCase().includes(keyword));
-        });
-      }
+      filtered = filtered.filter(card => card.displayTerrain.includes(filterTerrain));
     }
     if (filterPoints) {
       filtered = filtered.filter(card => {
@@ -113,12 +123,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       });
     }
     if (filterTags) {
-      const tagKeywords = filterTags.toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
-      if (tagKeywords.length > 0) {
-        filtered = filtered.filter(card => {
-          return tagKeywords.some(keyword => card.tags.toLowerCase().includes(keyword));
-        });
-      }
+      filtered = filtered.filter(card => card.tags.split(/\s+/).includes(filterTags));
     }
 
     // Apply sort
@@ -172,11 +177,31 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
 
   const clearFilters = () => {
     setFilterName('');
+    setDraftFilterName('');
     setFilterType('ALL');
     setFilterFaction('ALL');
     setFilterTerrain('');
     setFilterPoints('');
+    setDraftFilterPoints('');
     setFilterTags('');
+  };
+
+  const commitNameFilter = () => {
+    setFilterName(draftFilterName.trim());
+  };
+
+  const commitPointsFilter = () => {
+    setFilterPoints(draftFilterPoints.trim());
+  };
+
+  const commitOnEnter = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    commit: () => void,
+  ) => {
+    if (event.key === 'Enter') {
+      commit();
+      event.currentTarget.blur();
+    }
   };
   
   const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
@@ -207,8 +232,10 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
                 type="text"
                 placeholder="例: ガンダム"
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm"
-                value={filterName}
-                onChange={e => setFilterName(e.target.value)}
+                value={draftFilterName}
+                onBlur={commitNameFilter}
+                onChange={e => setDraftFilterName(e.target.value)}
+                onKeyDown={e => commitOnEnter(e, commitNameFilter)}
               />
             </FilterInput>
             <FilterInput label="種別">
@@ -234,31 +261,39 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
               </select>
             </FilterInput>
             <FilterInput label="地形">
-              <input
-                type="text"
-                placeholder="例: 宇,陸"
-                className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm"
+              <select
+                className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
                 value={filterTerrain}
                 onChange={e => setFilterTerrain(e.target.value)}
-              />
+              >
+                <option value="">すべての地形</option>
+                {terrainOptions.map(terrain => (
+                  <option key={terrain} value={terrain}>{terrain}</option>
+                ))}
+              </select>
             </FilterInput>
             <FilterInput label="ポイント(P)">
               <input
                 type="text"
                 placeholder="例: 8 または 7-9"
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm"
-                value={filterPoints}
-                onChange={e => setFilterPoints(e.target.value)}
+                value={draftFilterPoints}
+                onBlur={commitPointsFilter}
+                onChange={e => setDraftFilterPoints(e.target.value)}
+                onKeyDown={e => commitOnEnter(e, commitPointsFilter)}
               />
             </FilterInput>
             <FilterInput label="タグ">
-              <input
-                type="text"
-                placeholder="例: ガンダム系"
-                className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm"
+              <select
+                className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
                 value={filterTags}
                 onChange={e => setFilterTags(e.target.value)}
-              />
+              >
+                <option value="">すべてのタグ</option>
+                {tagOptions.map(tag => (
+                  <option key={tag} value={tag}>{tag}</option>
+                ))}
+              </select>
             </FilterInput>
             <button
               onClick={clearFilters}

@@ -39,7 +39,7 @@
 - **フロントエンド:** React, TypeScript, Tailwind CSS
 - **状態管理:** React Hooks (useState, useContext, etc.)
 - **カードデータ:** TSV形式で提供され、アプリケーション内で解析・利用。
-- **CPUロジック:** `aiService.ts` 内にルールベースで実装。
+- **CPUロジック:** `cpuLogicService.ts` 内にルールベースで実装。
 
 ## 5. UI/UX設計方針
 

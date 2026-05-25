@@ -21,6 +21,7 @@ export interface Card {
   effect?: string; // Effect text, primarily for C-Cards.
   gameVar: string; // Stores the 'Var' column from the TSV data (e.g., St1, Ki1)
   imageUrl?: string; // Optional: URL or path to the card image
+  fieldOrder?: number; // Preserves the original squad order in mixed field displays.
 }
 
 export interface Combo {
@@ -70,6 +71,33 @@ export interface LogEntry {
   timestamp: number;
 }
 
+export interface CombatCardSummary {
+  cardNumber: string;
+  name: string;
+  sourceCard: Card;
+  imageUrl?: string;
+  basePoints: number;
+  tagBonus: number;
+  total: number;
+  terrain: string;
+}
+
+export interface CombatSideSummary {
+  cards: CombatCardSummary[];
+  baseTotal: number;
+  tagTotal: number;
+  comboTotal: number;
+  supportDelta: number;
+  finalTotal: number;
+  combos: Combo[];
+}
+
+export interface BattleSummary {
+  player: CombatSideSummary;
+  cpu: CombatSideSummary;
+  cCardLogs: string[];
+}
+
 export interface GameState {
   phase: GamePhase;
   activePlayer: PlayerType; // Who's turn it is to make a primary action
@@ -90,7 +118,7 @@ export interface CPUAction {
   action: 'PLAY_M_CARD' | 'DISCARD_TO_DEFEAT' | 'PLAY_C_CARD' | 'SELECT_TERRAIN' | 'NO_ACTION' | 'DISCARD_FROM_HAND'; // Added DISCARD_FROM_HAND
   cardId?: string; // card.cardNumber of the card to play or discard
   targetCardId?: string; // For C-Cards that target
-  reasoning?: string; // Optional: Gemini's reasoning
+  reasoning?: string; // Optional: CPU decision explanation
 }
 
 // For Deck Editor Local Storage
