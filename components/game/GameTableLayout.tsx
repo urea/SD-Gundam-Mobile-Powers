@@ -331,6 +331,13 @@ const BattleAnimation: React.FC<{
   );
 };
 
+const getTouchDropTarget = (event: React.PointerEvent<HTMLElement>): 'squad' | 'discard' | null => {
+  const target = document.elementFromPoint(event.clientX, event.clientY);
+  const dropNode = target?.closest<HTMLElement>('[data-game-drop]');
+  const dropTarget = dropNode?.dataset.gameDrop;
+  return dropTarget === 'squad' || dropTarget === 'discard' ? dropTarget : null;
+};
+
 const FieldLane: React.FC<FieldLaneProps> = ({
   canDropToSquad,
   draggedCard,
@@ -386,6 +393,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
     <section className={`game-field-lane ${toneClass}`} aria-label={`${owner} field lane`}>
       <div
         className={`game-lane-surface game-lane-attention ${squadDropClass}`}
+        data-game-drop={!isCPU ? 'squad' : undefined}
         key={laneAttentionKey}
         onDragOver={handleDragOverToSquad}
         onDrop={handleDropToSquad}
@@ -536,9 +544,36 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     onPlayerAction(phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' ? 'DISCARD_FROM_HAND_CS' : 'DISCARD_TO_DEFEAT_PILE', draggedCard);
     setDraggedCard(null);
   };
+  const handleTouchDragEnd = (event: React.PointerEvent<HTMLElement>) => {
+    if (!draggedCard || event.pointerType === 'mouse') {
+      return;
+    }
+    const dropTarget = getTouchDropTarget(event);
+    if (dropTarget === 'squad' && canDropDraggedToSquad) {
+      event.preventDefault();
+      dropDraggedToSquad();
+      return;
+    }
+    if (dropTarget === 'discard' && canDropDraggedToDiscard) {
+      event.preventDefault();
+      dropDraggedToDiscard();
+      return;
+    }
+    setDraggedCard(null);
+  };
 
   return (
-    <main className={`game-table-layout ${gameStageClass}`} aria-label="対戦盤面">
+    <main
+      aria-label="対戦盤面"
+      className={`game-table-layout ${gameStageClass} ${draggedCard ? 'game-touch-dragging' : ''}`}
+      onPointerCancel={() => setDraggedCard(null)}
+      onPointerMove={(event) => {
+        if (draggedCard && event.pointerType !== 'mouse') {
+          event.preventDefault();
+        }
+      }}
+      onPointerUp={handleTouchDragEnd}
+    >
       <section className="game-opponent-strip" aria-label="CPU情報">
         <div className="game-opponent-identity">
           <span className="game-strip-title">CPU</span>
@@ -695,6 +730,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               <button
                 aria-label="プレイヤーの捨て札を見る"
                 className={`game-zone-button game-zone-button-player ${canDropDraggedToDiscard ? 'game-drop-ready' : ''}`}
+                data-game-drop="discard"
                 disabled={(!canDropDraggedToDiscard && player.discardPile.length === 0) || !!winner}
                 onDragOver={(event) => {
                   if (canDropDraggedToDiscard) {
@@ -784,6 +820,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               onClick={onSelectCard}
               onDragEnd={() => setDraggedCard(null)}
               onDragStart={setDraggedCard}
+              onPointerDragStart={setDraggedCard}
               onPreviewEnd={() => setPreviewCard(null)}
               onPreviewStart={setPreviewCard}
               uniqueKey={`player-hand-${card.cardNumber}-${idx}`}

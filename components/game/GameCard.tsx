@@ -12,6 +12,7 @@ interface GameCardProps {
   onDragStart?: (card: Card, event: React.DragEvent<HTMLButtonElement>) => void;
   onPreviewEnd?: () => void;
   onPreviewStart?: (card: Card) => void;
+  onPointerDragStart?: (card: Card, event: React.PointerEvent<HTMLButtonElement>) => void;
   isSelected?: boolean;
   isTargetable?: boolean;
   isDisabled?: boolean;
@@ -28,6 +29,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   onDragStart,
   onPreviewEnd,
   onPreviewStart,
+  onPointerDragStart,
   isSelected,
   isTargetable,
   isDisabled,
@@ -84,6 +86,11 @@ Var: ${card.gameVar || '-'}`;
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', card.cardNumber);
         onDragStart?.(card, event);
+      } : undefined}
+      onPointerDown={canDrag ? (event) => {
+        if (event.pointerType !== 'mouse') {
+          onPointerDragStart?.(card, event);
+        }
       } : undefined}
       onBlur={onPreviewEnd}
       onFocus={() => onPreviewStart?.(card)}

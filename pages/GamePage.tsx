@@ -31,11 +31,36 @@ interface GamePageProps {
 }
 
 const customScrollbarAndAnimationStyles = `
+  html.game-scroll-locked,
+  body.game-scroll-locked {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
   .game-screen {
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
     background:
       linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(226, 232, 240, 0.98)),
       #eef2f7;
+    padding-top: max(0.375rem, env(safe-area-inset-top));
+    padding-right: max(0.375rem, env(safe-area-inset-right));
+    padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+    padding-left: max(0.375rem, env(safe-area-inset-left));
+  }
+  @supports not (height: 100dvh) {
+    .game-screen {
+      height: 100vh;
+      min-height: 100vh;
+      max-height: 100vh;
+    }
   }
   .game-board-grid {
     flex: 1;
@@ -60,6 +85,98 @@ const customScrollbarAndAnimationStyles = `
     display: grid;
     grid-template-rows: auto minmax(4.75rem, 1fr) auto minmax(4.75rem, 1fr) minmax(7rem, auto);
     gap: 0.375rem;
+    touch-action: none;
+  }
+  .game-mobile-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .game-fullscreen-button {
+    border-radius: 6px;
+    border: 1px solid rgba(15, 23, 42, 0.22);
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.22rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .game-fullscreen-button:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+  .game-exit-button {
+    background: #ef4444;
+    color: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(127, 29, 29, 0.18);
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .game-orientation-guard {
+    display: none;
+  }
+  .game-orientation-icon {
+    width: 3.5rem;
+    height: 5.2rem;
+    border: 3px solid rgba(248, 250, 252, 0.92);
+    border-radius: 12px;
+    position: relative;
+    transform: rotate(90deg);
+    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.28), 0 18px 44px rgba(15, 23, 42, 0.35);
+  }
+  .game-orientation-icon::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0.28rem;
+    width: 0.32rem;
+    height: 0.32rem;
+    border-radius: 999px;
+    background: rgba(248, 250, 252, 0.92);
+    transform: translateX(-50%);
+  }
+  @media (orientation: portrait) and (max-width: 900px) {
+    .game-orientation-guard {
+      position: fixed;
+      inset: 0;
+      z-index: 260;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      color: #f8fafc;
+      text-align: center;
+      background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.96)),
+        #020617;
+    }
+    .game-orientation-guard strong {
+      font-size: 1.35rem;
+      line-height: 1.3;
+    }
+    .game-orientation-guard span {
+      max-width: 18rem;
+      color: #cbd5e1;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+    .game-orientation-guard .game-fullscreen-button {
+      padding: 0.55rem 0.9rem;
+      font-size: 0.86rem;
+      background: #0284c7;
+      border-color: rgba(125, 211, 252, 0.55);
+    }
+    .game-table-layout {
+      filter: blur(2px);
+      pointer-events: none;
+    }
   }
   .game-opponent-strip,
   .game-player-dock,
@@ -164,6 +281,7 @@ const customScrollbarAndAnimationStyles = `
     min-height: 0;
     padding: 0.35rem;
     overflow: hidden;
+    touch-action: none;
   }
   .game-lane-surface {
     position: relative;
@@ -172,6 +290,7 @@ const customScrollbarAndAnimationStyles = `
     border-radius: 7px;
     border: 1px dashed rgba(148, 163, 184, 0.55);
     overflow: hidden;
+    touch-action: none;
   }
   .game-lane-attention {
     animation: lane-border-focus 0.92s ease-out;
@@ -255,6 +374,17 @@ const customScrollbarAndAnimationStyles = `
     box-shadow:
       0 0 0 5px rgba(250, 204, 21, 0.18),
       0 8px 20px rgba(15, 23, 42, 0.18);
+  }
+  .game-table-layout .game-card-size,
+  .game-zone-button,
+  .game-action-button,
+  .game-fullscreen-button,
+  .game-exit-button {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .game-table-layout .game-card-size {
+    touch-action: none;
+    -webkit-touch-callout: none;
   }
   .game-screen .kira-border-animated {
     isolation: isolate;
@@ -1095,6 +1225,8 @@ const customScrollbarAndAnimationStyles = `
     background: rgba(241, 245, 249, 0.9);
     border: 1px solid rgba(148, 163, 184, 0.42);
     padding: 0.35rem;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
   }
   .game-table-layout .game-card-size {
     width: clamp(3rem, 5.2vw, 4.75rem);
@@ -1627,6 +1759,7 @@ const createBattleSummary = (player: GameState['player'], cpu: GameState['cpu'],
 });
 
 export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, initialCpuDeckCode }) => {
+  const gameScreenRef = useRef<HTMLDivElement | null>(null);
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
   const [fullInstancePool, setFullInstancePool] = useState<Card[]>([]);
   const [baseCardToShortIdMap, setBaseCardToShortIdMap] = useState<Map<string, number>>(new Map());
@@ -1652,6 +1785,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   
   const [isLargeCardModalOpen, setIsLargeCardModalOpen] = useState(false);
   const [cardForLargeModal, setCardForLargeModal] = useState<Card | null>(null);
+  const [isFullscreenActive, setIsFullscreenActive] = useState(false);
 
 
   const handleImageError = (cardKey: string) => {
@@ -2168,6 +2302,46 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   }, []);
 
   useEffect(() => {
+    document.documentElement.classList.add('game-scroll-locked');
+    document.body.classList.add('game-scroll-locked');
+
+    return () => {
+      document.documentElement.classList.remove('game-scroll-locked');
+      document.body.classList.remove('game-scroll-locked');
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreenActive(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const requestGameFullscreen = useCallback(async () => {
+    const target = gameScreenRef.current ?? document.documentElement;
+
+    try {
+      if (!document.fullscreenElement && target.requestFullscreen) {
+        await target.requestFullscreen();
+      }
+
+      const orientation = window.screen.orientation as ScreenOrientation & {
+        lock?: (orientation: string) => Promise<void>;
+      };
+      if (orientation?.lock) {
+        await orientation.lock('landscape').catch(() => undefined);
+      }
+    } catch {
+      addLogEntry('ブラウザの制限により全画面化できませんでした。ホーム画面に追加して起動してください。', 'SYSTEM');
+    }
+  }, [addLogEntry]);
+
+  useEffect(() => {
     if (!gameState || gameState.winner) return;
 
     const currentPhase = gameState.phase;
@@ -2565,16 +2739,36 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
   return (
     <GamePageContext.Provider value={{ handleImageError, imageLoadErrors, setSelectedCard }}>
-      <div className="game-screen text-slate-800 p-1.5 sm:p-2 lg:p-3 flex flex-col">
+      <div ref={gameScreenRef} className="game-screen text-slate-800 p-1.5 sm:p-2 lg:p-3 flex flex-col">
         <style dangerouslySetInnerHTML={{ __html: customScrollbarAndAnimationStyles }} />
         <header className="game-topbar mb-1 flex justify-between items-center">
           <h1 className="text-base sm:text-lg font-bold text-sky-700 flex items-center gap-2">
             モビルパワーズ - CPU対戦 
           </h1> 
-          <button onClick={onExit} className="bg-red-500 hover:bg-red-600 text-white py-1 px-2.5 text-xs rounded shadow">
-            ゲーム終了
-          </button>
+          <div className="game-mobile-actions">
+            <button
+              aria-label="ゲーム画面を全画面表示にする"
+              className="game-fullscreen-button"
+              disabled={isFullscreenActive}
+              onClick={requestGameFullscreen}
+              type="button"
+            >
+              {isFullscreenActive ? '全画面中' : '全画面'}
+            </button>
+            <button onClick={onExit} className="game-exit-button" type="button">
+              ゲーム終了
+            </button>
+          </div>
         </header>
+
+        <aside className="game-orientation-guard" aria-live="polite">
+          <span className="game-orientation-icon" aria-hidden="true" />
+          <strong>横向きでプレイしてください</strong>
+          <span>盤面を表示しきるため、スマホを横向きにしてください。ホーム画面に追加して起動すると、全画面でより安定します。</span>
+          <button className="game-fullscreen-button" onClick={requestGameFullscreen} type="button">
+            全画面で続ける
+          </button>
+        </aside>
 
         <GameOverModal
           winner={winner}
