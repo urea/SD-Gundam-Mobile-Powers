@@ -170,6 +170,7 @@ const BattleCalculationSummary: React.FC<{
   onPreviewStart: (card: Card) => void;
 }> = ({ battleSummary, onPreviewEnd, onPreviewStart }) => {
   if (!battleSummary) return null;
+  const calculationLogs = [...battleSummary.tagLogs, ...battleSummary.cCardLogs].slice(0, 6);
 
   return (
     <div className="game-battle-summary" aria-label="戦闘計算サマリ">
@@ -180,14 +181,14 @@ const BattleCalculationSummary: React.FC<{
         summary={battleSummary.player}
         tone="player"
       />
-      <section className="game-battle-events" aria-label="Cカード結果">
-        <span className="game-battle-events-title">C/S結果</span>
-        {battleSummary.cCardLogs.length > 0 ? (
-          battleSummary.cCardLogs.slice(0, 4).map((message, index) => (
+      <section className="game-battle-events" aria-label="戦闘計算ログ">
+        <span className="game-battle-events-title">計算ログ</span>
+        {calculationLogs.length > 0 ? (
+          calculationLogs.map((message, index) => (
             <p key={`${message}-${index}`}>{message}</p>
           ))
         ) : (
-          <p>C/S補正なし</p>
+          <p>タグ/C/S補正なし</p>
         )}
       </section>
       <BattleSummarySide

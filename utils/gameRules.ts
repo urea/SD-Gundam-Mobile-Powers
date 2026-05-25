@@ -434,24 +434,36 @@ export const getPhaseInstruction = (
   }
 };
 
-export const calculateTagBonus = (card: Card, friendlyBattlefield: Card[]): number => {
-  if (card.type !== 'M' || !card.tags) return 0;
-  const cardTags = card.tags.split(' ').filter(Boolean);
-  if (cardTags.length === 0) return 0;
+export interface TagBonusDetail {
+  tag: string;
+  otherCardName: string;
+}
 
-  let bonus = 0;
+export const getTagBonusDetails = (card: Card, friendlyBattlefield: Card[]): TagBonusDetail[] => {
+  if (card.type !== 'M' || !card.tags) return [];
+  const cardTags = card.tags.split(' ').filter(Boolean);
+  if (cardTags.length === 0) return [];
+
+  const details: TagBonusDetail[] = [];
   friendlyBattlefield.forEach(otherCard => {
     if (otherCard.cardNumber === card.cardNumber && otherCard.type === card.type) return;
     if (otherCard.type === 'M' && otherCard.tags) {
       const otherCardTags = otherCard.tags.split(' ').filter(Boolean);
       cardTags.forEach(cardTag => {
         if (otherCardTags.includes(cardTag)) {
-          bonus++;
+          details.push({
+            tag: cardTag,
+            otherCardName: otherCard.cardNameOmm || otherCard.cardName,
+          });
         }
       });
     }
   });
-  return bonus;
+  return details;
+};
+
+export const calculateTagBonus = (card: Card, friendlyBattlefield: Card[]): number => {
+  return getTagBonusDetails(card, friendlyBattlefield).length;
 };
 
 export const getBaseCardNumber = (cardNumber: string): string => {

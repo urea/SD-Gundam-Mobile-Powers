@@ -18,6 +18,7 @@ import {
   getCCardTargetCandidates,
   getCCardTargetMode,
   getPhaseInstruction,
+  getTagBonusDetails,
   initialPlayerState,
   isPlayerInteractivePhase,
   shuffleDeck,
@@ -1726,7 +1727,8 @@ const createCombatSideSummary = (
   const mCards = battlefield.filter(card => card.type === 'M');
   const cards = mCards.map(card => {
     const basePoints = parseInt(card.points, 10) || 0;
-    const tagBonus = calculateTagBonus(card, mCards);
+    const tagDetails = getTagBonusDetails(card, mCards);
+    const tagBonus = tagDetails.length;
     return {
       cardNumber: card.cardNumber,
       name: card.cardNameOmm || card.cardName,
@@ -1734,6 +1736,7 @@ const createCombatSideSummary = (
       imageUrl: card.imageUrl,
       basePoints,
       tagBonus,
+      tagDetails: tagDetails.map(detail => `${detail.tag}が${detail.otherCardName}と一致`),
       total: basePoints + tagBonus,
       terrain: card.terrainTypeMCards || '-',
     };
@@ -1752,14 +1755,23 @@ const createCombatSideSummary = (
     supportDelta,
     finalTotal,
     combos,
+    tagLogs: cards
+      .filter(card => card.tagBonus > 0)
+      .map(card => `${ownerName}: ${card.name} タグ +${card.tagBonus} (${card.tagDetails.join(' / ')})`),
   };
 };
 
-const createBattleSummary = (player: GameState['player'], cpu: GameState['cpu'], gameLog: LogEntry[]): BattleSummary => ({
-  player: createCombatSideSummary(player.battlefield, player.combatPoints, 'プレイヤー'),
-  cpu: createCombatSideSummary(cpu.battlefield, cpu.combatPoints, 'CPU'),
-  cCardLogs: getSupportLogSummaries(gameLog),
-});
+const createBattleSummary = (player: GameState['player'], cpu: GameState['cpu'], gameLog: LogEntry[]): BattleSummary => {
+  const playerSummary = createCombatSideSummary(player.battlefield, player.combatPoints, 'プレイヤー');
+  const cpuSummary = createCombatSideSummary(cpu.battlefield, cpu.combatPoints, 'CPU');
+
+  return {
+    player: playerSummary,
+    cpu: cpuSummary,
+    cCardLogs: getSupportLogSummaries(gameLog),
+    tagLogs: [...playerSummary.tagLogs, ...cpuSummary.tagLogs],
+  };
+};
 
 export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, initialCpuDeckCode }) => {
   const gameScreenRef = useRef<HTMLDivElement | null>(null);

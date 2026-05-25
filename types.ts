@@ -78,6 +78,7 @@ export interface CombatCardSummary {
   imageUrl?: string;
   basePoints: number;
   tagBonus: number;
+  tagDetails: string[];
   total: number;
   terrain: string;
 }
@@ -90,12 +91,14 @@ export interface CombatSideSummary {
   supportDelta: number;
   finalTotal: number;
   combos: Combo[];
+  tagLogs: string[];
 }
 
 export interface BattleSummary {
   player: CombatSideSummary;
   cpu: CombatSideSummary;
   cCardLogs: string[];
+  tagLogs: string[];
 }
 
 export interface GameState {
