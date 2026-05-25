@@ -1,35 +1,83 @@
 
 import React from 'react';
 import { RuleSection } from './RuleSection';
-import { CardDisplayTable } from './CardDisplayTable';
 import { Card } from '../types';
 
-const ListItem: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+const ListItem: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <li className={`ml-4 list-disc list-outside text-slate-700 ${className}`}>{children}</li>
 );
 
-const SubHeading: React.FC<{ children: React.ReactNode; className?: string; id?: string }> = ({ children, className, id }) => (
+const SubHeading: React.FC<{ children: React.ReactNode; className?: string; id?: string }> = ({ children, className = '', id }) => (
   <h4 id={id} className={`text-xl font-semibold text-sky-600 mt-6 mb-3 scroll-mt-20 ${className}`}>{children}</h4>
 );
 
-const Paragraph: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+const Paragraph: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <p className={`text-slate-700 leading-relaxed ${className}`}>{children}</p>
 );
 
-const Strong: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+const Strong: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <strong className={`font-semibold text-orange-600 ${className}`}>{children}</strong>
 );
 
-const Table: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+const Table: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <div className={`overflow-x-auto my-4 ${className}`}>
     <table className="min-w-full border border-slate-300 divide-y divide-slate-300">{children}</table>
   </div>
 );
-const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <th scope="col" className={`px-4 py-2 text-left text-sm font-semibold text-sky-700 bg-slate-100 ${className}`}>{children}</th>
 );
-const Td: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+const Td: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <td className={`px-4 py-2 text-sm text-slate-700 border-t border-slate-300 ${className}`}>{children}</td>
+);
+
+const Callout: React.FC<{ title: string; children: React.ReactNode; tone?: 'blue' | 'amber' | 'red' }> = ({
+  title,
+  children,
+  tone = 'blue',
+}) => {
+  const styles = {
+    blue: 'border-sky-200 bg-sky-50 text-sky-900',
+    amber: 'border-amber-200 bg-amber-50 text-amber-900',
+    red: 'border-rose-200 bg-rose-50 text-rose-900',
+  };
+
+  return (
+    <aside className={`rounded-lg border p-4 ${styles[tone]}`}>
+      <p className="font-semibold">{title}</p>
+      <div className="mt-2 text-sm leading-relaxed">{children}</div>
+    </aside>
+  );
+};
+
+const FieldChip: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <span className={`inline-flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-semibold text-slate-700 shadow-sm ${className}`}>
+    {children}
+  </span>
+);
+
+const PhaseCard: React.FC<{ number: string; title: string; children: React.ReactNode }> = ({ number, title, children }) => (
+  <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <div className="flex items-center gap-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-600 text-sm font-bold text-white">{number}</span>
+      <h4 className="text-lg font-semibold text-slate-800">{title}</h4>
+    </div>
+    <div className="mt-3 space-y-2 text-sm leading-relaxed text-slate-700">{children}</div>
+  </article>
+);
+
+const CardFigure: React.FC<{
+  src: string;
+  title: string;
+  caption: string;
+}> = ({ src, title, caption }) => (
+  <figure className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <img src={src} alt={title} className="mx-auto aspect-[5/7] w-full max-w-[132px] rounded-md object-contain shadow" loading="lazy" />
+    <figcaption className="mt-2 text-center">
+      <p className="text-sm font-semibold text-slate-800">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-500">{caption}</p>
+    </figcaption>
+  </figure>
 );
 
 export const tsvData = `Unique_Key	Card_Number	Card_Name	Card_Name_Omm	Type	Points	Flavor_Ability	Terrain_Type_M_cards	Battlefield_Terrain	Faction_Affiliation	Other_Notes	Effect	Var	imgURL
@@ -178,218 +226,219 @@ export const parseMobilePowersTsvData = (tsv: string): Card[] => {
 const RuleContent: React.FC = () => {
   return (
     <>
-      <nav className="mb-10 p-4 bg-sky-50 rounded-lg shadow-md">
+      <nav className="mb-10 rounded-lg border border-sky-100 bg-sky-50 p-4 shadow-sm">
         <h3 className="text-lg font-semibold text-sky-700 mb-3">目次 (Table of Contents)</h3>
-        <ul className="space-y-1.5 text-sm">
-          <li><a href="#game-objective" className="text-sky-600 hover:text-sky-800 hover:underline">ゲームの目的</a></li>
-          <li><a href="#card-types" className="text-sky-600 hover:text-sky-800 hover:underline">カードの種類と使い方</a></li>
-          <li><a href="#game-flow" className="text-sky-600 hover:text-sky-800 hover:underline">ゲームの流れ</a></li>
-          <li><a href="#field-explanation" className="text-sky-600 hover:text-sky-800 hover:underline">フィールドの説明</a></li>
-          <li><a href="#terrain-effects" className="text-sky-600 hover:text-sky-800 hover:underline">地形効果について</a></li>
-          <li><a href="#combat-rules" className="text-sky-600 hover:text-sky-800 hover:underline">戦闘について</a></li>
-          <li><a href="#special-rules" className="text-sky-600 hover:text-sky-800 hover:underline">特殊なルール</a></li>
+        <ul className="grid gap-2 text-sm sm:grid-cols-2">
+          <li><a href="#source-policy" className="text-sky-700 hover:text-sky-900 hover:underline">基準と勝利条件</a></li>
+          <li><a href="#card-types" className="text-sky-700 hover:text-sky-900 hover:underline">カードとフィールド</a></li>
+          <li><a href="#game-flow" className="text-sky-700 hover:text-sky-900 hover:underline">ターン進行</a></li>
+          <li><a href="#combat-rules" className="text-sky-700 hover:text-sky-900 hover:underline">戦闘とC/S</a></li>
+          <li><a href="#combo-rules" className="text-sky-700 hover:text-sky-900 hover:underline">コンボ</a></li>
+          <li><a href="#special-rules" className="text-sky-700 hover:text-sky-900 hover:underline">特殊ルール</a></li>
         </ul>
       </nav>
 
-      <RuleSection id="game-objective" japaneseTitle="ゲームの目的" englishTitle="Game Objective">
+      <RuleSection id="source-policy" japaneseTitle="基準と勝利条件" englishTitle="Rules Source and Objective">
+        <Callout title="このルールページの基準">
+          <p>
+            ルール整理は、TCGカタログの「SDガンダム モビルパワーズ」ルール解説を基準にしています。アプリ実装と差がある箇所でも、このページでは原典寄りのルールを優先して説明します。
+          </p>
+        </Callout>
         <Paragraph>
-          モビルパワーズは、地球連邦軍またはジオン公国軍の司令官となり、MS（モビルスーツ）やMA（モビルアーマー）といった兵器カードと、キャラクターや特殊効果を持つコマンドカードを駆使して戦う2人用対戦カードゲームです。
+          モビルパワーズは、小隊単位でMカードを戦場へ送り、Cカードとコンボで攻撃ポイントを補正しながら相手に敗戦ポイントを押し付ける2人用カードゲームです。
         </Paragraph>
-        <Paragraph>
-          プレイヤーは自分の小隊を編成し、戦場に出撃させ、相手の小隊と戦闘を行います。戦闘に勝利することで相手に<Strong>敗戦ポイント</Strong>を与え、先に相手の敗戦ポイントを<Strong>10点</Strong>にしたプレイヤーがゲームの勝者となります。
-        </Paragraph>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Callout title="勝利条件">
+            <ul className="space-y-1">
+              <ListItem>相手の敗戦ポイントが10になった瞬間に勝利。</ListItem>
+              <ListItem>相手がデッキからカードを引けなくなった瞬間に勝利。</ListItem>
+            </ul>
+          </Callout>
+          <Callout title="手札の基本" tone="amber">
+            <p>
+              開始手札は7枚。ゲーム中も手札は常に7枚を維持します。通常の手札上限チェックではなく、各行動が「引いてから出す／捨てる」形で7枚へ戻る前提です。
+            </p>
+          </Callout>
+        </div>
+        <SubHeading id="deck-setup">デッキと開始準備</SubHeading>
+        <ul className="space-y-2">
+          <ListItem>デッキは55枚以上。</ListItem>
+          <ListItem>同一名称カードはデッキに3枚まで。</ListItem>
+          <ListItem>互いにデッキをシャッフルし、それぞれ手札を7枚引く。</ListItem>
+          <ListItem>先攻・後攻を決めてゲームを始める。マリガンとファーストドロー制限はありません。</ListItem>
+        </ul>
       </RuleSection>
 
-      <RuleSection id="card-types" japaneseTitle="カードの種類と使い方" englishTitle="Card Types and How to Use Them">
+      <RuleSection id="card-types" japaneseTitle="カードとフィールド" englishTitle="Cards and Fields">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <CardFigure src="/assets/cards/000-M-001.jpg" title="Mカード" caption="小隊へ配備し、地形に合えば戦場へ進軍する攻撃役。" />
+          <CardFigure src="/assets/cards/058-C-001.jpg" title="Cカード" caption="カウンター／支援フェイズで使う支援カード。" />
+          <CardFigure src="/assets/cards/074-C-017.jpg" title="地形として使うカード" caption="カード下面の地形属性が今回の戦場になる。" />
+          <CardFigure src="/assets/card-back.png" title="小隊のカード" caption="小隊フィールドに置かれ、条件を満たすと戦場へ出る。" />
+        </div>
+
+        <SubHeading id="m-cards">Mカード</SubHeading>
         <Paragraph>
-          カードは大きく分けて2種類あります：<Strong>Mカード（メカニックカード）</Strong>と<Strong>Cカード（カウンターカード）</Strong>です。
+          Mカードはモビルスーツ、モビルアーマー、戦艦などを表すカードです。ポイントを持ち、戦闘時の攻撃ポイントの土台になります。
         </Paragraph>
-        <SubHeading id="m-cards">Mカード (メカニックカード)</SubHeading>
-        <Paragraph>
-          MS、MA、戦艦などの兵器を表すカードです。各Mカードには以下の情報が記載されています。
-        </Paragraph>
-        <ul className="list-none space-y-2 pl-0">
-          <ListItem><Strong>カード名:</Strong> 兵器の名称です。（例：RX-78-2 ガンダム）</ListItem>
-          <ListItem><Strong>ポイント(P):</Strong> 兵器の基本戦闘力です。これが高いほど強力ですが、戦場に出すための条件が厳しくなることがあります。</ListItem>
-          <ListItem><Strong>所属:</Strong> 地球連邦軍かジオン公国軍かなど、所属勢力を示します。</ListItem>
-          <ListItem><Strong>地形適性:</Strong> 「宇」「陸」「海」「空」で示され、その兵器が活動可能な地形を表します。戦場の地形と一致しない場合、出撃できません。</ListItem>
-          <ListItem><Strong>テキスト/能力 (Flavor Ability):</Strong> 特殊な能力やフレーバーテキストが記載されています。</ListItem>
-          <ListItem><Strong>タグ (Tags):</Strong> 「ガンダム系」「シャア専用機」など、カードの特性を示すキーワードです。これらはスペースで区切られています。Cカードの効果に関わることがあり、また、戦場にいる他の味方Mカードとのタグの一致数によって戦闘力が上昇します。</ListItem>
-          <ListItem><Strong>Var (バリエーション):</Strong> カードのバリエーション情報です（例：St1、Ki1）。「キラカード」などの識別に使われることがあります。</ListItem>
+        <ul className="space-y-2">
+          <ListItem><Strong>適応属性:</Strong> カード左上の「宇」「陸」「海」「空」。戦場地形と1つでも一致すると戦場へ進軍できます。</ListItem>
+          <ListItem><Strong>ポイント:</Strong> 戦場にいるMカードのポイント合計が攻撃ポイントの基礎になります。</ListItem>
+          <ListItem><Strong>チーム条件:</Strong> 一定の組み合わせを満たすとコンボが成立します。タグ一致だけで自動加点するルールは、この基準資料では確認できません。</ListItem>
         </ul>
 
-        <SubHeading id="c-cards">Cカード (カウンターカード)</SubHeading>
+        <SubHeading id="c-cards">Cカード</SubHeading>
         <Paragraph>
-          キャラクター、アイテム、イベントなどを表すカードです。主に戦闘中（カウンター／支援フェイズ）に使用し、戦況を有利に進めるための様々な効果を発揮します。
+          Cカードはパイロット、アイテム、作戦などの支援カードです。カウンター／支援フェイズで任意に出せますが、出さない、または出せない場合は手札から任意の1枚を捨てます。
         </Paragraph>
-        <ul className="list-none space-y-2 pl-0">
-          <ListItem><Strong>カード名:</Strong> キャラクター名や事象名です。（例：アムロ・レイ、ミノフスキー粒子）</ListItem>
-          <ListItem><Strong>効果地形:</Strong> Cカードが効果を発揮できる戦場の地形属性を示します。現在の戦場地形と一致しないCカードは原則使用できません。（一部例外あり）</ListItem>
-          <ListItem><Strong>テキスト/フレーバー (Flavor Ability):</Strong> カードの雰囲気を伝える短いキャッチコピーや説明文が記載されています。</ListItem>
-          <ListItem><Strong>効果 (Effect):</Strong> カードが持つ具体的な効果内容です。ポイントの増減、カードの破壊、特殊な行動などが含まれます。これがCカードの主要なルールテキストとなります。</ListItem>
-          <ListItem><Strong>所属:</Strong> Mカード同様、関連する勢力を示します。</ListItem>
-          <ListItem><Strong>タグ (Tags):</Strong> Mカード同様、カードの特性を示すキーワードが含まれることがあります。</ListItem>
-           <ListItem><Strong>Var (バリエーション):</Strong> カードのバリエーション情報です。</ListItem>
+        <ul className="space-y-2">
+          <ListItem>Cカードは攻撃ポイントを増やす、相手カードを破壊する、戦場属性を追加するなどの効果を持ちます。</ListItem>
+          <ListItem>一部例外を除き、戦場に自軍MカードがいないとCカードは出せません。</ListItem>
+          <ListItem>使用したCカードは戦闘結果処理で捨て山へ送ります。</ListItem>
         </ul>
-        <Paragraph className="mt-4">
-          カードの詳細な見方や各項目の意味については、カードリストの表も参照してください。
-        </Paragraph>
+
+        <SubHeading id="fields">場の構成</SubHeading>
+        <div className="flex flex-wrap gap-2">
+          <FieldChip>山札</FieldChip>
+          <FieldChip>手札</FieldChip>
+          <FieldChip>小隊フィールド</FieldChip>
+          <FieldChip>戦場フィールド</FieldChip>
+          <FieldChip>敗戦フィールド</FieldChip>
+          <FieldChip>捨て山</FieldChip>
+        </div>
+        <ul className="mt-4 space-y-2">
+          <ListItem><Strong>小隊フィールド:</Strong> Mカードを配備する場所。両プレイヤーとも3枚になるまで編成します。</ListItem>
+          <ListItem><Strong>戦場フィールド:</Strong> 地形に適応したMカードと使用中のCカードが置かれる場所。</ListItem>
+          <ListItem><Strong>敗戦フィールド:</Strong> 敗戦ポイントを表す場所。ここに10枚目が置かれたら敗北します。</ListItem>
+          <ListItem><Strong>捨て山:</Strong> 使用済みカードや、敗戦ポイントにならないカードを送る場所。敗戦フィールドとは明確に区別します。</ListItem>
+        </ul>
       </RuleSection>
 
-      <RuleSection id="game-flow" japaneseTitle="ゲームの流れ" englishTitle="Game Flow">
+      <RuleSection id="game-flow" japaneseTitle="ターン進行" englishTitle="Turn Sequence">
+        <div className="space-y-4">
+          <PhaseCard number="1" title="編成フェイズ">
+            <ul className="space-y-2">
+              <ListItem>ターンプレイヤーから交互に、手札を1枚引いてからMカード1枚を小隊フィールドに出します。</ListItem>
+              <ListItem>両プレイヤーの小隊フィールドが3枚になるまで繰り返します。前ターンから残っているMカードがある場合、その分だけ新しく出す枚数は少なくなります。</ListItem>
+              <ListItem>手札がCカードばかりでMカードを出せない場合、手札の任意の1枚を<Strong>敗戦フィールド</Strong>へ出します。捨て山ではありません。</ListItem>
+              <ListItem>この処理で敗戦フィールドに10枚目が置かれたら、その時点で敗北します。</ListItem>
+            </ul>
+          </PhaseCard>
+
+          <PhaseCard number="2" title="出陣フェイズ">
+            <ul className="space-y-2">
+              <ListItem>ターンプレイヤーがデッキから1枚引き、そのカードを地形として戦場フィールドへ出します。</ListItem>
+              <ListItem>両軍とも、小隊フィールドのMカードのうち戦場地形と1つでも適応属性が一致するカードをすべて戦場フィールドへ前進させます。</ListItem>
+              <ListItem>両プレイヤーとも1枚も前進できない場合、今地形を出さなかった側が新たな地形カードを出します。どちらかのMカードが適応するまで繰り返します。</ListItem>
+              <ListItem>片方だけが前進できた場合、一方的な戦闘とみなし、前進できなかった側の小隊Mカード3枚は敗戦フィールドへ送られます。</ListItem>
+            </ul>
+          </PhaseCard>
+
+          <PhaseCard number="3" title="待機Mカードの処理">
+            <ul className="space-y-2">
+              <ListItem>両軍とも何らかのMカードを戦場へ送れた場合、今回出せなかったMカードは小隊フィールドに残ります。</ListItem>
+              <ListItem>残ったMカードはタップして待機状態にします。これは「1ターンだけ残れる」ことを表します。</ListItem>
+              <ListItem>前ターンからタップ済みだったMカードが今回も戦場へ出られなかった場合、そのMカードは捨て山へ送ります。</ListItem>
+            </ul>
+          </PhaseCard>
+
+          <PhaseCard number="4" title="戦闘フェイズ">
+            <ul className="space-y-2">
+              <ListItem>片方だけが戦場にMカードを出せなかった場合を除き、戦闘は必ず発生します。</ListItem>
+              <ListItem>戦場フィールドにいる自軍Mカードのポイント合計を攻撃ポイントとします。</ListItem>
+              <ListItem>この後、Cカードとコンボの修正を加えて最終攻撃ポイントを算出します。</ListItem>
+            </ul>
+          </PhaseCard>
+        </div>
+      </RuleSection>
+
+      <RuleSection id="combat-rules" japaneseTitle="戦闘とカウンター／支援" englishTitle="Combat and Counter Support">
+        <SubHeading id="counter-support">カウンター／支援フェイズ</SubHeading>
         <Paragraph>
-          ゲームは以下のフェイズを繰り返して進行します。
+          攻撃ポイントの低い側から順に、各プレイヤーが1回ずつ行動します。
         </Paragraph>
-        <ol className="list-decimal list-outside ml-5 space-y-3 text-slate-700">
-          <li>
-            <Strong>編成フェイズ (Formation Phase)</Strong>
-            <ul className="list-disc list-outside ml-4 mt-1 space-y-1">
-              <ListItem>各プレイヤーは山札からカードを1枚引きます。（手札は最大7枚。7枚を超える場合は1枚選び、捨て札にする。）</ListItem>
-              <ListItem>自分の手札からMカードを1枚選び、自分の「小隊フィールド」に裏向きで配置します。（小隊フィールドには最大3枚まで配置可能。）</ListItem>
-              <ListItem>もし手札に配置できるMカードがない（Cカードしかない、またはMカードはあるが小隊が3枚で満員）場合、手札から任意のカード1枚を選び、自分の「敗北フィールド」に表向きで置きます。これは敗戦ポイント1点となります。</ListItem>
-              <ListItem>両プレイヤーが配置を終えたら次のフェイズへ。</ListItem>
-            </ul>
-          </li>
-          <li>
-            <Strong>出陣フェイズ (Deployment Phase)</Strong>
-            <ul className="list-disc list-outside ml-4 mt-1 space-y-1">
-              <ListItem>先攻プレイヤー（前のターンに戦闘ポイントが低かった側、または同点なら前のターンの後攻側）が山札からカードを1枚引き、それを「地形カード」として戦場に出します。このカードの「効果地形」がこの戦闘の地形属性となります。</ListItem>
-              <ListItem>両プレイヤーは、自分の小隊フィールドにあるMカードの中で、決定された戦場地形に適性を持つカードを全て「最前線フィールド」に表向きで移動させます。</ListItem>
-              <ListItem>地形に適性がないMカードは小隊フィールドに残ります（待機）。</ListItem>
-              <ListItem>どちらか一方のプレイヤーしか最前線にMカードを出せなかった場合、「一方的出撃」となり、戦闘は発生せず、出撃できた側の勝利として扱われ、出撃できなかった側は小隊のMカード枚数分の敗戦ポイントを受けます。その後、ターン終了処理へ。</ListItem>
-            </ul>
-          </li>
-          <li>
-            <Strong>戦闘計算フェイズ (Combat Calculation Phase)</Strong>
-            <ul className="list-disc list-outside ml-4 mt-1 space-y-1">
-              <ListItem>各プレイヤーは、自分の最前線フィールドに出ているMカードのポイントの合計値を計算します。この際、Mカードの「タグ」が他の味方Mカードのタグと一致する場合、一致したタグの数だけそのMカードのポイントが上昇します。さらに、特定のカードの組み合わせによる「コンボ」が成立した場合、追加のポイントが加算されます。これが現在の戦闘ポイントとなります。</ListItem>
-            </ul>
-          </li>
-          <li>
-            <Strong>カウンター／支援フェイズ (Counter/Support Phase)</Strong>
-            <ul className="list-disc list-outside ml-4 mt-1 space-y-1">
-              <ListItem>戦闘計算フェイズで戦闘ポイントが<Strong>低かった</Strong>プレイヤーから順に行動します。（同点の場合は、前のターンの後攻側から）</ListItem>
-              <ListItem>各プレイヤーは山札からカードを1枚引きます。</ListItem>
-              <ListItem>その後、以下のいずれかを選択します：
-                <ul className="list-lower-alpha list-outside ml-5 mt-1 space-y-0.5">
-                  <ListItem>手札からCカードを1枚選び、効果を使用する。（使用したCカードは捨て札へ）</ListItem>
-                  <ListItem>手札から任意のカード1枚を選び、捨て札にする。</ListItem>
-                  <ListItem>何もしない（パス）。</ListItem>
-                </ul>
-              </ListItem>
-              <ListItem>使用するCカードは表向きで公開し、効果を解決します。</ListItem>
-              <ListItem>Cカードの効果は即座に解決され、戦闘ポイントが変動することがあります。</ListItem>
-              <ListItem>両プレイヤーが行動を終えたら次のフェイズへ。</ListItem>
-            </ul>
-          </li>
-          <li>
-            <Strong>戦闘解決フェイズ (Combat Resolution Phase)</Strong>
-            <ul className="list-disc list-outside ml-4 mt-1 space-y-1">
-              <ListItem>最終的な戦闘ポイントを比較します。</ListItem>
-              <ListItem>戦闘ポイントが<Strong>高い</Strong>プレイヤーが戦闘の勝者となります。</ListItem>
-              <ListItem>敗者は、自分の最前線フィールドに出ているMカードの枚数分だけ敗戦ポイントを受け、それらのMカードを自分の敗北フィールドに置きます。</ListItem>
-              <ListItem>勝者の最前線フィールドのMカードは捨て札となります。</ListItem>
-              <ListItem>引き分けの場合は、両者の最前線Mカードはそれぞれの捨て札となります。（敗戦ポイントは発生しない）</ListItem>
-            </ul>
-          </li>
-          <li>
-            <Strong>終了フェイズ (End Phase)</Strong>
-            <ul className="list-disc list-outside ml-4 mt-1 space-y-1">
-              <ListItem>待機していたMカード（小隊フィールドに残っていたカード）は全て持ち主の捨て札となります。</ListItem>
-              <ListItem>ターンが終了し、相手プレイヤーのターンに移り、編成フェイズから繰り返します。</ListItem>
-            </ul>
-          </li>
+        <ol className="list-decimal list-outside ml-5 space-y-2 text-slate-700">
+          <li>カードを1枚引く。</li>
+          <li>任意でCカードを1枚出す。</li>
+          <li>Cカードを出さない、または出せない場合は、手札から任意の1枚を捨てる。</li>
         </ol>
-      </RuleSection>
+        <Callout title="パスはありません" tone="red">
+          <p>
+            C/Sでは1枚引くため、何もせず終える選択肢はありません。Cカードを使わない場合は、手札を1枚捨てて7枚に戻します。
+          </p>
+        </Callout>
 
-      <RuleSection id="field-explanation" japaneseTitle="フィールドの説明" englishTitle="Field Explanation">
-        <ul className="list-none space-y-3 pl-0">
-          <ListItem><Strong>山札 (Deck):</Strong> ゲーム開始時に用意するカードの束。ここからカードを引きます。</ListItem>
-          <ListItem><Strong>手札 (Hand):</Strong> プレイヤーが引いて持っているカード。ここからカードを使用したり配置したりします。</ListItem>
-          <ListItem><Strong>小隊フィールド (Squad Field):</Strong> 編成フェイズでMカードを裏向きで配置する場所。最大3枚まで。</ListItem>
-          <ListItem><Strong>最前線フィールド (Battlefront Field):</Strong> 出陣フェイズで小隊から移動してきたMカードが置かれる戦闘場所。</ListItem>
-          <ListItem><Strong>敗北フィールド (Defeat Pile):</Strong> 敗戦ポイントとなったカードが置かれる場所。ここのカード枚数が敗戦ポイントとなります。</ListItem>
-          <ListItem><Strong>捨て札置き場 (Discard Pile):</Strong> 使用済み、または効果で破壊されたカードが置かれる場所。</ListItem>
-          <ListItem><Strong>地形カード置き場 (Terrain Card Slot):</Strong> 出陣フェイズで引かれた地形カードが置かれる場所。現在の戦場の地形を示します。</ListItem>
-        </ul>
-      </RuleSection>
-
-      <RuleSection id="terrain-effects" japaneseTitle="地形効果について" englishTitle="Terrain Effects">
+        <SubHeading id="combat-resolution">戦闘結果処理</SubHeading>
         <Paragraph>
-          戦場の地形は、出陣フェイズで引かれる地形カードによって決定されます。地形カードには「宇」「陸」「海」「空」「宇陸海空」（全地形）などの地形属性が記されています。
-        </Paragraph>
-        <Paragraph>
-          Mカードは、自身の持つ「地形適性」と戦場の「地形属性」が一致（一つでも適性があれば可）しなければ、最前線フィールドに出撃できません。
-        </Paragraph>
-        <Paragraph>
-          Cカードも同様に、カードに記された「効果地形」と戦場の「地形属性」が一致しなければ、原則として使用できません。（効果テキストに「地形に関わらず使用可能」などの記述がある場合は例外）
+          Cカードとコンボの修正を加えた最終攻撃ポイントを比較し、次のようにカードを移動します。
         </Paragraph>
         <Table>
           <thead>
-            <tr><Th>地形アイコン</Th><Th>日本語</Th><Th>英語</Th><Th>説明</Th></tr>
+            <tr><Th>結果</Th><Th>Mカード</Th><Th>Cカード</Th></tr>
           </thead>
           <tbody>
-            <tr><Td>宇</Td><Td>宇宙</Td><Td>Space</Td><Td>宇宙空間での戦闘に適性/効果。</Td></tr>
-            <tr><Td>陸</Td><Td>地上</Td><Td>Land</Td><Td>陸上での戦闘に適性/効果。</Td></tr>
-            <tr><Td>海</Td><Td>水中・海上</Td><Td>Water/Sea</Td><Td>水中や海上での戦闘に適性/効果。</Td></tr>
-            <tr><Td>空</Td><Td>空中</Td><Td>Air/Sky</Td><Td>空中での戦闘に適性/効果。</Td></tr>
-            <tr><Td>宇陸海空</Td><Td>全地形</Td><Td>All Terrains</Td><Td>あらゆる地形で適性/効果を持つ。</Td></tr>
+            <tr><Td>勝ち</Td><Td>自軍の戦場Mカードを捨て山へ送る。</Td><Td>自軍の使用Cカードを捨て山へ送る。</Td></tr>
+            <tr><Td>負け</Td><Td>自軍の戦場Mカードをすべて敗戦フィールドへ送る。</Td><Td>自軍の使用Cカードを捨て山へ送る。</Td></tr>
+            <tr><Td>引き分け</Td><Td>両軍の戦場Mカードを捨て山へ送る。</Td><Td>両軍の使用Cカードを捨て山へ送る。</Td></tr>
           </tbody>
         </Table>
+        <Paragraph>
+          敗戦フィールドへ送られたMカードは敗戦ポイントになります。捨て山に送られたカードは敗戦ポイントにはなりません。
+        </Paragraph>
       </RuleSection>
 
-      <RuleSection id="combat-rules" japaneseTitle="戦闘について" englishTitle="Combat Rules">
-        <SubHeading id="calculating-combat-points">戦闘ポイントの計算</SubHeading>
+      <RuleSection id="combo-rules" japaneseTitle="コンボ" englishTitle="Combo Rules">
         <Paragraph>
-          各プレイヤーの戦闘ポイントは、最前線フィールドに出ているMカードの「ポイント(P)」の合計です。
-        </Paragraph>
-        <Paragraph>
-          さらに、Mカードはその「タグ」が自軍の他のMカード（同じく最前線フィールドにいるもの）のタグと一致する場合、その一致したタグの総数だけポイントが加算されます。例えば、カードAが「タグ1 タグ2」を持ち、カードBが「タグ1 タグ3」を同じ戦場に持っている場合、カードAは+1ポイント（カードBとの「タグ1」の一致により）、カードBも+1ポイント（カードAとの「タグ1」の一致により）を得ます。この計算は各カード個別に行われます。
-        </Paragraph>
-        <Paragraph>
-          特定のMカードの組み合わせ（例：同一ナンバーのカード3枚、キラカード3枚など）が最前線フィールドに揃うことで「コンボ」が成立し、追加の戦闘ポイントが得られます。詳細は「コンボルール」を参照してください。
-        </Paragraph>
-        <Paragraph>
-          カウンター／支援フェイズでは、Cカードの効果によってこの戦闘ポイントが増減します。
-        </Paragraph>
-        <SubHeading id="winning-combat">戦闘の勝敗</SubHeading>
-        <Paragraph>
-          カウンター／支援フェイズ終了後、最終的な戦闘ポイントを比較し、数値が大きい側が勝利となります。
-        </Paragraph>
-        <Paragraph>
-          勝利した側は、敗北した側に、敗北した側の最前線Mカード枚数分の敗戦ポイントを与えます。
-        </Paragraph>
-        <Paragraph>
-          例：プレイヤーAが戦闘ポイント15、プレイヤーBが戦闘ポイント10で、プレイヤーBの最前線にMカードが2枚あった場合、プレイヤーAの勝利。プレイヤーBは敗戦ポイント2点を受けます。
-        </Paragraph>
-        <SubHeading id="combo-rules">コンボルール</SubHeading>
-        <Paragraph>
-          特定の条件を満たすMカードが最前線フィールドに3枚揃った場合、以下のコンボが成立し、対応するポイントが戦闘力に加算されます。これらのコンボは条件を満たせば複数同時に成立することもあります。
+          Mカードが一定のチームを組んだとみなされるとコンボが成立します。複数のコンボ条件を同時に満たしても、攻撃ポイントに加えられるのは<Strong>成立したコンボの中から任意の1つ</Strong>です。
         </Paragraph>
         <Table>
           <thead>
-            <tr><Th>コンボ名称</Th><Th>成立条件</Th><Th>加算ポイント</Th></tr>
+            <tr><Th>コンボ名称</Th><Th>成立条件</Th><Th>加算</Th></tr>
           </thead>
           <tbody>
-            <tr><Td>トリプルキラコンボ</Td><Td>同一ナンバーのキラカード（Varが "Ki" で始まるカード）が前線フィールドに3枚。</Td><Td>+10</Td></tr>
-            <tr><Td>トリプルGコンボ</Td><Td>同一ナンバーかつ「ガンダム系」タグを持つカードが前線フィールドに3枚。</Td><Td>+8</Td></tr>
-            <tr><Td>大将軍コンボ</Td><Td>「大将軍」タグを持つカードが前線フィールドに3枚。</Td><Td>+8</Td></tr>
-            <tr><Td>闇コンボ</Td><Td>「闇の支配者」タグを持つカードが前線フィールドに3枚。</Td><Td>+8</Td></tr>
+            <tr><Td>トリプルキラコンボ</Td><Td>同一ナンバーのキラカードが前線フィールドに3枚。</Td><Td>+10</Td></tr>
+            <tr><Td>トリプルGコンボ</Td><Td>同一ナンバーのガンダム系カードが前線フィールドに3枚。</Td><Td>+8</Td></tr>
+            <tr><Td>大将軍コンボ</Td><Td>大将軍カードが前線フィールドに3枚。</Td><Td>+8</Td></tr>
+            <tr><Td>闇コンボ</Td><Td>闇の支配者カードが前線フィールドに3枚。</Td><Td>+8</Td></tr>
             <tr><Td>トリプルコンボ</Td><Td>同一ナンバーのカードが前線フィールドに3枚。</Td><Td>+7</Td></tr>
-            <tr><Td>キラコンボ</Td><Td>キラカード（Varが "Ki" で始まるカード）が前線フィールドに3枚。</Td><Td>+5</Td></tr>
-            <tr><Td>機体系コンボ</Td><Td>同一の「〇〇系」タグ（例：「ガンダム系」）を持つカードが前線フィールドに3枚。</Td><Td>+5</Td></tr>
-            <tr><Td>パイロットコンボ</Td><Td>同一の「〇〇専用機」タグ（例：「シャア専用機」）を持つカードが前線フィールドに3枚。</Td><Td>+5</Td></tr>
+            <tr><Td>キラコンボ</Td><Td>キラカードが前線フィールドに3枚。</Td><Td>+5</Td></tr>
+            <tr><Td>機体系コンボ</Td><Td>同一機体系カードが前線フィールドに3枚。</Td><Td>+5</Td></tr>
+            <tr><Td>パイロットコンボ</Td><Td>同一パイロット専用機カードが前線フィールドに3枚。</Td><Td>+5</Td></tr>
+            <tr><Td>系統コンボ</Td><Td>同一系統カードが前線フィールドに3枚。武者ガンダム限定。</Td><Td>+5</Td></tr>
           </tbody>
         </Table>
       </RuleSection>
 
-      <RuleSection id="special-rules" japaneseTitle="特殊なルール" englishTitle="Special Rules">
-        <SubHeading id="hand-limit">手札制限</SubHeading>
-        <Paragraph>手札は常に7枚が上限です。編成フェイズやカウンター／支援フェイズでカードを引いた結果、手札が8枚以上になった場合、ただちに余分なカードを選んで捨て札にしなければなりません。</Paragraph>
-        <SubHeading id="deck-out">山札切れ</SubHeading>
-        <Paragraph>いずれかのフェイズでカードを引く際、山札が0枚で引けない場合、そのプレイヤーは即座にゲームに敗北します。</Paragraph>
-        <SubHeading id="simultaneous-actions">同時処理の原則</SubHeading>
-        <Paragraph>基本的に効果や処理はテキストに書かれた順番に解決されますが、もし両プレイヤーが同時に何かを行う指示がある場合は、ターンプレイヤー（編成フェイズや出陣フェイズの主導権を持つ側）から先に行動します。</Paragraph>
+      <RuleSection id="special-rules" japaneseTitle="特殊ルール" englishTitle="Special Rules">
+        <SubHeading id="terrain">属性と地形</SubHeading>
+        <ul className="space-y-2">
+          <ListItem>属性は「宇宙」「陸」「海」「空」の4種類です。</ListItem>
+          <ListItem>すべてのカードは本来の役割とは別に、地形カードとして使われる属性を持ちます。</ListItem>
+          <ListItem>Mカードは、戦場地形とカード左上の適応属性が1つでも一致している場合のみ進軍できます。</ListItem>
+        </ul>
+
+        <SubHeading id="transform">変形・進化</SubHeading>
+        <Paragraph>
+          変形マークを持つMカードは、戦場フェイズからターン終了までの間に変形を宣言できます。武者ガンダムでは進化と呼ぶ場合がありますが、基本的な扱いは変形と同じです。
+        </Paragraph>
+        <ul className="space-y-2">
+          <ListItem>変形後のMカードがデッキ内に残っている必要があります。</ListItem>
+          <ListItem>変形後カードをデッキから引いて手札に加え、手札から戦場フィールドへ直接出します。</ListItem>
+          <ListItem>変形前カードは捨て山へ送ります。</ListItem>
+          <ListItem>変形後に新しいコンボが成立した場合、そのコンボは有効です。</ListItem>
+          <ListItem>変形カードは戦場フィールドにしか配置できず、小隊フィールドには置けません。</ListItem>
+        </ul>
+
+        <SubHeading id="gasshin">合身</SubHeading>
+        <Paragraph>
+          合身は武者ガンダム系の追加能力です。指定された相手カードと合わせ、2体で1体のように扱います。
+        </Paragraph>
+        <ul className="space-y-2">
+          <ListItem>Mカードが「+MM」から始まる指定を持つ場合、指定番号のカードと合わせて同時出しできます。</ListItem>
+          <ListItem>合身後のポイントは、本来のポイントに後から出したカードのポイントを加えた値です。</ListItem>
+          <ListItem>コンボが発生している場合、コンボボーナスはそのまま適用し、さらに合身分のポイントを追加します。</ListItem>
+          <ListItem>合身は1体のMカードにつき、原則パートナー1体までです。</ListItem>
+        </ul>
       </RuleSection>
     </>
   );
