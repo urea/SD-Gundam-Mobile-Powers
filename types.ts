@@ -94,11 +94,21 @@ export interface CombatSideSummary {
   tagLogs: string[];
 }
 
+export interface PlayedCCardSummary {
+  owner: PlayerType;
+  cardNumber: string;
+  name: string;
+  imageUrl?: string;
+  effect: string;
+  sourceCard: Card;
+}
+
 export interface BattleSummary {
   player: CombatSideSummary;
   cpu: CombatSideSummary;
   cCardLogs: string[];
   tagLogs: string[];
+  playedCCards: PlayedCCardSummary[];
 }
 
 export interface GameState {

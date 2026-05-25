@@ -202,6 +202,63 @@ const BattleCalculationSummary: React.FC<{
   );
 };
 
+const BattleCounterCards: React.FC<{
+  battleSummary: BattleSummary | null | undefined;
+  onPreviewEnd: () => void;
+  onPreviewStart: (card: Card) => void;
+}> = ({ battleSummary, onPreviewEnd, onPreviewStart }) => {
+  if (!battleSummary) return null;
+
+  const renderSide = (owner: PlayerType, label: string) => {
+    const cards = battleSummary.playedCCards.filter(card => card.owner === owner);
+
+    return (
+      <section className={`game-battle-counter-side ${owner === 'PLAYER' ? 'game-battle-counter-player' : 'game-battle-counter-cpu'}`}>
+        <div className="game-battle-counter-title">
+          <span>{label}</span>
+          <span>使用Cカード</span>
+        </div>
+        <div className="game-battle-counter-list">
+          {cards.length > 0 ? (
+            cards.map(card => (
+              <button
+                aria-label={`${label}が使用したCカード ${card.name} の画像を表示`}
+                className="game-battle-counter-card"
+                key={`${owner}-${card.cardNumber}`}
+                title={card.effect ? `${card.name}: ${card.effect}` : card.name}
+                type="button"
+                onBlur={onPreviewEnd}
+                onFocus={() => onPreviewStart(card.sourceCard)}
+                onMouseEnter={() => onPreviewStart(card.sourceCard)}
+                onMouseLeave={onPreviewEnd}
+              >
+                {card.imageUrl ? (
+                  <img alt="" src={card.imageUrl} />
+                ) : (
+                  <span className="game-battle-counter-fallback">C</span>
+                )}
+                <span className="game-battle-counter-copy">
+                  <strong>{card.name}</strong>
+                  <span>{card.effect || '-'}</span>
+                </span>
+              </button>
+            ))
+          ) : (
+            <span className="game-battle-counter-empty">C使用なし</span>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  return (
+    <div className="game-battle-counter-cards" aria-label="使用Cカード">
+      {renderSide('PLAYER', 'PLAYER')}
+      {renderSide('CPU', 'CPU')}
+    </div>
+  );
+};
+
 const BattleMiniCards: React.FC<{
   battleSummary: BattleSummary | null | undefined;
   onPreviewEnd: () => void;
@@ -302,6 +359,11 @@ const BattleAnimation: React.FC<{
             <em>{cpuWon ? 'WIN' : playerWon ? 'LOSE' : 'DRAW'}</em>
           </div>
         </div>
+        <BattleCounterCards
+          battleSummary={battleSummary}
+          onPreviewEnd={onPreviewEnd}
+          onPreviewStart={onPreviewStart}
+        />
         <BattleCalculationSummary
           battleSummary={battleSummary}
           onPreviewEnd={onPreviewEnd}

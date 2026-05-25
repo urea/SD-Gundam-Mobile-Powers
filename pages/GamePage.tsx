@@ -590,7 +590,7 @@ const customScrollbarAndAnimationStyles = `
     width: min(62rem, 92vw);
     height: min(34rem, 82vh);
     display: grid;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
     overflow: hidden;
     border-radius: 10px;
     border: 1px solid rgba(226, 232, 240, 0.55);
@@ -722,6 +722,108 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-battle-result-draw {
     background: rgba(202, 138, 4, 0.78);
+  }
+  .game-battle-counter-cards {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    color: #e2e8f0;
+    background:
+      linear-gradient(90deg, rgba(14, 165, 233, 0.12), rgba(15, 23, 42, 0.72) 50%, rgba(239, 68, 68, 0.12)),
+      rgba(15, 23, 42, 0.76);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.2);
+  }
+  .game-battle-counter-side {
+    min-width: 0;
+    border-radius: 8px;
+    border: 1px solid rgba(226, 232, 240, 0.2);
+    background: rgba(15, 23, 42, 0.54);
+    padding: 0.35rem 0.45rem;
+  }
+  .game-battle-counter-player {
+    border-color: rgba(56, 189, 248, 0.34);
+  }
+  .game-battle-counter-cpu {
+    border-color: rgba(251, 113, 133, 0.34);
+  }
+  .game-battle-counter-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.45rem;
+    margin-bottom: 0.25rem;
+    color: #f8fafc;
+    font-size: 0.66rem;
+    font-weight: 900;
+  }
+  .game-battle-counter-title span:last-child {
+    color: #94a3b8;
+  }
+  .game-battle-counter-list {
+    display: grid;
+    gap: 0.25rem;
+  }
+  .game-battle-counter-card {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    border-radius: 6px;
+    padding: 0.18rem 0.25rem;
+    color: inherit;
+    background: rgba(248, 250, 252, 0.08);
+    text-align: left;
+    cursor: zoom-in;
+  }
+  .game-battle-counter-card:hover,
+  .game-battle-counter-card:focus-visible {
+    background: rgba(248, 250, 252, 0.14);
+    outline: 2px solid rgba(125, 211, 252, 0.65);
+    outline-offset: 1px;
+  }
+  .game-battle-counter-card img,
+  .game-battle-counter-fallback {
+    width: 2.25rem;
+    aspect-ratio: 5 / 7;
+    border-radius: 4px;
+    object-fit: cover;
+    background: rgba(15, 23, 42, 0.78);
+  }
+  .game-battle-counter-fallback {
+    display: grid;
+    place-items: center;
+    color: #f8fafc;
+    font-size: 0.58rem;
+    font-weight: 900;
+  }
+  .game-battle-counter-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+  }
+  .game-battle-counter-copy strong,
+  .game-battle-counter-copy span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .game-battle-counter-copy strong {
+    color: #f8fafc;
+    font-size: 0.68rem;
+  }
+  .game-battle-counter-copy span {
+    color: #cbd5e1;
+    font-size: 0.58rem;
+    line-height: 1.2;
+  }
+  .game-battle-counter-empty {
+    color: #94a3b8;
+    font-size: 0.62rem;
+    font-weight: 800;
   }
   .game-battle-summary {
     min-height: 0;
@@ -1529,6 +1631,36 @@ const customScrollbarAndAnimationStyles = `
       padding: 0 0.45rem;
       font-size: 0.66rem;
     }
+    .game-battle-counter-cards {
+      gap: 0.35rem;
+      padding: 0.3rem 0.45rem;
+    }
+    .game-battle-counter-side {
+      padding: 0.24rem 0.3rem;
+    }
+    .game-battle-counter-title {
+      margin-bottom: 0.16rem;
+      font-size: 0.56rem;
+    }
+    .game-battle-counter-card {
+      grid-template-columns: 1.65rem minmax(0, 1fr);
+      gap: 0.24rem;
+      padding: 0.12rem 0.18rem;
+    }
+    .game-battle-counter-card img,
+    .game-battle-counter-fallback {
+      width: 1.65rem;
+      border-radius: 3px;
+    }
+    .game-battle-counter-copy strong {
+      font-size: 0.54rem;
+    }
+    .game-battle-counter-copy span {
+      display: none;
+    }
+    .game-battle-counter-empty {
+      font-size: 0.52rem;
+    }
     .game-battle-summary {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 0.35rem;
@@ -1771,6 +1903,42 @@ const createCombatSideSummary = (
   };
 };
 
+const getCardDisplayName = (card: Card): string => card.cardNameOmm || card.cardName;
+
+const createPlayedCCardSummaries = (
+  player: GameState['player'],
+  cpu: GameState['cpu'],
+  gameLog: LogEntry[],
+): BattleSummary['playedCCards'] => {
+  const startIndex = findLastCombatStartIndex(gameLog);
+  const played: BattleSummary['playedCCards'] = [];
+
+  gameLog.slice(startIndex).forEach(logEntry => {
+    const match = logEntry.message.match(/^(プレイヤー|CPU)が (.+) を使用。$/);
+    if (!match) return;
+
+    const owner: PlayerType = match[1] === 'プレイヤー' ? 'PLAYER' : 'CPU';
+    const usedName = match[2];
+    const discardPile = owner === 'PLAYER' ? player.discardPile : cpu.discardPile;
+    const card = [...discardPile]
+      .reverse()
+      .find(discardedCard => discardedCard.type === 'C' && getCardDisplayName(discardedCard) === usedName);
+
+    if (!card) return;
+
+    played.push({
+      owner,
+      cardNumber: card.cardNumber,
+      name: getCardDisplayName(card),
+      imageUrl: card.imageUrl,
+      effect: card.effect || card.textAbility || '',
+      sourceCard: card,
+    });
+  });
+
+  return played;
+};
+
 const createBattleSummary = (player: GameState['player'], cpu: GameState['cpu'], gameLog: LogEntry[]): BattleSummary => {
   const playerSummary = createCombatSideSummary(player.battlefield, player.combatPoints, 'プレイヤー');
   const cpuSummary = createCombatSideSummary(cpu.battlefield, cpu.combatPoints, 'CPU');
@@ -1780,6 +1948,7 @@ const createBattleSummary = (player: GameState['player'], cpu: GameState['cpu'],
     cpu: cpuSummary,
     cCardLogs: getSupportLogSummaries(gameLog),
     tagLogs: [...playerSummary.tagLogs, ...cpuSummary.tagLogs],
+    playedCCards: createPlayedCCardSummaries(player, cpu, gameLog),
   };
 };
 
