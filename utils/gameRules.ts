@@ -80,6 +80,15 @@ const chooseHighestPointMCard = (cards: Card[]): Card | undefined => {
     })[0];
 };
 
+const chooseLowestPointMCard = (cards: Card[]): Card | undefined => {
+  return [...cards]
+    .filter(card => card.type === 'M')
+    .sort((a, b) => {
+      const pointDiff = (parseInt(a.points, 10) || 0) - (parseInt(b.points, 10) || 0);
+      return pointDiff !== 0 ? pointDiff : a.cardNumber.localeCompare(b.cardNumber);
+    })[0];
+};
+
 export const getCCardTargetMode = (card: Card | null | undefined): CCardTargetMode => {
   if (!card || card.type !== 'C') return null;
   if (card.cardNumber.startsWith('C-006')) return 'OPPONENT_M';
@@ -213,6 +222,11 @@ export const applyCCardEffect = (
       }
       return;
     }
+    if (!canDeploy(revealed, currentGameState.battlefieldTerrainAttribute)) {
+      discardRevealedActorCard(revealed);
+      logMessages.push({ message: `${getDisplayName(revealed)} は戦場属性と合わないため捨て札へ。`, source: byPlayerType, timestamp: Date.now() });
+      return;
+    }
     const actor = getActor();
     const cardForBattlefield = { ...revealed, fieldOrder: maxFieldOrder(actor) + 1 };
     const nextActor = setBattlefieldWithPowerDelta(
@@ -222,6 +236,35 @@ export const applyCCardEffect = (
     );
     setActor(nextActor);
     logMessages.push({ message: `${getDisplayName(revealed)} を最前線へ追加。`, source: byPlayerType, timestamp: Date.now() });
+  };
+  const moveActorCardToSquad = (target: Card | undefined) => {
+    if (!target) {
+      logMessages.push({ message: '小隊へ戻せる自軍Mカードがありません。', source: byPlayerType, timestamp: Date.now() });
+      return;
+    }
+    const actor = getActor();
+    const nextBattlefield = actor.battlefield.filter(card => card.cardNumber !== target.cardNumber);
+    const nextActor = setBattlefieldWithPowerDelta(
+      { ...actor, squad: [...actor.squad, target] },
+      nextBattlefield,
+      actorOwnerName,
+    );
+    setActor(nextActor);
+    logMessages.push({ message: `${getDisplayName(target)} を最前線から小隊へ戻しました。`, source: byPlayerType, timestamp: Date.now() });
+  };
+  const zeroOpponentNonNTPower = () => {
+    const opponent = getOpponent();
+    const eligible = opponent.battlefield.filter(card => card.type === 'M' && !card.tags.includes('NT専用機'));
+    if (eligible.length === 0) {
+      logMessages.push({ message: '相手最前線にNT専用機以外のMカードがないため効果なし。', source: byPlayerType, timestamp: Date.now() });
+      return;
+    }
+    const eligibleIds = new Set(eligible.map(card => card.cardNumber));
+    const nextBattlefield = opponent.battlefield.map(card =>
+      eligibleIds.has(card.cardNumber) ? { ...card, points: '0' } : card,
+    );
+    setOpponent(setBattlefieldWithPowerDelta(opponent, nextBattlefield, opponentOwnerName));
+    logMessages.push({ message: `相手最前線のNT専用機以外 ${eligible.length}枚のポイントを0にしました。`, source: byPlayerType, timestamp: Date.now() });
   };
   const deployWaitingUnitsForAddedTerrain = (terrainToAdd: string) => {
     const actor = getActor();
@@ -251,7 +294,7 @@ export const applyCCardEffect = (
 
   if (playedCard.cardNumber.startsWith('C-001')) {
     const count = ownM.filter(card => card.tags.includes('ガンダム系')).length;
-    addActorPoints(count, `自軍ガンダム系 ${count}枚に各+1`);
+    addActorPoints(count * 3, `自軍ガンダム系 ${count}枚に各+3`);
   } else if (playedCard.cardNumber.startsWith('C-002')) {
     const count = ownM.filter(card => card.factionAffiliation === '地球連邦').length;
     addActorPoints(count * 2, `自軍地球連邦 ${count}枚に各+2`);
@@ -274,31 +317,32 @@ export const applyCCardEffect = (
     discardRevealedActorCard(revealed);
   } else if (playedCard.cardNumber.startsWith('C-007')) {
     const matched = ownM.some(card => card.tags.includes('シャア専用機'));
-    addActorPoints(matched ? 2 : 0, matched ? '自軍にシャア専用機がいるため合計' : '自軍にシャア専用機がいないため効果なし');
+    addActorPoints(matched ? 5 : 0, matched ? '自軍にシャア専用機がいるため合計' : '自軍にシャア専用機がいないため効果なし');
   } else if (playedCard.cardNumber.startsWith('C-008')) {
-    const ownBest = chooseHighestPointMCard(ownM);
-    const opponentBest = chooseHighestPointMCard(opponentM);
-    const ownPoint = parseInt(ownBest?.points || '0', 10) || 0;
-    const opponentPoint = parseInt(opponentBest?.points || '0', 10) || 0;
-    addActorPoints(ownPoint > opponentPoint ? 3 : 0, ownPoint > opponentPoint ? '白兵戦に勝利したため合計' : '白兵戦に勝利できなかったため効果なし');
+    const hasLand = currentGameState.battlefieldTerrainAttribute?.includes('陸') ?? false;
+    addActorPoints(hasLand ? 5 : 0, hasLand ? '戦場に陸があるため合計' : '戦場に陸がないため効果なし');
   } else if (playedCard.cardNumber.startsWith('C-009')) {
     const revealed = revealActorDeckTop();
-    if (revealed?.type === 'M') addActorPoints(2, `${getDisplayName(revealed)} はMカード`);
-    else if (revealed?.type === 'C') addActorPoints(-1, `${getDisplayName(revealed)} はCカード`);
+    if (revealed?.factionAffiliation === 'ジオン') {
+      const count = ownM.filter(card => card.factionAffiliation === 'ジオン').length;
+      addActorPoints(count * 2, `${getDisplayName(revealed)} はジオンマーク。自軍ジオン ${count}枚に各+2`);
+    } else if (revealed) {
+      logMessages.push({ message: `${getDisplayName(revealed)} はジオンマークではないため効果なし。`, source: byPlayerType, timestamp: Date.now() });
+    }
     discardRevealedActorCard(revealed);
   } else if (playedCard.cardNumber.startsWith('C-010')) {
-    const count = ownM.filter(card => canDeploy(card, currentGameState.battlefieldTerrainAttribute)).length;
-    addActorPoints(count * 2, `戦場地形に適性を持つ自軍Mカード ${count}枚に各+2`);
+    const actor = getActor();
+    const opponent = getOpponent();
+    setActor({ ...actor, battlefield: opponent.battlefield, combatPoints: opponent.combatPoints });
+    setOpponent({ ...opponent, battlefield: actor.battlefield, combatPoints: actor.combatPoints });
+    logMessages.push({ message: '自分と相手の最前線カードとポイントを入れ換えました。', source: byPlayerType, timestamp: Date.now() });
   } else if (playedCard.cardNumber.startsWith('C-011')) {
-    reduceOpponentPoints(opponentM.length * 2, `相手Mカード ${opponentM.length}枚に各-2。`);
+    destroyOpponentCard(chooseLowestPointMCard(opponentM), '相手最前線のポイントが一番低いカードを対象。');
   } else if (playedCard.cardNumber.startsWith('C-012')) {
     const target = selectedTarget || chooseHighestPointMCard(ownM);
-    addActorPoints(target ? 2 : 0, target ? `${getDisplayName(target)} に+2` : '自軍Mカードがいないため効果なし');
+    moveActorCardToSquad(target);
   } else if (playedCard.cardNumber.startsWith('C-013')) {
-    const opponent = getOpponent();
-    const nextPoints = Math.floor(opponent.combatPoints / 2);
-    setOpponent({ ...opponent, combatPoints: nextPoints });
-    logMessages.push({ message: `${opponentName}の攻撃ポイントを半分にしました (${opponent.combatPoints}P -> ${nextPoints}P)。`, source: byPlayerType, timestamp: Date.now() });
+    zeroOpponentNonNTPower();
   } else if (playedCard.cardNumber.startsWith('C-014')) {
     deployRevealedActorMCard(revealActorDeckTop());
   } else if (playedCard.cardNumber.startsWith('C-015')) {

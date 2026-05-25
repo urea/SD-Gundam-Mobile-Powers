@@ -1670,7 +1670,7 @@ const customScrollbarAndAnimationStyles = `
 const getCCardTargetInstruction = (card: Card | null): string | null => {
   if (!card) return null;
   if (card.cardNumber.startsWith('C-006')) return 'Cカード対象: 破壊候補の相手最前線Mカードを選択';
-  if (card.cardNumber.startsWith('C-012')) return 'Cカード対象: +2する自軍最前線Mカードを選択';
+  if (card.cardNumber.startsWith('C-012')) return 'Cカード対象: 小隊へ戻す自軍最前線Mカードを選択';
   if (card.cardNumber.startsWith('C-015')) return 'Cカード対象: 海適性を持つ相手最前線Mカードを選択';
   if (card.cardNumber.startsWith('C-016')) return 'Cカード対象: 陸適性を持つ相手最前線Mカードを選択';
   return null;
@@ -1706,6 +1706,9 @@ const getSupportLogSummaries = (gameLog: LogEntry[]): string[] => {
         message.includes('効果') ||
         message.includes('破壊') ||
         message.includes('追加') ||
+        message.includes('戻し') ||
+        message.includes('入れ換え') ||
+        message.includes('ポイントを0') ||
         message.includes('半分') ||
         message.includes('不発') ||
         /[+-]\d+P/.test(message)
