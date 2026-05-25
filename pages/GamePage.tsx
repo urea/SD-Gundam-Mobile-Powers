@@ -1724,6 +1724,16 @@ const createCombatSideSummary = (
   finalTotal: number,
   ownerName: 'プレイヤー' | 'CPU',
 ) => {
+  const displayTagLabel = (tag: string): string => tag.endsWith('専用機') ? tag.replace(/専用機$/, '') : tag;
+  const summarizeTagDetails = (details: string[]): string => {
+    const counts = details.reduce<Record<string, number>>((acc, tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts)
+      .map(([tag, count]) => count > 1 ? `${tag} x${count}` : tag)
+      .join(' / ');
+  };
   const mCards = battlefield.filter(card => card.type === 'M');
   const cards = mCards.map(card => {
     const basePoints = parseInt(card.points, 10) || 0;
@@ -1736,7 +1746,7 @@ const createCombatSideSummary = (
       imageUrl: card.imageUrl,
       basePoints,
       tagBonus,
-      tagDetails: tagDetails.map(detail => `${detail.tag}が${detail.otherCardName}と一致`),
+      tagDetails: tagDetails.map(detail => displayTagLabel(detail.tag)),
       total: basePoints + tagBonus,
       terrain: card.terrainTypeMCards || '-',
     };
@@ -1757,7 +1767,7 @@ const createCombatSideSummary = (
     combos,
     tagLogs: cards
       .filter(card => card.tagBonus > 0)
-      .map(card => `${ownerName}: ${card.name} タグ +${card.tagBonus} (${card.tagDetails.join(' / ')})`),
+      .map(card => `${ownerName}: ${card.name} タグ +${card.tagBonus} (${summarizeTagDetails(card.tagDetails)})`),
   };
 };
 
