@@ -33,84 +33,84 @@ const Td: React.FC<{ children: React.ReactNode; className?: string }> = ({ child
 );
 
 export const tsvData = `Unique_Key	Card_Number	Card_Name	Card_Name_Omm	Type	Points	Flavor_Ability	Terrain_Type_M_cards	Battlefield_Terrain	Faction_Affiliation	Other_Notes	Effect	Var	imgURL
-0	M-001	RX-78-2 ガンダム	ガンダム	M	9	ビームライフルは空の敵を！！ビームサーベルは地上の敵をたたききせる！！	空陸	空	地球連邦	キラ ガンダム系 アムロ専用機		St1	https://assets.st-note.com/img/1748399226-QHInDFwXcSuzRM5iE1roexpK.jpg
-1	M-002	RX-78GP02A ガンダム試作2号機	GP02A	M	9	核の恐怖再び！！GP02Aが、アトミックバズーカをかまえた！！	宇陸	海	ジオン	キラ ガンダム系		St1	https://assets.st-note.com/img/1748399226-FtYJP0wj4LATs6G75vSyanxe.jpg
-2	M-003	RX-78GP01-Fb ガンダム試作1号機フルバーニアン	GP01Fb	M	9	GP01が宇宙用に換装！すばやい動きで敵の小隊を追い詰める！！	宇陸	宇	地球連邦	キラ ガンダム系		St1	https://assets.st-note.com/img/1748399226-RnNuCeBFIdD2h8rJmc51x7La.jpg
-3	M-004	AMX-002 ノイエ・ジール	ノイエ・ジール	M	9	ジオン軍の巨大MAが、オールレンジ攻撃をしかける！！	宇	陸	ジオン	ガトー専用機		St1	https://assets.st-note.com/img/1748399226-K5rasZNSX1CbHRn4hMkPjWBT.jpg
-4	M-005	MS-14S シャア専用ゲルググ	Sゲルググ(シャア)	M	9	シャア専用ゲルググが、宇宙から地上部隊の指揮を委託している！！	宇陸	空	ジオン	シャア専用機		St1	https://assets.st-note.com/img/1748399226-5ebZp7rJsUxVuIWAMRnca0tH.jpg
-5	M-006	MS-09R シャア専用リック・ドム	Rドム(シャア)	M	9	シャアが乗る赤いリック・ドムが、ビームバズーカをかまえた！！	宇	海	ジオン	シャア専用機		St1	https://assets.st-note.com/img/1748399226-Ii7T2awWvnzgGZ3XOtyVs4Pm.jpg
-6	M-007	MA-08 ビグ・ザム	ビグ・ザム	M	9	圧倒的な攻撃力のMAからメガ粒子砲がはなたれた！！	宇陸	陸	ジオン			St1	https://assets.st-note.com/img/1748399226-AiU0CoMcDhBVsuZmrkW6xf7S.jpg
-7	M-008	MS-09 ドム(トリプルドム)	ドム	M	8	トリプルドムが、ジェットストリームアタックをしかける！！	陸	宇	ジオン	黒い三連星専用機		St1	https://assets.st-note.com/img/1748399226-rmEDHO1gNJeRh9YsxCok4dpu.jpg
-8	M-009	MSN-02 ジオング	ジオング	M	8	ア・バオア・クーから出撃！有線式メガ粒子砲が敵をとらえた！！	宇	空	ジオン	シャア専用機 NT専用機		St1	https://assets.st-note.com/img/1748399226-szqo9RDXyiNr7Hbhc1GQfvBI.jpg
-9	M-010	RX-78-3 G-3ガンダム	G-3ガンダム	M	8	マグネットコーティングで白兵戦に強化されたG-3は、マグネットコーティングで機動性をアップした！！	陸	海	地球連邦	ガンダム系		St1	https://assets.st-note.com/img/1748399226-usTQ3CA6HaMdbROyXNB0ktnz.jpg
-10	M-011	MAN-03 ブラウ・ブロ	ブラウ・ブロ	M	7	サイコミュシステムを搭載し、ニュータイプ専用機が登場する！！	宇	宇	ジオン	NT専用機		St1	https://assets.st-note.com/img/1748399226-K2qUr7TH3JmAtg8DwYEsdPQc.jpg
-11	M-012	MSM-07S シャア専用ズゴック	Sズゴック(シャア)	M	8	水中より進入したズゴックが、鋭いクローで襲いかかる！！	海	空	ジオン	シャア専用機		St1	https://assets.st-note.com/img/1748399226-3ZxNcjGrKoQa9gdTyhW1eHpY.jpg
-12	M-013	RX-79[G] 陸戦用量産試作型ガンダム	陸戦型ガンダム	M	8	ミサイルランチャーをセット！長距離射程に有効攻撃をしかける！！	陸	陸	地球連邦	ガンダム系		St1	https://assets.st-note.com/img/1748399226-G2ehwHAdmTclzFW3fJREQtbS.jpg
-13	M-014	MS-18E ケンプファー	ケンプファー	M	8	専用のショットガンをかまえ、ケンプファーが奇襲をしかける！！	宇陸	海	ジオン			St1	https://assets.st-note.com/img/1748399226-9YSEplMfqd7oUcF4VmIaD3su.jpg
-14	M-015	APSARAS アプサラス	アプサラス	M	7	飛行テストでジオンの秘密兵器アプサラスに、連邦軍のMSが遭遇した！！	空	空海	ジオン			St1	https://assets.st-note.com/img/1748399226-ITF0qlpOEQvzxR2CPnXuK9Sm.jpg
-15	M-016	RX-78GP01 ガンダム試作1号機	GP01	M	7	スクランブル！GP01が地上の敵をたたき出すために出動した！！	陸	陸海	地球連邦	ガンダム系		St1	https://assets.st-note.com/img/1748399226-OCJrK5okuLYzTesfFQd3mqHy.jpg
-16	M-017	RX-178 ガンダムMk-Ⅱ(ティターンズ仕様)	ガンダムMk-Ⅱ(T)	M	7	ティターンズが独自に開発したMS！黒いガンダムMk-Ⅱが大地にたつ！！	空	宇陸	地球連邦	ガンダム系		St1	https://assets.st-note.com/img/1748399226-47kdrlnfM5PsJiaNeYAg1cBR.jpg
-17	M-018	MS-06F ドズル・ザビ専用ザクⅡ	ドズルザク	M	7	ドズル中将がザクで出撃！戦場をわがもの顔であばれまくる！！	陸海	宇空	ジオン	ザク系 ドズル専用機		St1	https://assets.st-note.com/img/1748399226-rNKJPpMeDWbOUkThxwzZQHj8.jpg
-18	M-019	MS-15 ギャン	ギャン	M	7	ビームサーベルをふりかざし、マ・クベ専用の蒼いMSが舞う！！	陸	陸海	ジオン	マ・クベ専用機		St1	https://assets.st-note.com/img/1748399226-TgAKsPHue40qx3fMNYdtzUJ9.jpg
-19	M-020	MS-06R-2 ジョニー・ライデン専用ザクⅡ	JザクⅡR-2	M	7	真紅の稲妻のザクがゆく。“高機動型”の威力をみせつける！！	宇	宇海	ジオン	ザク系 ライデン専用機		St1	https://assets.st-note.com/img/1748399226-UJ28LeWfQ7lDSTatmo5nEbuF.jpg
-20	M-021	RX-78GP03S ガンダム試作3号機ステイメン	GP03Sステイメン	M	7	オーキスからステイメンが分離！本当の戦いはここから始まると！！	宇	空海	地球連邦	ガンダム系		St1	https://assets.st-note.com/img/1748399226-sXF6UwvB2Kdk8phoaN4D9f0Y.jpg
-21	M-022	G FIGHTER Gファイター	Gファイター	M	7	テックラボ製の飛行メカ！ドックファイトをいどむぞ！！	空	宇陸	地球連邦			St1	https://assets.st-note.com/img/1748399226-hPo6IajwcSWYl7uJFyXGZ1vt.jpg
-22	M-023	MS-06S シャア専用ザクⅡ	SザクⅡ(シャア)	M	6	赤い彗星のシャアが駆るMS。赤い彗星は戦場をゆるがす！！	空陸	宇陸	ジオン	ザク系 シャア専用機		St1	https://assets.st-note.com/img/1748399226-dvU3FLT0oui7qhZHsGIO4aBx.jpg
-23	M-024	MS-14JG ゲルググJ	ゲルググJ	M	6	専用ライフルを手に、“ゲルググ狙撃型”が敵を撃ちぬく！！	宇陸	空陸	ジオン			St1	https://assets.st-note.com/img/1748399226-lQ2MRZfqpnhtiXu0KSzUHdDs.jpg
-24	M-025	MA-06 ヴァル・ヴァロ	ヴァル・ヴァロ	M	6	月面での最終決戦！大型クローによりヴァル・ヴァロが連邦軍をねらう！！	宇	宇海	ジオン			St1	https://assets.st-note.com/img/1748399226-LHeqTuKVdAbP8N72SrCkOYiB.jpg
-25	M-026	MA-05 ビグロ	ビグロ	M	6	クローで敵をつかまえ、メガ粒子砲をおみまいする！！	宇	空陸	ジオン			St1	https://assets.st-note.com/img/1748399226-pKm0WwI2aeZAys8EJv94oriX.jpg
-26	M-027	YMS-16M ザメル	ザメル	M	6	長距離支援用MSザメルのミサイルランチャーが、敵小隊を直撃する！！	陸海	宇海	ジオン			St1	https://assets.st-note.com/img/1748399226-jAJewliKQ43B8XgWtnspvF7f.jpg
-27	M-028	MS-14A ゲルググ	ゲルググ	M	6	ビームなぎなたをかまえ、たくみにビームライフルを使いこなす！！	宇陸	宇空	ジオン			St1	https://assets.st-note.com/img/1748399226-e7D5qZhS2cKWgMH8mPOoRTdB.jpg
-28	M-029	MS-14Fs ゲルググM指揮官機(シーマ専用ゲルググマリーネ)	ゲルググM(シーマ)	M	6	MRB-110ビームライフルを装備し、シーマが登場機をあばれまわる！！	宇陸	空陸	ジオン	シーマ専用機		St1	https://assets.st-note.com/img/1748399226-1Us7ln20H8RcAyZw5FqtgjDb.jpg
-29	M-030	MS-06F ザクⅡS型&マゼラトップ砲	ザクⅡS+マゼラ	M	6	ザクⅡS型のメガ粒子砲を発射！その強力な砲撃が敵をふきとばす！！	宇	宇空陸	ジオン	ザク系		St1	https://assets.st-note.com/img/1748399226-8sfMIurme5tUGBgYWyTb6CZz.jpg
-30	M-031	RX-78NT1-FA NT専用ガンダム試作機	アレックスFA	M	6	増加装甲チョバムアーマーを装着し、完全武装で出撃する！！	宇陸	空陸海	地球連邦	ガンダム系 NT専用機		St1	https://assets.st-note.com/img/1748399226-fgYEvOZatnrALukP52NMizWq.jpg
-31	M-032	MS-06R 高機動型ザクⅡ(黒い三連星仕様)	高機動ザク(三連星)	M	6	黒い三連星専用のMS。ジェットストリームアタックで攻撃だ！！	宇	宇空海	ジオン			St1	https://assets.st-note.com/img/1748399226-KA0kiJ4NHwbRYU75GBhD6TFV.jpg
-32	M-033	MAM-07 グラブロ	グラブロ	M	6	巨大MAが、水中からミサイルを発射！姿はクローで表現する！！	海	宇陸海	ジオン			St1	https://assets.st-note.com/img/1748399226-VOCNJAyIFnw8T3DQq1bSzL2v.jpg
-33	M-034	MS-07B3 グフカスタム	グフカスタム	M	6	ガトリングガンを乱射したグフが、敵MS部隊にあらわれた！！	陸海	宇空陸	ジオン			St1	https://assets.st-note.com/img/1748399226-sGKXJ74W19UkrFvMgilzQtTH.jpg
-34	M-035	MS-07H グフ飛行試験型	グフ飛行型	M	5	空からの攻撃はグフだ！グフ飛行型の高速強襲に気をつけろ！！	空陸	空陸海	ジオン			St1	https://assets.st-note.com/img/1748399226-hHie2L19aRln6cBbW8K3sMdI.jpg
-35	M-036	MS-06F2 ノイエン・ビッター専用ザクⅡ	ザクⅡ（ノイエン）	M	5	ロケットブースター噴射！一度だけなら、ザクでも空を飛べる！！	空陸	宇空海	ジオン	ザク系 ビッター専用機		St1	https://assets.st-note.com/img/1748399226-GvkW5uZoR8Ylz1gIwOAt4XF3.jpg
-36	M-037	MS-07B マ・クベ専用グフ	グフ(マ・クベ)	M	5	地上専用MSにマ・クベが搭乗！あの壺をキシリア様に届けてくれよ！！	空陸	宇陸海	ジオン	マ・クベ専用機		St1	https://assets.st-note.com/img/1748399226-JHsoREtu8frI0LTAGXBDV4pU.jpg
-37	M-038	RX-77 ガンキャノン	ガンキャノン	M	5	ガンキャノン出撃！肩の低反動キャノン砲をおみまいする！！	空海	空陸海	地球連邦			St1	https://assets.st-note.com/img/1748399226-UmCw8X5Y6drln2KpQzBAy7Ox.jpg
-38	M-039	MSM-03C ハイゴッグ(水中形態)	ハイゴッグ	M	5	ハイ・ゴッグは両腕を強行しならし、空の敵を撃ちおとせ！！	空海	宇空陸	ジオン			St1	https://assets.st-note.com/img/1748399226-rlvdN6jY4enRMCugZHG1cBKi.jpg
-39	M-040	RGM-79Q ジム・クゥエル	ジムクゥエル	M	5	強化されたティターンズ仕様のジム。ティターンズの意思を示す！！	宇空陸	空陸海	地球連邦	ジム系		St1	https://assets.st-note.com/img/1748399226-83lSpIUR95nDoyaCw67WHFGx.jpg
-40	M-041	MS-09F/TROP ドム・トローペン	ドムトローペン(砂)	M	5	砂漠専用のMS。地上はもちろん、空の敵にだって負けやしない！！	空陸	宇空海	ジオン			St1	https://assets.st-note.com/img/1748399226-3nPSql51Cf72zOBYy6pVdj4s.jpg
-41	M-042	RGM-79 パワード・ジム	パワードジム	M	5	大型バックパックを装備し、ジムの機動力がアップした！！	空陸海	宇陸海	地球連邦	ジム系		St1	https://assets.st-note.com/img/1748399226-6Tf4kEnWgVlSxowzCq5aeJm8.jpg
-42	M-043	RX-75 ガンタンク	ガンタンク	M	5	強力なキャノン砲で敵を攻撃！無限キャタピラで、どこまでも進撃する！！	宇陸海	宇空陸	地球連邦			St1	https://assets.st-note.com/img/1748399226-bq1mi0wNrLpEjeCDO5264MRs.jpg
-43	M-044	GRAY PHANTOM グレイファントム	グレイファントム	M	5	ペガサス級強襲揚陸艦！索敵しながら、友軍の中央を突破する！！	宇空海	空陸海	地球連邦	戦艦系		St1	https://assets.st-note.com/img/1748399226-q83uStXwCKvj4TRkaAP5oBmV.jpg
-44	M-045	GRAF ZEPPELIN グラーフ・ツェッペリン	グラーフツェペリン	M	4	ムサイ級軽巡洋艦が索敵する！敵の陣形に集中砲火をかける！！	宇	宇空海	ジオン	戦艦系		St1	https://assets.st-note.com/img/1748399226-I7BOGTFYgSArQ4Wj83etkC2f.jpg
-45	M-046	RGC-83 ジム・キャノンⅡ	ジムキャノンⅡ	M	4	中距離支援に最適！両肩のビームキャノンが敵の侵攻を阻止する！！	宇空陸	宇陸海	地球連邦	ジム系		St1	https://assets.st-note.com/img/1748399226-MKJWD2NbuhXEVAZCTUfogy3Y.jpg
-46	M-047	RGM-79G ジムコマンド(コロニー仕様)	ジムコマンド(コロニー)	M	4	汎用性の利点をいかし、けんせいを続けながら攻撃に出撃する！！	宇空陸	宇空陸	地球連邦	ジム系		St1	https://assets.st-note.com/img/1748399226-w1tiPA5zx6vglqKXm0Qy7VGE.jpg
-47	M-048	RGM-79SP ジムスナイパーⅡ	ジムスナイパーⅡ	M	4	一年戦争最強のジム！長距離狙撃ライフルで、ターゲットを正確に射ぬく！！	宇空陸	空陸海	地球連邦	ジム系		St1	https://assets.st-note.com/img/1748399226-fSX2ZeplPrE8vT35yRLbCtW4.jpg
-48	M-049	RAG-79 アクア・ジム	アクアジム	M	4	水中戦用のアクアジムは、浅海にひそみ、敵の上陸をくいとめる！！	空陸海	宇空陸海	地球連邦	ジム系		St1	https://assets.st-note.com/img/1748399226-cm7UZBgyToEOk6nhwlYNCjsd.jpg
-49	M-050	MS-06FZ ザクⅡ改Bタイプ	ザクⅡ改B	M	4	シュツルムファウストを装備し、ザクの戦闘能力がアップした！！	宇空陸	宇空陸海	ジオン	ザク系		St1	https://assets.st-note.com/img/1748399226-eOsprMG61gl2TUy5JvAoZYwS.jpg
-50	M-051	MS-06J ザクⅡ	ザクⅡ(地上用)	M	4	地上戦仕様のＪ型ザクが、空と海の敵に狙いをさだめた！！	空陸海	宇空陸海	ジオン	ザク系		St1	https://assets.st-note.com/img/1748399226-WuXy4tgS9F6lxDLQ5p7Ie8vk.jpg
-51	M-052	MSM-03 ゴッグ	ゴッグ	M	4	極秘任務を遂行するため、海底から敵基地に潜入する！！	陸海	宇空陸海	ジオン			St1	https://assets.st-note.com/img/1748399226-m2AC8pGVcwaQqiluP1XMxTo3.jpg
-52	M-053	MSM-04 アッガイ	アッガイ	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇陸	宇空陸海	ジオン	ザク系		St1	https://assets.st-note.com/img/1748399226-p3hUAfyi1Bsc8MrmOgn2K7VY.jpg
-53	M-054	ジム寒冷地仕様	ジム寒冷地仕様	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	空陸海	宇空陸海	地球連邦	ジム系		St1	https://assets.st-note.com/img/1748399226-Dlb4iq8GPISTwXpat1uFVMxv.jpg
-54	M-055	ジークフリード	ジークフリード	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇	宇空陸海	ジオン	戦艦系		St1	https://assets.st-note.com/img/1748399226-gMOR74ETrmxNSGwIJtvlQz16.jpg
-55	M-056	コア・ファイター	コア・ファイター	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇空	宇空陸海	地球連邦			St1	https://assets.st-note.com/img/1748399226-tClA6zaBgupK0Y3SZxcwrHb2.jpg
-56	M-057	プロトタイプザク	プロトタイプザク	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇陸	宇空陸海	ジオン	ザク系		St1	https://assets.st-note.com/img/1748399226-oVdnhr2MK9i764LOg8lXjtYG.jpg
-57	M-058	ボール	ボール	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇	宇空陸海	地球連邦			St1	https://assets.st-note.com/img/1748399226-UVILgYGW9DK6RaQ4islCmecf.jpg
-58	C-001	アムロ・レイ	アムロ	C		「させるか！」アムロの能力がガンダムを変えた！！		海	地球連邦		●自分の最前線のガンダム系にポイント各+1	St1	https://assets.st-note.com/img/1748399226-R0iqADnbIoYjThlJmx7X92FN.jpg
-59	C-002	クリスチーナ・マッケンジー	クリス	C		クリスの調整で、コンピュータの性能がアップした！！		陸	地球連邦		●自分の最前線の地球連邦軍に、ポイントを+2	St1	https://assets.st-note.com/img/1748399226-OTAhc8Q5D9WFCGqMZN3bxYmn.jpg
-60	C-003	ブライト・ノア	ブライト	C		「砲撃手なにやってんのー！」ブライトのゲキがとぶ！！		宇	地球連邦		●自分の最前線に戦艦系がいれば、合計ポイントに+5	St1	https://assets.st-note.com/img/1748399226-dFqQXBD3AKYI2JTHiamsyS1Z.jpg
-61	C-004	コウ・ウラキ	コウ	C		敵の作戦を阻止するために、コウの執念が熱く燃える！！		空	地球連邦		●自分の最前線に地球連邦軍が2枚以上いれば合計ポイント+5	St1	https://assets.st-note.com/img/1748399226-drokRmIXbOFC91jBJE82uY5z.jpg
-62	C-005	アナベル・ガトー	ガトー	C		己の執念のために……ソロモンの悪夢が立ち上がる！！		空陸	ジオン		●自分の最前線のジオン軍にポイント各+2	St1	https://assets.st-note.com/img/1748399226-i1rRCtfVkQqsDgAFx5ejE6BS.jpg
-63	C-006	スレッガー・ロウ	スレッガー	C		特攻成功！「悲しいけど、これ、戦争なのよね……」		宇海	地球連邦		●デッキを1枚めくり、戦場と属性の合うメカニックカードが出たら、相手の最前線から好きなカード一枚を破壊できる。	St1	https://assets.st-note.com/img/1748399226-1HeJDWaVoiN9MdpPl4xUy52G.jpg
-64	C-007	シャア・アズナブル	シャア	C		シャアは専用の機体にのり、性能以上の能力をひきだした！		空	ジオン		●自分のMカードの“シャア専用機”のカードの1枚であれば、合計ポイントに+2	St1	https://assets.st-note.com/img/1748399226-iBWHRqstG0lhQceJT3frOdyL.jpg
-65	C-008	ランバ・ラル	ラル	C		ランバ・ラルが、ゲリラ屋本来の戦いをしかけた！		陸海	ジオン		●戦闘時に“白兵戦”が発生し、勝利すれば、合計ポイントに+3	St1	https://assets.st-note.com/img/1748399226-yzdiC9gZaEVjrQb5cqkfYlA8.jpg
-66	C-009	バーナード・ワイズマン	バーニィ	C		ジオン軍のバーニィは、ザクを知り尽くしている！！		宇陸	ジオン		●デッキを1枚めくり、それがMカードならポイント+2。Cカードならポイント-1。	St1	https://assets.st-note.com/img/1748399226-VgjHLfGo06lJPsTkQdUMyNWt.jpg
-67	C-010	ミハル・ラトキエ	ミハル	C		スパイ活動で情報をキャッチした！！		宇空	ジオン		●自分のMカードの地形適性が戦場の地形と同じならポイントを+2。	St1	https://assets.st-note.com/img/1748399226-clX2af1zeWmQsnh0O3ZtY4vo.jpg
-68	C-011	ミノフスキー粒子	ミノフスキー粒子	C		戦闘レーダーが効かなくなり索敵が混乱した！！		空陸	アイテム		●相手のMカードのポイントを-2。	St1	https://assets.st-note.com/img/1748399226-S38jMEoRliL4gBCJyY7efQxk.jpg
-69	C-012	チョバムアーマー	チョバムアーマー	C				宇海	アイテム		●自分のMカード1枚のポイントを+2する。	St1	https://assets.st-note.com/img/1748414581-vzrbWhcxfE6XjkeAVSaY8Q0q.jpg
-70	C-013	Iフィールド	Iフィールド	C		ア・バオア・クーでの攻防をしのいだ！！		空海	アイテム		●相手のMSの攻撃ポイントを半分にできる威力を持つ！	St1	https://assets.st-note.com/img/1748399226-yblEX9xTMWYhBFom3KLP6z87.jpg
-71	C-014	補給部隊	補給部隊	C		後方から補給部隊が到着した！！		陸海	アイテム		●デッキを1枚めくり、それがMカードなら自分の戦場に出せる。	St1	https://assets.st-note.com/img/1748399226-yAvgWwSHGVbT5uKl8PzdXfCO.jpg
-72	C-015	魚雷	魚雷	C		水中から攻撃をかけて、発見された！！		宇海	アイテム		●相手の最前線の属性”海”を持つカードを1枚だけ破壊できる。	St1	https://assets.st-note.com/img/1748399226-9vJMwisl1xOU2f5onPFCBHR4.jpg
-73	C-016	地雷	地雷	C		地上戦を有利にするため、地雷が設置された！！		宇空	アイテム		●相手の最前線の属性”陸”を持つカードを1枚だけ破壊できる。	St1	https://assets.st-note.com/img/1748399226-rYq0xjIbeEMKV9TCsSpAyQ3w.jpg
-74	C-017	ブースター	ブースター	C		ブースターを使い強力な推進力をてにいれた！！		空陸	アイテム		●自分のみ戦場に“空”が追加される。	St1	https://assets.st-note.com/img/1748399226-Xct6pW9ABSLGFyREzvraQqI4.jpg
-75	C-018	スラスター	スラスター	C		スラスター増設で宇宙に移動可能に！！		宇海	アイテム		●自分のみ戦場に“宇”が追加される。	St1	https://assets.st-note.com/img/1748399227-6D4taYnGm1gCjqIQSLFbzE73.jpg
-76	C-019	熱核ジェットエンジン	熱核JETエンジン	C		熱核ジェットエンジンを搭載し仕様可能になった！！		空海	アイテム		●自分のみ戦場に“陸”が追加される。	St1	https://assets.st-note.com/img/1748399227-1a0H3DLV9PYfE7oQdwNvMeWI.jpg
-77	C-020	ジェットパック	ジェットパック	C		ジェットパック装着で空中移動が可能になった！！		陸海	アイテム		●自分のみ戦場に“空”が追加される。	St1	https://assets.st-note.com/img/1748399227-3vMtTN1JLuAreZG6RxD9ObyH.jpg`;
+0	M-001	RX-78-2 ガンダム	ガンダム	M	9	ビームライフルは空の敵を！！ビームサーベルは地上の敵をたたききせる！！	空陸	空	地球連邦	キラ ガンダム系 アムロ専用機		St1	/assets/cards/000-M-001.jpg
+1	M-002	RX-78GP02A ガンダム試作2号機	GP02A	M	9	核の恐怖再び！！GP02Aが、アトミックバズーカをかまえた！！	宇陸	海	ジオン	キラ ガンダム系		St1	/assets/cards/001-M-002.jpg
+2	M-003	RX-78GP01-Fb ガンダム試作1号機フルバーニアン	GP01Fb	M	9	GP01が宇宙用に換装！すばやい動きで敵の小隊を追い詰める！！	宇陸	宇	地球連邦	キラ ガンダム系		St1	/assets/cards/002-M-003.jpg
+3	M-004	AMX-002 ノイエ・ジール	ノイエ・ジール	M	9	ジオン軍の巨大MAが、オールレンジ攻撃をしかける！！	宇	陸	ジオン	ガトー専用機		St1	/assets/cards/003-M-004.jpg
+4	M-005	MS-14S シャア専用ゲルググ	Sゲルググ(シャア)	M	9	シャア専用ゲルググが、宇宙から地上部隊の指揮を委託している！！	宇陸	空	ジオン	シャア専用機		St1	/assets/cards/004-M-005.jpg
+5	M-006	MS-09R シャア専用リック・ドム	Rドム(シャア)	M	9	シャアが乗る赤いリック・ドムが、ビームバズーカをかまえた！！	宇	海	ジオン	シャア専用機		St1	/assets/cards/005-M-006.jpg
+6	M-007	MA-08 ビグ・ザム	ビグ・ザム	M	9	圧倒的な攻撃力のMAからメガ粒子砲がはなたれた！！	宇陸	陸	ジオン			St1	/assets/cards/006-M-007.jpg
+7	M-008	MS-09 ドム(トリプルドム)	ドム	M	8	トリプルドムが、ジェットストリームアタックをしかける！！	陸	宇	ジオン	黒い三連星専用機		St1	/assets/cards/007-M-008.jpg
+8	M-009	MSN-02 ジオング	ジオング	M	8	ア・バオア・クーから出撃！有線式メガ粒子砲が敵をとらえた！！	宇	空	ジオン	シャア専用機 NT専用機		St1	/assets/cards/008-M-009.jpg
+9	M-010	RX-78-3 G-3ガンダム	G-3ガンダム	M	8	マグネットコーティングで白兵戦に強化されたG-3は、マグネットコーティングで機動性をアップした！！	陸	海	地球連邦	ガンダム系		St1	/assets/cards/009-M-010.jpg
+10	M-011	MAN-03 ブラウ・ブロ	ブラウ・ブロ	M	7	サイコミュシステムを搭載し、ニュータイプ専用機が登場する！！	宇	宇	ジオン	NT専用機		St1	/assets/cards/010-M-011.jpg
+11	M-012	MSM-07S シャア専用ズゴック	Sズゴック(シャア)	M	8	水中より進入したズゴックが、鋭いクローで襲いかかる！！	海	空	ジオン	シャア専用機		St1	/assets/cards/011-M-012.jpg
+12	M-013	RX-79[G] 陸戦用量産試作型ガンダム	陸戦型ガンダム	M	8	ミサイルランチャーをセット！長距離射程に有効攻撃をしかける！！	陸	陸	地球連邦	ガンダム系		St1	/assets/cards/012-M-013.jpg
+13	M-014	MS-18E ケンプファー	ケンプファー	M	8	専用のショットガンをかまえ、ケンプファーが奇襲をしかける！！	宇陸	海	ジオン			St1	/assets/cards/013-M-014.jpg
+14	M-015	APSARAS アプサラス	アプサラス	M	7	飛行テストでジオンの秘密兵器アプサラスに、連邦軍のMSが遭遇した！！	空	空海	ジオン			St1	/assets/cards/014-M-015.jpg
+15	M-016	RX-78GP01 ガンダム試作1号機	GP01	M	7	スクランブル！GP01が地上の敵をたたき出すために出動した！！	陸	陸海	地球連邦	ガンダム系		St1	/assets/cards/015-M-016.jpg
+16	M-017	RX-178 ガンダムMk-Ⅱ(ティターンズ仕様)	ガンダムMk-Ⅱ(T)	M	7	ティターンズが独自に開発したMS！黒いガンダムMk-Ⅱが大地にたつ！！	空	宇陸	地球連邦	ガンダム系		St1	/assets/cards/016-M-017.jpg
+17	M-018	MS-06F ドズル・ザビ専用ザクⅡ	ドズルザク	M	7	ドズル中将がザクで出撃！戦場をわがもの顔であばれまくる！！	陸海	宇空	ジオン	ザク系 ドズル専用機		St1	/assets/cards/017-M-018.jpg
+18	M-019	MS-15 ギャン	ギャン	M	7	ビームサーベルをふりかざし、マ・クベ専用の蒼いMSが舞う！！	陸	陸海	ジオン	マ・クベ専用機		St1	/assets/cards/018-M-019.jpg
+19	M-020	MS-06R-2 ジョニー・ライデン専用ザクⅡ	JザクⅡR-2	M	7	真紅の稲妻のザクがゆく。“高機動型”の威力をみせつける！！	宇	宇海	ジオン	ザク系 ライデン専用機		St1	/assets/cards/019-M-020.jpg
+20	M-021	RX-78GP03S ガンダム試作3号機ステイメン	GP03Sステイメン	M	7	オーキスからステイメンが分離！本当の戦いはここから始まると！！	宇	空海	地球連邦	ガンダム系		St1	/assets/cards/020-M-021.jpg
+21	M-022	G FIGHTER Gファイター	Gファイター	M	7	テックラボ製の飛行メカ！ドックファイトをいどむぞ！！	空	宇陸	地球連邦			St1	/assets/cards/021-M-022.jpg
+22	M-023	MS-06S シャア専用ザクⅡ	SザクⅡ(シャア)	M	6	赤い彗星のシャアが駆るMS。赤い彗星は戦場をゆるがす！！	空陸	宇陸	ジオン	ザク系 シャア専用機		St1	/assets/cards/022-M-023.jpg
+23	M-024	MS-14JG ゲルググJ	ゲルググJ	M	6	専用ライフルを手に、“ゲルググ狙撃型”が敵を撃ちぬく！！	宇陸	空陸	ジオン			St1	/assets/cards/023-M-024.jpg
+24	M-025	MA-06 ヴァル・ヴァロ	ヴァル・ヴァロ	M	6	月面での最終決戦！大型クローによりヴァル・ヴァロが連邦軍をねらう！！	宇	宇海	ジオン			St1	/assets/cards/024-M-025.jpg
+25	M-026	MA-05 ビグロ	ビグロ	M	6	クローで敵をつかまえ、メガ粒子砲をおみまいする！！	宇	空陸	ジオン			St1	/assets/cards/025-M-026.jpg
+26	M-027	YMS-16M ザメル	ザメル	M	6	長距離支援用MSザメルのミサイルランチャーが、敵小隊を直撃する！！	陸海	宇海	ジオン			St1	/assets/cards/026-M-027.jpg
+27	M-028	MS-14A ゲルググ	ゲルググ	M	6	ビームなぎなたをかまえ、たくみにビームライフルを使いこなす！！	宇陸	宇空	ジオン			St1	/assets/cards/027-M-028.jpg
+28	M-029	MS-14Fs ゲルググM指揮官機(シーマ専用ゲルググマリーネ)	ゲルググM(シーマ)	M	6	MRB-110ビームライフルを装備し、シーマが登場機をあばれまわる！！	宇陸	空陸	ジオン	シーマ専用機		St1	/assets/cards/028-M-029.jpg
+29	M-030	MS-06F ザクⅡS型&マゼラトップ砲	ザクⅡS+マゼラ	M	6	ザクⅡS型のメガ粒子砲を発射！その強力な砲撃が敵をふきとばす！！	宇	宇空陸	ジオン	ザク系		St1	/assets/cards/029-M-030.jpg
+30	M-031	RX-78NT1-FA NT専用ガンダム試作機	アレックスFA	M	6	増加装甲チョバムアーマーを装着し、完全武装で出撃する！！	宇陸	空陸海	地球連邦	ガンダム系 NT専用機		St1	/assets/cards/030-M-031.jpg
+31	M-032	MS-06R 高機動型ザクⅡ(黒い三連星仕様)	高機動ザク(三連星)	M	6	黒い三連星専用のMS。ジェットストリームアタックで攻撃だ！！	宇	宇空海	ジオン			St1	/assets/cards/031-M-032.jpg
+32	M-033	MAM-07 グラブロ	グラブロ	M	6	巨大MAが、水中からミサイルを発射！姿はクローで表現する！！	海	宇陸海	ジオン			St1	/assets/cards/032-M-033.jpg
+33	M-034	MS-07B3 グフカスタム	グフカスタム	M	6	ガトリングガンを乱射したグフが、敵MS部隊にあらわれた！！	陸海	宇空陸	ジオン			St1	/assets/cards/033-M-034.jpg
+34	M-035	MS-07H グフ飛行試験型	グフ飛行型	M	5	空からの攻撃はグフだ！グフ飛行型の高速強襲に気をつけろ！！	空陸	空陸海	ジオン			St1	/assets/cards/034-M-035.jpg
+35	M-036	MS-06F2 ノイエン・ビッター専用ザクⅡ	ザクⅡ（ノイエン）	M	5	ロケットブースター噴射！一度だけなら、ザクでも空を飛べる！！	空陸	宇空海	ジオン	ザク系 ビッター専用機		St1	/assets/cards/035-M-036.jpg
+36	M-037	MS-07B マ・クベ専用グフ	グフ(マ・クベ)	M	5	地上専用MSにマ・クベが搭乗！あの壺をキシリア様に届けてくれよ！！	空陸	宇陸海	ジオン	マ・クベ専用機		St1	/assets/cards/036-M-037.jpg
+37	M-038	RX-77 ガンキャノン	ガンキャノン	M	5	ガンキャノン出撃！肩の低反動キャノン砲をおみまいする！！	空海	空陸海	地球連邦			St1	/assets/cards/037-M-038.jpg
+38	M-039	MSM-03C ハイゴッグ(水中形態)	ハイゴッグ	M	5	ハイ・ゴッグは両腕を強行しならし、空の敵を撃ちおとせ！！	空海	宇空陸	ジオン			St1	/assets/cards/038-M-039.jpg
+39	M-040	RGM-79Q ジム・クゥエル	ジムクゥエル	M	5	強化されたティターンズ仕様のジム。ティターンズの意思を示す！！	宇空陸	空陸海	地球連邦	ジム系		St1	/assets/cards/039-M-040.jpg
+40	M-041	MS-09F/TROP ドム・トローペン	ドムトローペン(砂)	M	5	砂漠専用のMS。地上はもちろん、空の敵にだって負けやしない！！	空陸	宇空海	ジオン			St1	/assets/cards/040-M-041.jpg
+41	M-042	RGM-79 パワード・ジム	パワードジム	M	5	大型バックパックを装備し、ジムの機動力がアップした！！	空陸海	宇陸海	地球連邦	ジム系		St1	/assets/cards/041-M-042.jpg
+42	M-043	RX-75 ガンタンク	ガンタンク	M	5	強力なキャノン砲で敵を攻撃！無限キャタピラで、どこまでも進撃する！！	宇陸海	宇空陸	地球連邦			St1	/assets/cards/042-M-043.jpg
+43	M-044	GRAY PHANTOM グレイファントム	グレイファントム	M	5	ペガサス級強襲揚陸艦！索敵しながら、友軍の中央を突破する！！	宇空海	空陸海	地球連邦	戦艦系		St1	/assets/cards/043-M-044.jpg
+44	M-045	GRAF ZEPPELIN グラーフ・ツェッペリン	グラーフツェペリン	M	4	ムサイ級軽巡洋艦が索敵する！敵の陣形に集中砲火をかける！！	宇	宇空海	ジオン	戦艦系		St1	/assets/cards/044-M-045.jpg
+45	M-046	RGC-83 ジム・キャノンⅡ	ジムキャノンⅡ	M	4	中距離支援に最適！両肩のビームキャノンが敵の侵攻を阻止する！！	宇空陸	宇陸海	地球連邦	ジム系		St1	/assets/cards/045-M-046.jpg
+46	M-047	RGM-79G ジムコマンド(コロニー仕様)	ジムコマンド(コロニー)	M	4	汎用性の利点をいかし、けんせいを続けながら攻撃に出撃する！！	宇空陸	宇空陸	地球連邦	ジム系		St1	/assets/cards/046-M-047.jpg
+47	M-048	RGM-79SP ジムスナイパーⅡ	ジムスナイパーⅡ	M	4	一年戦争最強のジム！長距離狙撃ライフルで、ターゲットを正確に射ぬく！！	宇空陸	空陸海	地球連邦	ジム系		St1	/assets/cards/047-M-048.jpg
+48	M-049	RAG-79 アクア・ジム	アクアジム	M	4	水中戦用のアクアジムは、浅海にひそみ、敵の上陸をくいとめる！！	空陸海	宇空陸海	地球連邦	ジム系		St1	/assets/cards/048-M-049.jpg
+49	M-050	MS-06FZ ザクⅡ改Bタイプ	ザクⅡ改B	M	4	シュツルムファウストを装備し、ザクの戦闘能力がアップした！！	宇空陸	宇空陸海	ジオン	ザク系		St1	/assets/cards/049-M-050.jpg
+50	M-051	MS-06J ザクⅡ	ザクⅡ(地上用)	M	4	地上戦仕様のＪ型ザクが、空と海の敵に狙いをさだめた！！	空陸海	宇空陸海	ジオン	ザク系		St1	/assets/cards/050-M-051.jpg
+51	M-052	MSM-03 ゴッグ	ゴッグ	M	4	極秘任務を遂行するため、海底から敵基地に潜入する！！	陸海	宇空陸海	ジオン			St1	/assets/cards/051-M-052.jpg
+52	M-053	MS-06F ザクⅡ	ザクⅡ	M	3	地上降下作戦開始！ザクの脅威が地上の敵をせいあつする！！	宇陸	宇空陸海	ジオン	ザク系		St1	/assets/cards/052-M-053.jpg
+53	M-054	ジム寒冷地仕様	ジム寒冷地仕様	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	空陸海	宇空陸海	地球連邦	ジム系		St1	/assets/cards/053-M-054.jpg
+54	M-055	ジークフリード	ジークフリード	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇	宇空陸海	ジオン	戦艦系		St1	/assets/cards/054-M-055.jpg
+55	M-056	コア・ファイター	コア・ファイター	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇空	宇空陸海	地球連邦			St1	/assets/cards/055-M-056.jpg
+56	M-057	プロトタイプザク	プロトタイプザク	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇陸	宇空陸海	ジオン	ザク系		St1	/assets/cards/056-M-057.jpg
+57	M-058	ボール	ボール	M	4	偵察任務をうけるため、ジャブロー基地内部に進入するぞ！！	宇	宇空陸海	地球連邦			St1	/assets/cards/057-M-058.jpg
+58	C-001	アムロ・レイ	アムロ	C		「させるか！」アムロの能力がガンダムを変えた！！		海	地球連邦		●自分の最前線のガンダム系にポイント各+1	St1	/assets/cards/058-C-001.jpg
+59	C-002	クリスチーナ・マッケンジー	クリス	C		クリスの調整で、コンピュータの性能がアップした！！		陸	地球連邦		●自分の最前線の地球連邦軍に、ポイントを+2	St1	/assets/cards/059-C-002.jpg
+60	C-003	ブライト・ノア	ブライト	C		「砲撃手なにやってんのー！」ブライトのゲキがとぶ！！		宇	地球連邦		●自分の最前線に戦艦系がいれば、合計ポイントに+5	St1	/assets/cards/060-C-003.jpg
+61	C-004	コウ・ウラキ	コウ	C		敵の作戦を阻止するために、コウの執念が熱く燃える！！		空	地球連邦		●自分の最前線に地球連邦軍が2枚以上いれば合計ポイント+5	St1	/assets/cards/061-C-004.jpg
+62	C-005	アナベル・ガトー	ガトー	C		己の執念のために……ソロモンの悪夢が立ち上がる！！		空陸	ジオン		●自分の最前線のジオン軍にポイント各+2	St1	/assets/cards/062-C-005.jpg
+63	C-006	スレッガー・ロウ	スレッガー	C		特攻成功！「悲しいけど、これ、戦争なのよね……」		宇海	地球連邦		●デッキを1枚めくり、戦場と属性の合うメカニックカードが出たら、相手の最前線から好きなカード一枚を破壊できる。	St1	/assets/cards/063-C-006.jpg
+64	C-007	シャア・アズナブル	シャア	C		シャアは専用の機体にのり、性能以上の能力をひきだした！		空	ジオン		●自分のMカードの“シャア専用機”のカードの1枚であれば、合計ポイントに+2	St1	/assets/cards/064-C-007.jpg
+65	C-008	ランバ・ラル	ラル	C		ランバ・ラルが、ゲリラ屋本来の戦いをしかけた！		陸海	ジオン		●戦闘時に“白兵戦”が発生し、勝利すれば、合計ポイントに+3	St1	/assets/cards/065-C-008.jpg
+66	C-009	バーナード・ワイズマン	バーニィ	C		ジオン軍のバーニィは、ザクを知り尽くしている！！		宇陸	ジオン		●デッキを1枚めくり、それがMカードならポイント+2。Cカードならポイント-1。	St1	/assets/cards/066-C-009.jpg
+67	C-010	ミハル・ラトキエ	ミハル	C		スパイ活動で情報をキャッチした！！		宇空	ジオン		●自分のMカードの地形適性が戦場の地形と同じならポイントを+2。	St1	/assets/cards/067-C-010.jpg
+68	C-011	ミノフスキー粒子	ミノフスキー粒子	C		戦闘レーダーが効かなくなり索敵が混乱した！！		空陸	アイテム		●相手のMカードのポイントを-2。	St1	/assets/cards/068-C-011.jpg
+69	C-012	チョバムアーマー	チョバムアーマー	C				宇海	アイテム		●自分のMカード1枚のポイントを+2する。	St1	/assets/cards/069-C-012.jpg
+70	C-013	Iフィールド	Iフィールド	C		ア・バオア・クーでの攻防をしのいだ！！		空海	アイテム		●相手のMSの攻撃ポイントを半分にできる威力を持つ！	St1	/assets/cards/070-C-013.jpg
+71	C-014	補給部隊	補給部隊	C		後方から補給部隊が到着した！！		陸海	アイテム		●デッキを1枚めくり、それがMカードなら自分の戦場に出せる。	St1	/assets/cards/071-C-014.jpg
+72	C-015	魚雷	魚雷	C		水中から攻撃をかけて、発見された！！		宇海	アイテム		●相手の最前線の属性”海”を持つカードを1枚だけ破壊できる。	St1	/assets/cards/072-C-015.jpg
+73	C-016	地雷	地雷	C		地上戦を有利にするため、地雷が設置された！！		宇空	アイテム		●相手の最前線の属性”陸”を持つカードを1枚だけ破壊できる。	St1	/assets/cards/073-C-016.jpg
+74	C-017	ブースター	ブースター	C		ブースターを使い強力な推進力をてにいれた！！		空陸	アイテム		●自分のみ戦場に“空”が追加される。	St1	/assets/cards/074-C-017.jpg
+75	C-018	スラスター	スラスター	C		スラスター増設で宇宙に移動可能に！！		宇海	アイテム		●自分のみ戦場に“宇”が追加される。	St1	/assets/cards/075-C-018.jpg
+76	C-019	熱核ジェットエンジン	熱核JETエンジン	C		熱核ジェットエンジンを搭載し仕様可能になった！！		空海	アイテム		●自分のみ戦場に“陸”が追加される。	St1	/assets/cards/076-C-019.jpg
+77	C-020	ジェットパック	ジェットパック	C		ジェットパック装着で空中移動が可能になった！！		陸海	アイテム		●自分のみ戦場に“空”が追加される。	St1	/assets/cards/077-C-020.jpg`;
 
 
 export const parseMobilePowersTsvData = (tsv: string): Card[] => {
