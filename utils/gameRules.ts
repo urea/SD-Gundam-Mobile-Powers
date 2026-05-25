@@ -62,8 +62,10 @@ interface CCardEffectResult {
 
 const getDisplayName = (card: Card): string => card.cardNameOmm || card.cardName;
 
+const isActiveMCard = (card: Card): boolean => card.type === 'M' && !card.isDestroyed;
+
 const getBattlefieldPower = (battlefield: Card[], ownerName: string): number => {
-  const mCards = battlefield.filter(card => card.type === 'M');
+  const mCards = battlefield.filter(isActiveMCard);
   const baseAndTagTotal = mCards.reduce((total, card) => {
     return total + (parseInt(card.points, 10) || 0) + calculateTagBonus(card, mCards);
   }, 0);
@@ -106,8 +108,8 @@ export const getCCardTargetCandidates = (
   const mode = getCCardTargetMode(card);
   const actor = byPlayerType === 'PLAYER' ? currentGameState.player : currentGameState.cpu;
   const opponent = byPlayerType === 'PLAYER' ? currentGameState.cpu : currentGameState.player;
-  const ownM = actor.battlefield.filter(fieldCard => fieldCard.type === 'M');
-  const opponentM = opponent.battlefield.filter(fieldCard => fieldCard.type === 'M');
+  const ownM = actor.battlefield.filter(isActiveMCard);
+  const opponentM = opponent.battlefield.filter(isActiveMCard);
 
   switch (mode) {
     case 'OWN_M':
@@ -189,14 +191,16 @@ export const applyCCardEffect = (
       return;
     }
     const opponent = getOpponent();
-    const nextBattlefield = opponent.battlefield.filter(card => card.cardNumber !== target.cardNumber);
+    const nextBattlefield = opponent.battlefield.map(card =>
+      card.cardNumber === target.cardNumber ? { ...card, isDestroyed: true } : card,
+    );
     const nextOpponent = setBattlefieldWithPowerDelta(
-      { ...opponent, discardPile: [...opponent.discardPile, target] },
+      opponent,
       nextBattlefield,
       opponentOwnerName,
     );
     setOpponent(nextOpponent);
-    logMessages.push({ message: `${reason} ${opponentName}の ${getDisplayName(target)} を破壊。`, source: byPlayerType, timestamp: Date.now() });
+    logMessages.push({ message: `${reason} ${opponentName}の ${getDisplayName(target)} を破壊。戦闘終了まで戦場に残します。`, source: byPlayerType, timestamp: Date.now() });
   };
   const revealActorDeckTop = (): Card | undefined => {
     const actor = getActor();
@@ -254,7 +258,7 @@ export const applyCCardEffect = (
   };
   const zeroOpponentNonNTPower = () => {
     const opponent = getOpponent();
-    const eligible = opponent.battlefield.filter(card => card.type === 'M' && !card.tags.includes('NT専用機'));
+    const eligible = opponent.battlefield.filter(card => isActiveMCard(card) && !card.tags.includes('NT専用機'));
     if (eligible.length === 0) {
       logMessages.push({ message: '相手最前線にNT専用機以外のMカードがないため効果なし。', source: byPlayerType, timestamp: Date.now() });
       return;
@@ -285,8 +289,8 @@ export const applyCCardEffect = (
     logMessages.push({ message: `${actorName}側の戦場に${terrainToAdd}を追加。${movingCards.map(getDisplayName).join('、')} が追加出撃。`, source: byPlayerType, timestamp: Date.now() });
   };
 
-  const ownM = getActor().battlefield.filter(card => card.type === 'M');
-  const opponentM = getOpponent().battlefield.filter(card => card.type === 'M');
+  const ownM = getActor().battlefield.filter(isActiveMCard);
+  const opponentM = getOpponent().battlefield.filter(isActiveMCard);
   const explicitTargets = getCCardTargetCandidates(playedCard, currentGameState, byPlayerType);
   const selectedTarget = targetCard && explicitTargets.some(candidate => candidate.cardNumber === targetCard.cardNumber)
     ? targetCard
@@ -440,14 +444,14 @@ export interface TagBonusDetail {
 }
 
 export const getTagBonusDetails = (card: Card, friendlyBattlefield: Card[]): TagBonusDetail[] => {
-  if (card.type !== 'M' || !card.tags) return [];
+  if (!isActiveMCard(card) || !card.tags) return [];
   const cardTags = card.tags.split(' ').filter(Boolean);
   if (cardTags.length === 0) return [];
 
   const details: TagBonusDetail[] = [];
   friendlyBattlefield.forEach(otherCard => {
     if (otherCard.cardNumber === card.cardNumber && otherCard.type === card.type) return;
-    if (otherCard.type === 'M' && otherCard.tags) {
+    if (isActiveMCard(otherCard) && otherCard.tags) {
       const otherCardTags = otherCard.tags.split(' ').filter(Boolean);
       cardTags.forEach(cardTag => {
         if (otherCardTags.includes(cardTag)) {
@@ -484,7 +488,7 @@ export const checkCombos = (
 ): { achievedCombos: Combo[]; logMessages: LogEntry[] } => {
   const achievedCombos: Combo[] = [];
   const logMessages: LogEntry[] = [];
-  const mCards = battlefieldCards.filter(c => c.type === 'M');
+  const mCards = battlefieldCards.filter(isActiveMCard);
 
   if (mCards.length < 3) return { achievedCombos, logMessages };
 

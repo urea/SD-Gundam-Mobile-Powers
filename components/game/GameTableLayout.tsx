@@ -567,9 +567,10 @@ const FieldLane: React.FC<FieldLaneProps> = ({
           {orderedFieldCards.map(({ card, idx, location }) => {
             const isTargetable = targetableCardNumbers?.has(card.cardNumber) ?? false;
             const isFaceDown = isCPU && location === 'squad';
+            const isDestroyed = !!card.isDestroyed;
             return (
               <div
-                className={`game-field-card game-field-card-${location} ${isTargetable ? 'game-field-card-targetable' : ''}`}
+                className={`game-field-card game-field-card-${location} ${isTargetable && !isFaceDown && !isDestroyed ? 'game-field-card-targetable' : ''}`}
                 key={`${owner.toLowerCase()}-${location}-${card.cardNumber}-${idx}`}
               >
                 <GameCard
@@ -577,10 +578,10 @@ const FieldLane: React.FC<FieldLaneProps> = ({
                   isPlayerCard={!isCPU}
                   isDisabled={isCardDisabled}
                   isFaceDown={isFaceDown}
-                  isSelected={!isFaceDown && selectedCard?.cardNumber === card.cardNumber && selectedCard?.type === card.type}
-                  isTargetable={!isFaceDown && isTargetable}
+                  isSelected={!isFaceDown && !isDestroyed && selectedCard?.cardNumber === card.cardNumber && selectedCard?.type === card.type}
+                  isTargetable={!isFaceDown && !isDestroyed && isTargetable}
                   location={location}
-                  onClick={isFaceDown ? undefined : isTargetable ? onTargetCard : onSelectCard}
+                  onClick={isFaceDown || isDestroyed ? undefined : isTargetable ? onTargetCard : onSelectCard}
                   onPreviewEnd={onPreviewEnd}
                   onPreviewStart={onPreviewStart}
                   uniqueKey={`${owner.toLowerCase()}-${location}-${card.cardNumber}-${idx}`}

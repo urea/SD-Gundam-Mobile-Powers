@@ -22,6 +22,7 @@ export interface Card {
   gameVar: string; // Stores the 'Var' column from the TSV data (e.g., St1, Ki1)
   imageUrl?: string; // Optional: URL or path to the card image
   fieldOrder?: number; // Preserves the original squad order in mixed field displays.
+  isDestroyed?: boolean; // Keeps a destroyed card visible on the battlefield until combat cleanup.
 }
 
 export interface Combo {

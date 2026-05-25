@@ -376,6 +376,36 @@ const customScrollbarAndAnimationStyles = `
       0 0 0 5px rgba(250, 204, 21, 0.18),
       0 8px 20px rgba(15, 23, 42, 0.18);
   }
+  .game-card-destroyed {
+    filter: grayscale(0.35) saturate(0.78);
+  }
+  .game-card-destroyed-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    border-radius: inherit;
+    background:
+      linear-gradient(135deg, transparent 0 43%, rgba(127, 29, 29, 0.92) 44% 56%, transparent 57%),
+      linear-gradient(45deg, transparent 0 43%, rgba(127, 29, 29, 0.92) 44% 56%, transparent 57%),
+      rgba(15, 23, 42, 0.28);
+    pointer-events: none;
+  }
+  .game-card-destroyed-mark {
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 2px solid rgba(254, 226, 226, 0.94);
+    background: rgba(153, 27, 27, 0.9);
+    color: #fef2f2;
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 0 18px rgba(127, 29, 29, 0.55);
+  }
   .game-table-layout .game-card-size,
   .game-zone-button,
   .game-action-button,
@@ -1933,6 +1963,12 @@ const getCCardTargetInstruction = (card: Card | null): string | null => {
   return null;
 };
 
+const isActiveMCard = (card: Card): boolean => card.type === 'M' && !card.isDestroyed;
+
+const clearDestroyedMarker = (card: Card): Card => (
+  card.isDestroyed ? { ...card, isDestroyed: undefined } : card
+);
+
 const findLastCombatStartIndex = (gameLog: LogEntry[]): number => {
   for (let index = gameLog.length - 1; index >= 0; index--) {
     if (gameLog[index].message.includes('タグボーナス計算後')) {
@@ -1990,7 +2026,7 @@ const createCombatSideSummary = (
       .map(([tag, count]) => count > 1 ? `${tag} x${count}` : tag)
       .join(' / ');
   };
-  const mCards = battlefield.filter(card => card.type === 'M');
+  const mCards = battlefield.filter(isActiveMCard);
   const cards = mCards.map(card => {
     const basePoints = parseInt(card.points, 10) || 0;
     const tagDetails = getTagBonusDetails(card, mCards);
@@ -2538,18 +2574,29 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
       }
       tempLogEntries.push({message: `戦闘解決確定: プレイヤー ${newPlayerState.combatPoints} vs CPU ${newCpuState.combatPoints}`, source: 'SYSTEM', timestamp: Date.now()});
 
-      const playerMOnBattlefield = newPlayerState.battlefield.filter(c => c.type === 'M');
-      const cpuMOnBattlefield = newCpuState.battlefield.filter(c => c.type === 'M');
+      const playerDestroyedMOnBattlefield = newPlayerState.battlefield.filter(c => c.type === 'M' && c.isDestroyed);
+      const cpuDestroyedMOnBattlefield = newCpuState.battlefield.filter(c => c.type === 'M' && c.isDestroyed);
+      const playerMOnBattlefield = newPlayerState.battlefield.filter(isActiveMCard);
+      const cpuMOnBattlefield = newCpuState.battlefield.filter(isActiveMCard);
+
+      if (playerDestroyedMOnBattlefield.length > 0) {
+        tempLogEntries.push({message: `破壊済みのプレイヤー戦場Mカード (${playerDestroyedMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札へ。`, source: 'PLAYER', timestamp: Date.now()});
+        newPlayerState.discardPile = [...newPlayerState.discardPile, ...playerDestroyedMOnBattlefield.map(clearDestroyedMarker)];
+      }
+      if (cpuDestroyedMOnBattlefield.length > 0) {
+        tempLogEntries.push({message: `破壊済みのCPU戦場Mカード (${cpuDestroyedMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札へ。`, source: 'CPU', timestamp: Date.now()});
+        newCpuState.discardPile = [...newCpuState.discardPile, ...cpuDestroyedMOnBattlefield.map(clearDestroyedMarker)];
+      }
 
       if (newPlayerState.combatPoints > newCpuState.combatPoints) {
         tempLogEntries.push({message: "プレイヤーの勝利！戦闘ポイントで上回りました。", source: 'SYSTEM', timestamp: Date.now()});
         if (playerMOnBattlefield.length > 0) {
           tempLogEntries.push({message: `プレイヤーの戦場Mカード (${playerMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札へ。`, source: 'PLAYER', timestamp: Date.now()});
-          newPlayerState.discardPile = [...newPlayerState.discardPile, ...playerMOnBattlefield];
+          newPlayerState.discardPile = [...newPlayerState.discardPile, ...playerMOnBattlefield.map(clearDestroyedMarker)];
         }
         if (cpuMOnBattlefield.length > 0) {
           tempLogEntries.push({message: `CPUの戦場Mカード (${cpuMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) はCPUの敗北フィールドへ。`, source: 'CPU', timestamp: Date.now()});
-          newCpuState.defeatPile = [...newCpuState.defeatPile, ...cpuMOnBattlefield];
+          newCpuState.defeatPile = [...newCpuState.defeatPile, ...cpuMOnBattlefield.map(clearDestroyedMarker)];
           const defeatedCpuCardCount = cpuMOnBattlefield.length;
           newCpuState.defeatPoints += defeatedCpuCardCount;
           tempLogEntries.push({message: `CPUは敗北ポイントを ${defeatedCpuCardCount}点獲得。合計: ${newCpuState.defeatPoints}点。`, source: 'CPU', timestamp: Date.now()});
@@ -2563,7 +2610,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         tempLogEntries.push({message: "CPUの勝利！戦闘ポイントで上回りました。", source: 'SYSTEM', timestamp: Date.now()});
         if (playerMOnBattlefield.length > 0) {
           tempLogEntries.push({message: `プレイヤーの戦場Mカード (${playerMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) はプレイヤーの敗北フィールドへ。`, source: 'PLAYER', timestamp: Date.now()});
-          newPlayerState.defeatPile = [...newPlayerState.defeatPile, ...playerMOnBattlefield];
+          newPlayerState.defeatPile = [...newPlayerState.defeatPile, ...playerMOnBattlefield.map(clearDestroyedMarker)];
           const defeatedCardCount = playerMOnBattlefield.length;
           newPlayerState.defeatPoints += defeatedCardCount;
           tempLogEntries.push({message: `プレイヤーは敗北ポイントを ${defeatedCardCount}点獲得。合計: ${newPlayerState.defeatPoints}点。`, source: 'PLAYER', timestamp: Date.now()});
@@ -2575,17 +2622,17 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         }
         if (cpuMOnBattlefield.length > 0) {
           tempLogEntries.push({message: `CPUの戦場Mカード (${cpuMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札へ。`, source: 'CPU', timestamp: Date.now()});
-          newCpuState.discardPile = [...newCpuState.discardPile, ...cpuMOnBattlefield];
+          newCpuState.discardPile = [...newCpuState.discardPile, ...cpuMOnBattlefield.map(clearDestroyedMarker)];
         }
       } else {
         tempLogEntries.push({message: "引き分け！戦闘ポイントが同じです。", source: 'SYSTEM', timestamp: Date.now()});
         if (playerMOnBattlefield.length > 0) {
           tempLogEntries.push({message: `プレイヤーの戦場Mカード (${playerMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札へ。`, source: 'PLAYER', timestamp: Date.now()});
-          newPlayerState.discardPile = [...newPlayerState.discardPile, ...playerMOnBattlefield];
+          newPlayerState.discardPile = [...newPlayerState.discardPile, ...playerMOnBattlefield.map(clearDestroyedMarker)];
         }
         if (cpuMOnBattlefield.length > 0) {
           tempLogEntries.push({message: `CPUの戦場Mカード (${cpuMOnBattlefield.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札へ。`, source: 'CPU', timestamp: Date.now()});
-          newCpuState.discardPile = [...newCpuState.discardPile, ...cpuMOnBattlefield];
+          newCpuState.discardPile = [...newCpuState.discardPile, ...cpuMOnBattlefield.map(clearDestroyedMarker)];
         }
       }
 
@@ -2840,14 +2887,14 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     let cpuCombatPoints = 0;
                     let tempLogEntries: LogEntry[] = [];
 
-                    prev.player.battlefield.filter(c => c.type === 'M').forEach(card => {
+                    prev.player.battlefield.filter(isActiveMCard).forEach(card => {
                         const baseP = parseInt(card.points) || 0;
                         const tagB = calculateTagBonus(card, prev.player.battlefield);
                         playerCombatPoints += (baseP + tagB);
                         if (tagB > 0) tempLogEntries.push({message: `プレイヤーの ${card.cardNameOmm || card.cardName} がタグボーナス +${tagB}P を獲得。`, source: 'PLAYER', timestamp: Date.now()});
                     });
 
-                    prev.cpu.battlefield.filter(c => c.type === 'M').forEach(card => {
+                    prev.cpu.battlefield.filter(isActiveMCard).forEach(card => {
                         const baseP = parseInt(card.points) || 0;
                         const tagB = calculateTagBonus(card, prev.cpu.battlefield);
                         cpuCombatPoints += (baseP + tagB);
@@ -2856,11 +2903,11 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     
                     tempLogEntries.push({message: `タグボーナス計算後: プレイヤー ${playerCombatPoints}P, CPU ${cpuCombatPoints}P`, source: 'SYSTEM', timestamp: Date.now()});
 
-                    const playerCombosResult = checkCombos(prev.player.battlefield.filter(c => c.type === 'M'), "プレイヤー");
+                    const playerCombosResult = checkCombos(prev.player.battlefield.filter(isActiveMCard), "プレイヤー");
                     playerCombosResult.achievedCombos.forEach(combo => playerCombatPoints += combo.points);
                     tempLogEntries = [...tempLogEntries, ...playerCombosResult.logMessages];
 
-                    const cpuCombosResult = checkCombos(prev.cpu.battlefield.filter(c => c.type === 'M'), "CPU");
+                    const cpuCombosResult = checkCombos(prev.cpu.battlefield.filter(isActiveMCard), "CPU");
                     cpuCombosResult.achievedCombos.forEach(combo => cpuCombatPoints += combo.points);
                     tempLogEntries = [...tempLogEntries, ...cpuCombosResult.logMessages];
                     
@@ -2942,11 +2989,11 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         }
                     }
                     if (newPlayerState.battlefield.length > 0) {
-                        newPlayerState.discardPile = [...newPlayerState.discardPile, ...newPlayerState.battlefield];
+                        newPlayerState.discardPile = [...newPlayerState.discardPile, ...newPlayerState.battlefield.map(clearDestroyedMarker)];
                         newPlayerState.battlefield = [];
                     }
                     if (newCpuState.battlefield.length > 0) {
-                        newCpuState.discardPile = [...newCpuState.discardPile, ...newCpuState.battlefield];
+                        newCpuState.discardPile = [...newCpuState.discardPile, ...newCpuState.battlefield.map(clearDestroyedMarker)];
                         newCpuState.battlefield = [];
                     }
                     

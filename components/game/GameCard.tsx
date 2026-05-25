@@ -43,6 +43,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   const hasError = imageLoadErrors[uniqueKey];
   const showImage = !isFaceDown && card.imageUrl && !hasError;
   const isKira = !isFaceDown && isKiraCard(card);
+  const isDestroyed = !isFaceDown && !!card.isDestroyed;
   const showTextOverlay = !isFaceDown && (!showImage || location === 'hand' || location === 'deck' || location === 'discardPile');
 
   const cardSizeSpecificClasses = 'game-card-size';
@@ -77,8 +78,8 @@ Flavor: ${card.textAbility}
 ${card.type === 'C' && card.effect ? `Effect: ${card.effect}\n` : ''}Tags: ${card.tags || '-'}
 Var: ${card.gameVar || '-'}`;
 
-  const effectiveOnClick = isFaceDown ? undefined : onClick ? () => onClick(card) : () => contextSetSelectedCard(card);
-  const canDrag = !!isDraggable && !isDisabled && !isFaceDown;
+  const effectiveOnClick = isFaceDown || isDestroyed ? undefined : onClick ? () => onClick(card) : () => contextSetSelectedCard(card);
+  const canDrag = !!isDraggable && !isDisabled && !isFaceDown && !isDestroyed;
   const isEffectivelyDisabled = !!isDisabled || !!isFaceDown;
 
   return (
@@ -105,8 +106,9 @@ Var: ${card.gameVar || '-'}`;
       className={`${cardSizeSpecificClasses} rounded overflow-hidden shadow-md relative transition-all duration-150 ease-in-out transform hover:scale-105
                   ${bgColor}
                   ${isSelected && !isFaceDown ? (isPlayerCard ? 'ring-4 ring-sky-400 shadow-xl' : 'ring-4 ring-red-400 shadow-xl') : 'ring-1 ring-slate-400'}
-                  ${isTargetable && !isFaceDown ? 'game-card-targetable' : ''}
-                  ${isEffectivelyDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
+                  ${isTargetable && !isFaceDown && !isDestroyed ? 'game-card-targetable' : ''}
+                  ${isDestroyed ? 'game-card-destroyed' : ''}
+                  ${isDestroyed ? 'cursor-help' : isEffectivelyDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
                   ${isKira ? 'kira-border-animated' : ''}`}
       title={cardTitle}
       aria-label={isFaceDown ? `${location}の伏せられたMカード` : `${location}のカード ${card.cardNameOmm || card.cardName} ${isSelected ? '選択中' : ''} ${isKira ? 'キラカード' : ''}`}
@@ -148,6 +150,11 @@ Var: ${card.gameVar || '-'}`;
             </p>
           )}
         </div>
+      )}
+      {isDestroyed && (
+        <span className="game-card-destroyed-overlay" aria-hidden="true">
+          <span className="game-card-destroyed-mark">×</span>
+        </span>
       )}
     </button>
   );
