@@ -17,6 +17,7 @@ interface GameCardProps {
   isTargetable?: boolean;
   isDisabled?: boolean;
   isDraggable?: boolean;
+  isFaceDown?: boolean;
   uniqueKey: string;
 }
 
@@ -34,14 +35,15 @@ export const GameCard: React.FC<GameCardProps> = ({
   isTargetable,
   isDisabled,
   isDraggable,
+  isFaceDown,
   uniqueKey,
 }) => {
   const { handleImageError, imageLoadErrors, setSelectedCard: contextSetSelectedCard } = useGamePageContext();
   const isMCard = card.type === 'M';
   const hasError = imageLoadErrors[uniqueKey];
-  const showImage = card.imageUrl && !hasError;
-  const isKira = isKiraCard(card);
-  const showTextOverlay = !showImage || location === 'hand' || location === 'deck' || location === 'discardPile';
+  const showImage = !isFaceDown && card.imageUrl && !hasError;
+  const isKira = !isFaceDown && isKiraCard(card);
+  const showTextOverlay = !isFaceDown && (!showImage || location === 'hand' || location === 'deck' || location === 'discardPile');
 
   const cardSizeSpecificClasses = 'game-card-size';
 
@@ -68,18 +70,21 @@ export const GameCard: React.FC<GameCardProps> = ({
     textColor = 'text-yellow-800';
   }
 
-  const cardTitle = `${card.cardNameOmm || card.cardName} (${card.type}${isMCard ? ` P:${card.points}` : ''})
+  const cardTitle = isFaceDown
+    ? '伏せられたMカード'
+    : `${card.cardNameOmm || card.cardName} (${card.type}${isMCard ? ` P:${card.points}` : ''})
 Flavor: ${card.textAbility}
 ${card.type === 'C' && card.effect ? `Effect: ${card.effect}\n` : ''}Tags: ${card.tags || '-'}
 Var: ${card.gameVar || '-'}`;
 
-  const effectiveOnClick = onClick ? () => onClick(card) : () => contextSetSelectedCard(card);
-  const canDrag = !!isDraggable && !isDisabled;
+  const effectiveOnClick = isFaceDown ? undefined : onClick ? () => onClick(card) : () => contextSetSelectedCard(card);
+  const canDrag = !!isDraggable && !isDisabled && !isFaceDown;
+  const isEffectivelyDisabled = !!isDisabled || !!isFaceDown;
 
   return (
     <button
       onClick={effectiveOnClick}
-      disabled={isDisabled}
+      disabled={isEffectivelyDisabled}
       draggable={canDrag}
       onDragEnd={canDrag ? onDragEnd : undefined}
       onDragStart={canDrag ? (event) => {
@@ -92,22 +97,29 @@ Var: ${card.gameVar || '-'}`;
           onPointerDragStart?.(card, event);
         }
       } : undefined}
-      onBlur={onPreviewEnd}
-      onFocus={() => onPreviewStart?.(card)}
-      onMouseEnter={() => onPreviewStart?.(card)}
-      onMouseLeave={onPreviewEnd}
+      onBlur={isFaceDown ? undefined : onPreviewEnd}
+      onFocus={isFaceDown ? undefined : () => onPreviewStart?.(card)}
+      onMouseEnter={isFaceDown ? undefined : () => onPreviewStart?.(card)}
+      onMouseLeave={isFaceDown ? undefined : onPreviewEnd}
       key={uniqueKey}
       className={`${cardSizeSpecificClasses} rounded overflow-hidden shadow-md relative transition-all duration-150 ease-in-out transform hover:scale-105
                   ${bgColor}
-                  ${isSelected ? (isPlayerCard ? 'ring-4 ring-sky-400 shadow-xl' : 'ring-4 ring-red-400 shadow-xl') : 'ring-1 ring-slate-400'}
-                  ${isTargetable ? 'game-card-targetable' : ''}
-                  ${isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
+                  ${isSelected && !isFaceDown ? (isPlayerCard ? 'ring-4 ring-sky-400 shadow-xl' : 'ring-4 ring-red-400 shadow-xl') : 'ring-1 ring-slate-400'}
+                  ${isTargetable && !isFaceDown ? 'game-card-targetable' : ''}
+                  ${isEffectivelyDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
                   ${isKira ? 'kira-border-animated' : ''}`}
       title={cardTitle}
-      aria-label={`${location}のカード ${card.cardNameOmm || card.cardName} ${isSelected ? '選択中' : ''} ${isKira ? 'キラカード' : ''}`}
-      aria-pressed={isSelected}
+      aria-label={isFaceDown ? `${location}の伏せられたMカード` : `${location}のカード ${card.cardNameOmm || card.cardName} ${isSelected ? '選択中' : ''} ${isKira ? 'キラカード' : ''}`}
+      aria-pressed={!isFaceDown && isSelected}
     >
-      {showImage ? (
+      {isFaceDown ? (
+        <img
+          src="/assets/card-back.png"
+          alt=""
+          className="w-full h-full object-cover bg-blue-900"
+          loading="lazy"
+        />
+      ) : showImage ? (
         <img
           src={card.imageUrl}
           alt={card.cardName}

@@ -277,6 +277,7 @@ const RuleContent: React.FC = () => {
                   <ListItem>何もしない（パス）。</ListItem>
                 </ul>
               </ListItem>
+              <ListItem>使用するCカードは表向きで公開し、効果を解決します。</ListItem>
               <ListItem>Cカードの効果は即座に解決され、戦闘ポイントが変動することがあります。</ListItem>
               <ListItem>両プレイヤーが行動を終えたら次のフェイズへ。</ListItem>
             </ul>

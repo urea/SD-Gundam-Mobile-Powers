@@ -566,6 +566,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
         <div className="game-lane-cards" aria-label={`${owner} cards`}>
           {orderedFieldCards.map(({ card, idx, location }) => {
             const isTargetable = targetableCardNumbers?.has(card.cardNumber) ?? false;
+            const isFaceDown = isCPU && location === 'squad';
             return (
               <div
                 className={`game-field-card game-field-card-${location} ${isTargetable ? 'game-field-card-targetable' : ''}`}
@@ -575,10 +576,11 @@ const FieldLane: React.FC<FieldLaneProps> = ({
                   card={card}
                   isPlayerCard={!isCPU}
                   isDisabled={isCardDisabled}
-                  isSelected={selectedCard?.cardNumber === card.cardNumber && selectedCard?.type === card.type}
-                  isTargetable={isTargetable}
+                  isFaceDown={isFaceDown}
+                  isSelected={!isFaceDown && selectedCard?.cardNumber === card.cardNumber && selectedCard?.type === card.type}
+                  isTargetable={!isFaceDown && isTargetable}
                   location={location}
-                  onClick={isTargetable ? onTargetCard : onSelectCard}
+                  onClick={isFaceDown ? undefined : isTargetable ? onTargetCard : onSelectCard}
                   onPreviewEnd={onPreviewEnd}
                   onPreviewStart={onPreviewStart}
                   uniqueKey={`${owner.toLowerCase()}-${location}-${card.cardNumber}-${idx}`}
