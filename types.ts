@@ -8,6 +8,8 @@ export interface RuleSectionContent {
 }
 
 export interface Card {
+  uniqueKey?: string; // Stable base-card identity for duplicated card numbers.
+  instanceId?: string; // Per-deck copy identity, e.g. M-046-2#1.
   cardNumber: string;
   cardName: string;
   cardNameOmm: string;
@@ -132,7 +134,7 @@ export interface GameState {
 
 export interface CPUAction {
   action: 'PLAY_M_CARD' | 'DISCARD_TO_DEFEAT' | 'PLAY_C_CARD' | 'SELECT_TERRAIN' | 'DISCARD_FROM_HAND';
-  cardId?: string; // card.cardNumber of the card to play or discard
+  cardId?: string; // card instance identity of the card to play or discard
   targetCardId?: string; // For C-Cards that target
   reasoning?: string; // Optional: CPU decision explanation
 }

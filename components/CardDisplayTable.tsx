@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card } from '../types'; // Assuming Card is the base type
+import { getCardBaseId } from '../utils/cardIdentity';
 
 // Define DisplayCard to include properties used for display/sorting
 export interface DisplayCard extends Card { // Exported for use in DeckEditorPage
@@ -101,7 +102,8 @@ export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSor
         </thead>
         <tbody className="divide-y divide-slate-200 bg-white">
           {cards.map((card, index) => {
-            const imageErrorKey = `${card.cardNumber}-${card.cardName}-${index}`;
+            const baseId = getCardBaseId(card);
+            const imageErrorKey = `${baseId}-${card.cardName}-${index}`;
             const imgSrc = card.imageUrl;
             const handleImageError = () => {
               setImageLoadErrors(prev => ({ ...prev, [imageErrorKey]: true }));
@@ -116,7 +118,7 @@ export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSor
 
 
             return (
-              <tr key={`${card.cardNumber}-${card.cardNameOmm}-${index}`} className="hover:bg-slate-50 transition-colors duration-150 ease-in-out">
+              <tr key={`${baseId}-${card.cardNameOmm}-${index}`} className="hover:bg-slate-50 transition-colors duration-150 ease-in-out">
                 {renderActions && (
                   <td className="px-2 py-2 whitespace-nowrap text-sm text-slate-500 align-middle text-center">
                     {renderActions(card)}
@@ -154,7 +156,12 @@ export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSor
                     </div>
                   </button>
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-600 tabular-nums align-top">{card.cardNumber}</td>
+                <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-600 tabular-nums align-top">
+                  <div>{card.cardNumber}</div>
+                  {baseId !== card.cardNumber && (
+                    <div className="text-[11px] text-slate-400">{baseId}</div>
+                  )}
+                </td>
                 <td className="px-3 py-3 text-sm text-slate-800 font-medium align-top">
                   <div className="break-words">{card.cardName} {isKira && <span className="text-xs font-bold" style={{background: 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>キラ</span>}</div>
                   {card.cardNameOmm && card.cardNameOmm !== card.cardName && (

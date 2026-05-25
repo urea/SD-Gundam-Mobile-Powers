@@ -7,6 +7,7 @@ import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';
 import * as cpuLogicService from '../services/cpuLogicService';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
+import { getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { cpuDeckPresets } from '../data/cpuDecks'; // Import CPU presets to find by code if needed, though MainMenu should resolve ID to code.
 import {
   applyCCardEffect,
@@ -2128,7 +2129,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   };
 
   const setSelectedCard = (card: Card | null) => {
-    if (pendingTargetCCard && card?.cardNumber !== pendingTargetCCard.cardNumber) {
+    if (pendingTargetCCard && !isSameCardInstance(card, pendingTargetCCard)) {
       setPendingTargetCCard(null);
     }
     setSelectedCardLocal(card);
@@ -2190,7 +2191,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         setFullInstancePool(instancePool);
 
         const gamePlayableBaseCards = parsedBase.filter(c => c.type === 'M' || c.type === 'C');
-        const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(c => c.cardNumber))).sort();
+        const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
         
         const bToS = new Map<string, number>();
         const sToB = new Map<number, string>();
@@ -2345,11 +2346,11 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         if (prev.phase === 'FORMATION_PLAYER_PLACE') {
             if (actionType === 'PLAY_M_CARD_TO_SQUAD' && card.type === 'M' && newPlayerState.squad.length < 3) {
                 const cardForSquad = { ...card, fieldOrder: newPlayerState.squad.length };
-                newPlayerState.hand = newPlayerState.hand.filter(c => c.cardNumber !== card.cardNumber); 
+                newPlayerState.hand = newPlayerState.hand.filter(c => !isSameCardInstance(c, card));
                 newPlayerState.squad = [...newPlayerState.squad, cardForSquad];
                 newLog.push({message: `プレイヤーが ${card.cardName} を小隊に配置。`, source: 'PLAYER', timestamp: Date.now()});
             } else if (actionType === 'DISCARD_TO_DEFEAT_PILE') {
-                newPlayerState.hand = newPlayerState.hand.filter(c => c.cardNumber !== card.cardNumber);
+                newPlayerState.hand = newPlayerState.hand.filter(c => !isSameCardInstance(c, card));
                 newPlayerState.defeatPile = [...newPlayerState.defeatPile, card];
                 newPlayerState.defeatPoints += 1;
                 newLog.push({message: `プレイヤーが ${card.cardName} を手札から敗戦フィールドへ (編成時Mカード配置不可のため)。敗北ポイント: ${newPlayerState.defeatPoints}。`, source: 'PLAYER', timestamp: Date.now()});
@@ -2379,7 +2380,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                 if (!canPlayCCard(card, newPlayerState, { ...prev, player: newPlayerState, cpu: newCpuState })) {
                     newLog.push({message: `Cカードを出すには戦場にMカードが必要です。(${card.cardName})`, source: 'SYSTEM', timestamp: Date.now()});
                 } else {
-                    newPlayerState.hand = newPlayerState.hand.filter(c => c.cardNumber !== card.cardNumber);
+                    newPlayerState.hand = newPlayerState.hand.filter(c => !isSameCardInstance(c, card));
                     const playedCardSummary: PlayedCCardSummary = {
                         owner: 'PLAYER',
                         cardNumber: card.cardNumber,
@@ -2398,7 +2399,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     nextPhasePartial.playedCCards = [...prev.playedCCards, playedCardSummary];
                 }
             } else if (actionType === 'DISCARD_FROM_HAND_CS') {
-                newPlayerState.hand = newPlayerState.hand.filter(c => c.cardNumber !== card.cardNumber);
+                newPlayerState.hand = newPlayerState.hand.filter(c => !isSameCardInstance(c, card));
                 newPlayerState.discardPile = [...newPlayerState.discardPile, card];
                 newLog.push({message: `プレイヤーが手札から ${card.cardName} を捨てました。`, source: 'PLAYER', timestamp: Date.now()});
                 nextPhasePartial = goToNextCounterSupportStepOrCombatResolution({ ...prev, player: newPlayerState, cpu: newCpuState, gameLog: newLog });
@@ -2430,10 +2431,10 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
       if (prev.phase === 'FORMATION_CPU_PLACE') {
         if (aiDecision.action === 'PLAY_M_CARD' && aiDecision.cardId) {
-          const cardToPlay = newCpuState.hand.find(c => c.cardNumber === aiDecision.cardId);
+          const cardToPlay = newCpuState.hand.find(c => getCardInstanceId(c) === aiDecision.cardId);
           if (cardToPlay && cardToPlay.type === 'M' && newCpuState.squad.length < 3) {
             const cardForSquad = { ...cardToPlay, fieldOrder: newCpuState.squad.length };
-            newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToPlay.cardNumber);
+            newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToPlay));
             newCpuState.squad = [...newCpuState.squad, cardForSquad];
             newLog = [...newLog, {message: `CPUが ${cardToPlay.cardName} を小隊に配置。`, source: 'CPU', timestamp: Date.now()}];
             actionTakenSuccessfully = true;
@@ -2441,9 +2442,9 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             newLog = [...newLog, {message: `CPU AI提案 (${aiDecision.cardId} 配置)は無効でした。`, source: 'SYSTEM', timestamp: Date.now()}];
           }
         } else if (aiDecision.action === 'DISCARD_TO_DEFEAT' && aiDecision.cardId) {
-          const cardToDiscard = newCpuState.hand.find(c => c.cardNumber === aiDecision.cardId);
+          const cardToDiscard = newCpuState.hand.find(c => getCardInstanceId(c) === aiDecision.cardId);
           if (cardToDiscard) {
-            newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToDiscard.cardNumber);
+            newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscard));
             newCpuState.defeatPile = [...newCpuState.defeatPile, cardToDiscard];
             newCpuState.defeatPoints += 1;
             newLog = [...newLog, {message: `CPUが ${cardToDiscard.cardName} を手札から敗戦フィールドへ (編成時Mカード配置不可のため)。敗北ポイント: ${newCpuState.defeatPoints}。`, source: 'CPU', timestamp: Date.now()}];
@@ -2462,12 +2463,12 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
           if (newCpuState.squad.length < 3 && availableMCardsInHand.length > 0) {
             const cardToPlay = availableMCardsInHand.sort((a,b) => parseInt(b.points) - parseInt(a.points))[0];
             const cardForSquad = { ...cardToPlay, fieldOrder: newCpuState.squad.length };
-            newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToPlay.cardNumber);
+            newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToPlay));
             newCpuState.squad = [...newCpuState.squad, cardForSquad];
             newLog = [...newLog, {message: `CPUフォールバック: ${cardToPlay.cardName} を小隊に配置。`, source: 'CPU', timestamp: Date.now()}];
           } else if (newCpuState.hand.length > 0) {
             const cardToDiscard = newCpuState.hand[Math.floor(Math.random() * newCpuState.hand.length)];
-            newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToDiscard.cardNumber);
+            newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscard));
             newCpuState.defeatPile = [...newCpuState.defeatPile, cardToDiscard];
             newCpuState.defeatPoints += 1;
             newLog = [...newLog, {message: `CPUフォールバック: ${cardToDiscard.cardName} を手札から敗戦フィールドへ (編成時Mカード配置不可のため)。敗北ポイント: ${newCpuState.defeatPoints}。`, source: 'CPU', timestamp: Date.now()}];
@@ -2493,7 +2494,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
       } else if (prev.phase === 'COUNTER_SUPPORT_CPU_PLAY_C') {
         const cardId = aiDecision.cardId;
-        const cardToAct = cardId ? newCpuState.hand.find(c => c.cardNumber === cardId) : null;
+        const cardToAct = cardId ? newCpuState.hand.find(c => getCardInstanceId(c) === cardId) : null;
         let nextPlayedCCards = prev.playedCCards;
 
         if (aiDecision.action === 'PLAY_C_CARD' && cardToAct && cardToAct.type === 'C') {
@@ -2501,12 +2502,12 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                 newLog.push({message: `CPUはCカード(${cardToAct.cardName})を出そうとしましたが、戦場にMカードがいません。フォールバック。`, source: 'CPU', timestamp: Date.now()});
                 const cardToDiscardFallback = cardToAct || (newCpuState.hand.length > 0 ? newCpuState.hand[0] : null);
                 if (cardToDiscardFallback) {
-                    newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToDiscardFallback.cardNumber);
+                    newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscardFallback));
                     newCpuState.discardPile = [...newCpuState.discardPile, cardToDiscardFallback];
                     newLog.push({message: `CPUフォールバック: ${cardToDiscardFallback.cardName} を捨てました。`, source: 'CPU', timestamp: Date.now()});
                 }
             } else {
-                newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToAct.cardNumber);
+                newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToAct));
                 const playedCardSummary: PlayedCCardSummary = {
                     owner: 'CPU',
                     cardNumber: cardToAct.cardNumber,
@@ -2522,7 +2523,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                 nextPlayedCCards = [...prev.playedCCards, playedCardSummary];
             }
         } else if (aiDecision.action === 'DISCARD_FROM_HAND' && cardToAct) {
-            newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToAct.cardNumber);
+            newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToAct));
             newCpuState.discardPile = [...newCpuState.discardPile, cardToAct];
             newLog.push({message: `CPUが手札から ${cardToAct.cardName} を捨てました。`, source: 'CPU', timestamp: Date.now()});
         } else { 
@@ -2530,7 +2531,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             if (newCpuState.hand.length > 0) {
                 newLog.push({message: `フォールバック: 手札から1枚捨てます。`, source: 'CPU', timestamp: Date.now()});
                 const cardToDiscard = newCpuState.hand[Math.floor(Math.random() * newCpuState.hand.length)];
-                newCpuState.hand = newCpuState.hand.filter(c => c.cardNumber !== cardToDiscard.cardNumber);
+                newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscard));
                 newCpuState.discardPile = [...newCpuState.discardPile, cardToDiscard];
                 newLog.push({message: `CPUフォールバック: ${cardToDiscard.cardName} を捨てました。`, source: 'CPU', timestamp: Date.now()});
             } else {
@@ -3144,10 +3145,10 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
     ? getCCardTargetCandidates(pendingTargetCCard, gameState, 'PLAYER')
     : [];
   const playerCCardTargetableNumbers = new Set(
-    pendingTargetMode === 'OWN_M' ? cCardTargetCandidates.map(card => card.cardNumber) : [],
+    pendingTargetMode === 'OWN_M' ? cCardTargetCandidates.map(getCardInstanceId) : [],
   );
   const cpuCCardTargetableNumbers = new Set(
-    pendingTargetMode && pendingTargetMode !== 'OWN_M' ? cCardTargetCandidates.map(card => card.cardNumber) : [],
+    pendingTargetMode && pendingTargetMode !== 'OWN_M' ? cCardTargetCandidates.map(getCardInstanceId) : [],
   );
   const cCardTargetInstruction = getCCardTargetInstruction(pendingTargetCCard);
   const handleTargetCard = (targetCard: Card) => {

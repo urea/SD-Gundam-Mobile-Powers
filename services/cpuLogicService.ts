@@ -1,6 +1,7 @@
 
 import { Card, GameState, CPUAction } from '../types';
 import { canPlayCCard } from '../utils/gameRules';
+import { getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 
 // Helper function to simulate thinking time (UX only)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -41,7 +42,7 @@ export const getCPUFormationAction = async (gameState: GameState): Promise<CPUAc
       });
       const cardToPlay = mCardsInHand[0];
       reasoning = `Rule-based: Play highest point M-card (${cardToPlay.cardNameOmm || cardToPlay.cardName}) to squad.`;
-      return { action: 'PLAY_M_CARD', cardId: cardToPlay.cardNumber, reasoning };
+      return { action: 'PLAY_M_CARD', cardId: getCardInstanceId(cardToPlay), reasoning };
     }
   }
 
@@ -72,11 +73,11 @@ export const getCPUFormationAction = async (gameState: GameState): Promise<CPUAc
     }
 
     if (cardToDiscard) {
-      return { action: 'DISCARD_TO_DEFEAT', cardId: cardToDiscard.cardNumber, reasoning };
+      return { action: 'DISCARD_TO_DEFEAT', cardId: getCardInstanceId(cardToDiscard), reasoning };
     } else if (cpuState.hand.length > 0) { // Should only happen if hand has only M-cards and all are high value (or only one M card left)
         cardToDiscard = cpuState.hand.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber))[0];
         reasoning = `Rule-based: Discarding first available card (${cardToDiscard.cardNameOmm || cardToDiscard.cardName}) as a last resort.`;
-        return { action: 'DISCARD_TO_DEFEAT', cardId: cardToDiscard.cardNumber, reasoning };
+        return { action: 'DISCARD_TO_DEFEAT', cardId: getCardInstanceId(cardToDiscard), reasoning };
     }
   }
 
@@ -137,12 +138,12 @@ export const getCPUTerrainSelectionAction = async (gameState: GameState): Promis
 
   if (bestCard) {
     reasoning += `Selected ${bestCard.cardNameOmm || bestCard.cardName} (Score: ${maxScore.toFixed(1)}) to optimize deployment.`;
-    return { action: 'SELECT_TERRAIN', cardId: bestCard.cardNumber, reasoning };
+    return { action: 'SELECT_TERRAIN', cardId: getCardInstanceId(bestCard), reasoning };
   } else {
     // Fallback: if no card could be evaluated (e.g. all cards have no battlefieldTerrain), pick first card.
     const fallbackCard = cpuState.hand[0];
     reasoning += "No suitable terrain card found based on heuristics, picking first available card.";
-    return { action: 'SELECT_TERRAIN', cardId: fallbackCard.cardNumber, reasoning };
+    return { action: 'SELECT_TERRAIN', cardId: getCardInstanceId(fallbackCard), reasoning };
   }
 };
 
@@ -174,29 +175,29 @@ export const getCPUCounterSupportAction = async (gameState: GameState): Promise<
   const gatoCard = playableCCards.find(c => c.cardNumber.startsWith('C-005'));
   if (gatoCard && (cpuState.combatPoints <= playerState.combatPoints + 5)) {
     reasoning += `Play ${gatoCard.cardNameOmm || gatoCard.cardName} to boost points.`;
-    return { action: 'PLAY_C_CARD', cardId: gatoCard.cardNumber, reasoning };
+    return { action: 'PLAY_C_CARD', cardId: getCardInstanceId(gatoCard), reasoning };
   }
 
   const minovskyCard = playableCCards.find(c => c.cardNumber.startsWith('C-011'));
   if (minovskyCard && playerState.battlefield.filter(c => c.type === 'M').length > 0 && (cpuState.combatPoints <= playerState.combatPoints + 5)) {
      reasoning += `Play ${minovskyCard.cardNameOmm || minovskyCard.cardName} to potentially reduce opponent's points.`;
-    return { action: 'PLAY_C_CARD', cardId: minovskyCard.cardNumber, reasoning };
+    return { action: 'PLAY_C_CARD', cardId: getCardInstanceId(minovskyCard), reasoning };
   }
   
   const chobhamCard = playableCCards.find(c => c.cardNumber.startsWith('C-012'));
   if (chobhamCard && cpuState.battlefield.filter(c => c.type === 'M').length > 0 && (cpuState.combatPoints <= playerState.combatPoints + 3)){
     reasoning += `Play ${chobhamCard.cardNameOmm || chobhamCard.cardName} to return an M-card to squad.`;
-    return { action: 'PLAY_C_CARD', cardId: chobhamCard.cardNumber, reasoning };
+    return { action: 'PLAY_C_CARD', cardId: getCardInstanceId(chobhamCard), reasoning };
   }
 
   const priorityCard = byPriority(playableCCards);
   if (priorityCard && cpuState.combatPoints <= playerState.combatPoints + 4) {
     reasoning += `Play ${priorityCard.cardNameOmm || priorityCard.cardName} as the best available implemented C-card.`;
-    return { action: 'PLAY_C_CARD', cardId: priorityCard.cardNumber, reasoning };
+    return { action: 'PLAY_C_CARD', cardId: getCardInstanceId(priorityCard), reasoning };
   }
 
   let cardToDiscard: Card | undefined;
-  const unplayableCCards = cpuState.hand.filter(c => c.type === 'C' && !playableCCards.find(pc => pc.cardNumber === c.cardNumber));
+  const unplayableCCards = cpuState.hand.filter(c => c.type === 'C' && !playableCCards.find(pc => isSameCardInstance(pc, c)));
   if (unplayableCCards.length > 0) {
     cardToDiscard = unplayableCCards.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber))[0];
     reasoning += `Discard unplayable C-card (${cardToDiscard.cardNameOmm || cardToDiscard.cardName}) to keep hand at seven.`;
@@ -215,7 +216,7 @@ export const getCPUCounterSupportAction = async (gameState: GameState): Promise<
   }
 
   if (cardToDiscard) {
-    return { action: 'DISCARD_FROM_HAND', cardId: cardToDiscard.cardNumber, reasoning };
+    return { action: 'DISCARD_FROM_HAND', cardId: getCardInstanceId(cardToDiscard), reasoning };
   }
 
   reasoning += "No card in hand to discard.";

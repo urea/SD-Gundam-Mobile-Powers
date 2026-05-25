@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, PlayerType } from '../../types';
 import { isKiraCard } from '../../utils/gameRules';
+import { getCardInstanceId, isSameCardInstance } from '../../utils/cardIdentity';
 import { GameCard } from './GameCard';
 
 interface GameOverModalProps {
@@ -141,14 +142,14 @@ export const CardCollectionModal: React.FC<CardCollectionModalProps> = ({
             <div className="flex flex-wrap gap-3 justify-center">
               {cards.map((card, index) => (
                 <GameCard
-                  key={`${keyPrefix}-${card.cardNumber}-${index}`}
+                  key={`${keyPrefix}-${getCardInstanceId(card)}-${index}`}
                   card={card}
                   isPlayerCard={isPlayerCard}
                   location={location}
                   onClick={() => onSelectCard(card)}
-                  isSelected={selectedCard?.cardNumber === card.cardNumber && selectedCard?.type === card.type}
+                  isSelected={isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
                   isDisabled={false}
-                  uniqueKey={`${keyPrefix}-${card.cardNumber}-${index}`}
+                  uniqueKey={`${keyPrefix}-${getCardInstanceId(card)}-${index}`}
                 />
               ))}
             </div>

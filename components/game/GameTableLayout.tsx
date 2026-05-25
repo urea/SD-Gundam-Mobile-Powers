@@ -1,6 +1,7 @@
 import React from 'react';
 import { BattleSummary, Card, CombatSideSummary, GamePhase, LogEntry, PlayedCCardSummary, PlayerState, PlayerType } from '../../types';
 import { isKiraCard } from '../../utils/gameRules';
+import { getCardInstanceId, isSameCardInstance } from '../../utils/cardIdentity';
 import { GameCard } from './GameCard';
 
 interface GameTableLayoutProps {
@@ -175,7 +176,7 @@ const BattleSummarySide: React.FC<{
     </div>
     <div className="game-battle-summary-cards">
       {summary.cards.slice(0, 3).map(card => (
-        <div className="game-battle-summary-card" key={card.cardNumber}>
+        <div className="game-battle-summary-card" key={getCardInstanceId(card.sourceCard)}>
           <button
             className="game-battle-card-name"
             type="button"
@@ -230,7 +231,7 @@ const FieldCounterCards: React.FC<{
               <button
                 aria-label={`${label}が使用したCカード ${card.name} の画像を表示`}
                 className="game-counter-card"
-                key={`${owner}-${card.cardNumber}-${index}`}
+                key={`${owner}-${getCardInstanceId(card.sourceCard)}-${index}`}
                 title={card.effect ? `${card.name}: ${card.effect}` : card.name}
                 type="button"
                 onBlur={onPreviewEnd}
@@ -325,7 +326,7 @@ const BattleCounterCards: React.FC<{
               <button
                 aria-label={`${label}が使用したCカード ${card.name} の画像を表示`}
                 className="game-battle-counter-card"
-                key={`${owner}-${card.cardNumber}`}
+                key={`${owner}-${getCardInstanceId(card.sourceCard)}`}
                 title={card.effect ? `${card.name}: ${card.effect}` : card.name}
                 type="button"
                 onBlur={onPreviewEnd}
@@ -375,7 +376,7 @@ const BattleMiniCards: React.FC<{
         <button
           aria-label={`${owner === 'PLAYER' ? 'PLAYER' : 'CPU'} ${card.name} のカード画像を表示${isKira ? ' キラカード' : ''}`}
           className={`game-battle-mini-card ${isKira ? 'kira-border-animated' : ''}`}
-          key={`${owner}-${card.cardNumber}`}
+          key={`${owner}-${getCardInstanceId(card.sourceCard)}`}
           title={card.name}
           type="button"
           onBlur={onPreviewEnd}
@@ -566,26 +567,26 @@ const FieldLane: React.FC<FieldLaneProps> = ({
         <span className="game-lane-badge game-lane-badge-front">{frontLabel}</span>
         <div className="game-lane-cards" aria-label={`${owner} cards`}>
           {orderedFieldCards.map(({ card, idx, location }) => {
-            const isTargetable = targetableCardNumbers?.has(card.cardNumber) ?? false;
+            const isTargetable = targetableCardNumbers?.has(getCardInstanceId(card)) ?? false;
             const isFaceDown = isCPU && location === 'squad';
             const isDestroyed = !!card.isDestroyed;
             return (
               <div
                 className={`game-field-card game-field-card-${location} ${isTargetable && !isFaceDown && !isDestroyed ? 'game-field-card-targetable' : ''}`}
-                key={`${owner.toLowerCase()}-${location}-${card.cardNumber}-${idx}`}
+                key={`${owner.toLowerCase()}-${location}-${getCardInstanceId(card)}-${idx}`}
               >
                 <GameCard
                   card={card}
                   isPlayerCard={!isCPU}
                   isDisabled={isCardDisabled}
                   isFaceDown={isFaceDown}
-                  isSelected={!isFaceDown && !isDestroyed && selectedCard?.cardNumber === card.cardNumber && selectedCard?.type === card.type}
+                  isSelected={!isFaceDown && !isDestroyed && isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
                   isTargetable={!isFaceDown && !isDestroyed && isTargetable}
                   location={location}
                   onClick={isFaceDown || isDestroyed ? undefined : isTargetable ? onTargetCard : onSelectCard}
                   onPreviewEnd={onPreviewEnd}
                   onPreviewStart={onPreviewStart}
-                  uniqueKey={`${owner.toLowerCase()}-${location}-${card.cardNumber}-${idx}`}
+                  uniqueKey={`${owner.toLowerCase()}-${location}-${getCardInstanceId(card)}-${idx}`}
                 />
               </div>
             );
@@ -661,16 +662,16 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     phase === 'FORMATION_CPU_PLACE' ||
     phase === 'COUNTER_SUPPORT_CPU_PLAY_C' ||
     phase === 'DEPLOYMENT_CPU_TERRAIN';
-  const selectedImageKey = selectedCard ? `table-selected-${selectedCard.cardNumber}` : '';
+  const selectedImageKey = selectedCard ? `table-selected-${getCardInstanceId(selectedCard)}` : '';
   const canOpenSelectedImage = !!selectedCard?.imageUrl && !imageLoadErrors[selectedImageKey];
   const isSelectingCCardTarget = !!pendingTargetCCard && !!cCardTargetInstruction;
   const playerLaneAttentionKey = [
-    player.squad.map(card => card.cardNumber).join(','),
-    player.battlefield.map(card => card.cardNumber).join(','),
+    player.squad.map(getCardInstanceId).join(','),
+    player.battlefield.map(getCardInstanceId).join(','),
   ].join('|');
   const cpuLaneAttentionKey = [
-    cpu.squad.map(card => card.cardNumber).join(','),
-    cpu.battlefield.map(card => card.cardNumber).join(','),
+    cpu.squad.map(getCardInstanceId).join(','),
+    cpu.battlefield.map(getCardInstanceId).join(','),
   ].join('|');
   const hasRecentCombo = gameLog.slice(-4).some(logEntry => logEntry.message.includes('成立'));
   const shouldShowFieldCounterCards = phase.startsWith('COUNTER_SUPPORT') || phase.startsWith('COMBAT');
@@ -802,7 +803,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
 
         <div
           className="game-terrain-node game-attention-flash"
-          key={`terrain-${currentTerrainCard?.cardNumber || 'none'}-${battlefieldTerrainAttribute || 'none'}`}
+          key={`terrain-${currentTerrainCard ? getCardInstanceId(currentTerrainCard) : 'none'}-${battlefieldTerrainAttribute || 'none'}`}
         >
           {isVisualizingUnilateralDeployment && unilateralDeploymentWinner ? (
             <span className={`game-unilateral-text ${unilateralDeploymentWinner === 'PLAYER' ? 'text-sky-500' : 'text-red-500'}`}>
@@ -992,9 +993,9 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               card={card}
               isDisabled={!isPlayerTurnInteractive || isVisualizingCombat || isVisualizingUnilateralDeployment || !!winner}
               isPlayerCard
-              isSelected={selectedCard?.cardNumber === card.cardNumber && selectedCard?.type === card.type}
+              isSelected={isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
               isDraggable={canDragHandCard}
-              key={`player-hand-${card.cardNumber}-${idx}`}
+              key={`player-hand-${getCardInstanceId(card)}-${idx}`}
               location="hand"
               onClick={onSelectCard}
               onDragEnd={() => setDraggedCard(null)}
@@ -1002,7 +1003,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               onPointerDragStart={setDraggedCard}
               onPreviewEnd={() => setPreviewCard(null)}
               onPreviewStart={setPreviewCard}
-              uniqueKey={`player-hand-${card.cardNumber}-${idx}`}
+              uniqueKey={`player-hand-${getCardInstanceId(card)}-${idx}`}
             />
           ))}
         </div>

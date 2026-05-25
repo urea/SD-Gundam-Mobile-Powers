@@ -1,4 +1,5 @@
 import { Card, Combo, GamePhase, GameState, LogEntry, PlayerState, PlayerType } from '../types';
+import { getCardInstanceId, isSameCardInstance } from './cardIdentity';
 
 export const initialPlayerState = (): PlayerState => ({
   deck: [],
@@ -190,7 +191,7 @@ export const applyCCardEffect = (
     }
     const opponent = getOpponent();
     const nextBattlefield = opponent.battlefield.map(card =>
-      card.cardNumber === target.cardNumber ? { ...card, isDestroyed: true } : card,
+      isSameCardInstance(card, target) ? { ...card, isDestroyed: true } : card,
     );
     const nextOpponent = setBattlefieldWithPowerDelta(
       opponent,
@@ -245,7 +246,7 @@ export const applyCCardEffect = (
       return;
     }
     const actor = getActor();
-    const nextBattlefield = actor.battlefield.filter(card => card.cardNumber !== target.cardNumber);
+    const nextBattlefield = actor.battlefield.filter(card => !isSameCardInstance(card, target));
     const squadCard = { ...target, isDestroyed: undefined, isTapped: undefined };
     const nextActor = setBattlefieldWithPowerDelta(
       { ...actor, squad: [...actor.squad, squadCard] },
@@ -262,9 +263,9 @@ export const applyCCardEffect = (
       logMessages.push({ message: '相手最前線にNT専用機以外のMカードがないため効果なし。', source: byPlayerType, timestamp: Date.now() });
       return;
     }
-    const eligibleIds = new Set(eligible.map(card => card.cardNumber));
+    const eligibleIds = new Set(eligible.map(getCardInstanceId));
     const nextBattlefield = opponent.battlefield.map(card =>
-      eligibleIds.has(card.cardNumber) ? { ...card, points: '0' } : card,
+      eligibleIds.has(getCardInstanceId(card)) ? { ...card, points: '0' } : card,
     );
     setOpponent(setBattlefieldWithPowerDelta(opponent, nextBattlefield, opponentOwnerName));
     logMessages.push({ message: `相手最前線のNT専用機以外 ${eligible.length}枚のポイントを0にしました。`, source: byPlayerType, timestamp: Date.now() });
@@ -277,8 +278,8 @@ export const applyCCardEffect = (
       logMessages.push({ message: `${actorName}側に${terrainToAdd}を追加しましたが、新たに出撃できる待機MSはありません。`, source: byPlayerType, timestamp: Date.now() });
       return;
     }
-    const movingIds = new Set(movingCards.map(card => card.cardNumber));
-    const nextSquad = actor.squad.filter(card => !movingIds.has(card.cardNumber));
+    const movingIds = new Set(movingCards.map(getCardInstanceId));
+    const nextSquad = actor.squad.filter(card => !movingIds.has(getCardInstanceId(card)));
     const nextActor = setBattlefieldWithPowerDelta(
       { ...actor, squad: nextSquad },
       [...actor.battlefield, ...movingCards],
@@ -291,7 +292,7 @@ export const applyCCardEffect = (
   const ownM = getActor().battlefield.filter(isActiveMCard);
   const opponentM = getOpponent().battlefield.filter(isActiveMCard);
   const explicitTargets = getCCardTargetCandidates(playedCard, currentGameState, byPlayerType);
-  const selectedTarget = targetCard && explicitTargets.some(candidate => candidate.cardNumber === targetCard.cardNumber)
+  const selectedTarget = targetCard && explicitTargets.some(candidate => isSameCardInstance(candidate, targetCard))
     ? targetCard
     : undefined;
 

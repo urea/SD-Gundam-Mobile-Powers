@@ -177,8 +177,7 @@ export const parseMobilePowersTsvData = (tsv: string): Card[] => {
     return index;
   };
 
-  // Note: The Unique_Key from TSV is not stored in the Card object by default
-  // const h_uniqueKey = getHeaderIndex('Unique_Key'); 
+  const h_uniqueKey = getHeaderIndex('Unique_Key');
   const h_cardNumber = getHeaderIndex('Card_Number');
   const h_cardName = getHeaderIndex('Card_Name');
   const h_cardNameOmm = getHeaderIndex('Card_Name_Omm');
@@ -201,9 +200,15 @@ export const parseMobilePowersTsvData = (tsv: string): Card[] => {
         continue;
     }
 
+    const cardNumber = values[h_cardNumber] || '';
+    const rawUniqueKey = h_uniqueKey !== -1 ? values[h_uniqueKey] : '';
+    const uniqueKey = rawUniqueKey && /^[A-Z]+-\d{2,4}(?:-\d+)?$/.test(rawUniqueKey)
+      ? rawUniqueKey
+      : cardNumber;
+
     const card: Card = {
-      // uniqueKey: (h_uniqueKey !== -1 && values[h_uniqueKey]) ? values[h_uniqueKey] : undefined, // If Card type was updated
-      cardNumber: values[h_cardNumber] || '',
+      uniqueKey,
+      cardNumber,
       cardName: values[h_cardName] || '',
       cardNameOmm: values[h_cardNameOmm] || '',
       type: values[h_type] || '',

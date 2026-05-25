@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '../../types';
 import { isKiraCard } from '../../utils/gameRules';
+import { getCardInstanceId } from '../../utils/cardIdentity';
 import { useGamePageContext } from './GamePageContext';
 
 interface GameCardProps {
@@ -91,7 +92,7 @@ Var: ${card.gameVar || '-'}`;
       onDragEnd={canDrag ? onDragEnd : undefined}
       onDragStart={canDrag ? (event) => {
         event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', card.cardNumber);
+        event.dataTransfer.setData('text/plain', getCardInstanceId(card));
         onDragStart?.(card, event);
       } : undefined}
       onPointerDown={canDrag ? (event) => {

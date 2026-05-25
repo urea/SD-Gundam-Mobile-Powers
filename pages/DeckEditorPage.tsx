@@ -4,6 +4,7 @@ import { Card, SavedDeck } from '../types';
 import { parseMobilePowersTsvData, tsvData as allCardsTsvData } from '../components/RulePage';
 import { CardDisplayTable, DisplayCard, SortableCardKey } from '../components/CardDisplayTable';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
+import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { getSavedDecks, saveDeck, deleteDeck } from '../utils/localStorageUtils';
 import { cpuDeckPresets, PredefinedDeck } from '../data/cpuDecks'; // Import predefined decks
 
@@ -13,14 +14,6 @@ interface DeckEditorPageProps {
 
 const MIN_DECK_SIZE = 55;
 const MAX_DECK_SIZE = 100;
-
-const getBaseCardNumberFromInstance = (instanceCardNumber: string): string => {
-  const parts = instanceCardNumber.split('-');
-  if ((parts[0] === 'M' || parts[0] === 'C') && parts.length >= 3) {
-    return `${parts[0]}-${parts[1]}`;
-  }
-  return instanceCardNumber;
-};
 
 const isKiraCard = (card: Card): boolean => {
   return card.tags.includes("キラ");
@@ -70,7 +63,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       const instancePool = createFullCardInstancePool(gamePlayableBaseCards);
       setFullCardInstancePool(instancePool);
 
-      const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(c => c.cardNumber))).sort();
+      const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
       const bToS = new Map<string, number>();
       const sToB = new Map<number, string>();
       sortedBaseCardNumbers.forEach((num, idx) => {
@@ -153,8 +146,8 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
         if (typeof valA === 'string' && typeof valB === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
         if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
         if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
-        if (a.cardNumber < b.cardNumber) return -1;
-        if (a.cardNumber > b.cardNumber) return 1;
+        const identityDiff = compareCardsByIdentity(a, b);
+        if (identityDiff !== 0) return identityDiff;
         return 0;
       });
     }
@@ -180,17 +173,17 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       setDeckCodeMessage({ type: 'error', text: `デッキは${MAX_DECK_SIZE}枚までです。`});
       return;
     }
-    const baseIdOfCardToAdd = baseCardToAdd.cardNumber;
-    const instancesInDeck = currentDeck.filter(c => getBaseCardNumberFromInstance(c.cardNumber) === baseIdOfCardToAdd);
+    const baseIdOfCardToAdd = getCardBaseId(baseCardToAdd);
+    const instancesInDeck = currentDeck.filter(c => getCardBaseId(c) === baseIdOfCardToAdd);
     if (instancesInDeck.length >= 3) {
       setDeckCodeMessage({ type: 'error', text: `${baseCardToAdd.cardName} は既に3枚デッキに入っています。` });
       return;
     }
     const nextInstanceNumber = instancesInDeck.length + 1;
-    const targetInstanceCardNumber = `${baseIdOfCardToAdd}-${nextInstanceNumber}`;
-    const instanceToAdd = fullCardInstancePool.find(inst => inst.cardNumber === targetInstanceCardNumber);
+    const targetInstanceCardNumber = `${baseIdOfCardToAdd}#${nextInstanceNumber}`;
+    const instanceToAdd = fullCardInstancePool.find(inst => getCardInstanceId(inst) === targetInstanceCardNumber);
     if (instanceToAdd) {
-      setCurrentDeck(prev => [...prev, instanceToAdd].sort((a,b) => a.cardNumber.localeCompare(b.cardNumber)));
+      setCurrentDeck(prev => [...prev, instanceToAdd].sort(compareCardsByIdentity));
       setDeckCodeMessage(null);
     } else {
       setDeckCodeMessage({ type: 'error', text: `${baseCardToAdd.cardName} のインスタンス ${targetInstanceCardNumber} がプールに見つかりません。` });
@@ -199,20 +192,20 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   };
 
   const handleDecrementFromDeck = (baseCardToRemove: Card) => {
-    const baseIdToRemove = baseCardToRemove.cardNumber;
-    const instancesInDeck = currentDeck.filter(c => getBaseCardNumberFromInstance(c.cardNumber) === baseIdToRemove);
+    const baseIdToRemove = getCardBaseId(baseCardToRemove);
+    const instancesInDeck = currentDeck.filter(c => getCardBaseId(c) === baseIdToRemove);
     if (instancesInDeck.length === 0) {
       setDeckCodeMessage({ type: 'error', text: `${baseCardToRemove.cardName} はデッキにありません。` });
       return;
     }
     const instanceToRemove = instancesInDeck.sort((a,b) => {
-        const numA = parseInt(a.cardNumber.split('-')[2] || '0');
-        const numB = parseInt(b.cardNumber.split('-')[2] || '0');
+        const numA = parseInt((a.instanceId || '').split('#')[1] || '0');
+        const numB = parseInt((b.instanceId || '').split('#')[1] || '0');
         return numB - numA; 
     })[0];
 
     if (instanceToRemove) {
-        setCurrentDeck(prev => prev.filter(c => c.cardNumber !== instanceToRemove.cardNumber));
+        setCurrentDeck(prev => prev.filter(c => !isSameCardInstance(c, instanceToRemove)));
         setDeckCodeMessage(null);
     } else {
         console.error(`[DeckEditor] Could not determine which instance of ${baseIdToRemove} to remove.`);
@@ -220,7 +213,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   };
 
   const handleRemoveSpecificInstance = (instanceCardToRemove: Card) => {
-    setCurrentDeck(prevDeck => prevDeck.filter(card => card.cardNumber !== instanceCardToRemove.cardNumber));
+    setCurrentDeck(prevDeck => prevDeck.filter(card => !isSameCardInstance(card, instanceCardToRemove)));
     setDeckCodeMessage({ type: 'success', text: `${instanceCardToRemove.cardNameOmm || instanceCardToRemove.cardName} (${instanceCardToRemove.cardNumber}) をデッキから削除しました。` });
   };
 
@@ -243,7 +236,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     }
     const parsedDeck = parseCompressedDeckCode(deckCodeInput.trim(), shortIdToBaseCardMap, fullCardInstancePool);
     if (parsedDeck) {
-      setCurrentDeck(parsedDeck.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber)));
+      setCurrentDeck(parsedDeck.sort(compareCardsByIdentity));
       setDeckCodeMessage({ type: 'success', text: 'デッキコードを正常に読み込みました。' });
       setDeckCodeInput('');
       setGeneratedDeckCodeOutput(deckCodeInput.trim());
@@ -307,7 +300,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   const handleLoadUserDeck = (savedDeck: SavedDeck) => {
     const parsedDeck = parseCompressedDeckCode(savedDeck.code, shortIdToBaseCardMap, fullCardInstancePool);
     if (parsedDeck) {
-      setCurrentDeck(parsedDeck.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber)));
+      setCurrentDeck(parsedDeck.sort(compareCardsByIdentity));
       setCurrentDeckName(savedDeck.name);
       setEditingDeckId(savedDeck.id);
       setGeneratedDeckCodeOutput(savedDeck.code);
@@ -360,7 +353,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     if (predefinedDeck) {
         const parsedDeck = parseCompressedDeckCode(predefinedDeck.code, shortIdToBaseCardMap, fullCardInstancePool);
         if (parsedDeck) {
-            setCurrentDeck(parsedDeck.sort((a,b) => a.cardNumber.localeCompare(b.cardNumber)));
+            setCurrentDeck(parsedDeck.sort(compareCardsByIdentity));
             setCurrentDeckName(predefinedDeck.name + " (コピー)"); // Indicate it's a copy
             setEditingDeckId(null); // Not editing a user's saved deck
             setGeneratedDeckCodeOutput(predefinedDeck.code);
@@ -378,8 +371,8 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   const cCardCount = currentDeck.filter(c => c.type === 'C').length;
 
   const renderDeckCardOperations = (cardFromTable: DisplayCard) => {
-    const baseCardId = cardFromTable.cardNumber;
-    const instancesInDeckCount = currentDeck.filter(c => getBaseCardNumberFromInstance(c.cardNumber) === baseCardId).length;
+    const baseCardId = getCardBaseId(cardFromTable);
+    const instancesInDeckCount = currentDeck.filter(c => getCardBaseId(c) === baseCardId).length;
     const deckIsAtMaxSize = totalCount >= MAX_DECK_SIZE;
     const canIncrement = instancesInDeckCount < 3 && !deckIsAtMaxSize;
     const canDecrement = instancesInDeckCount > 0;
@@ -503,7 +496,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
             ) : (
               <ul className="space-y-0.5">
                 {currentDeck.map((card, index) => (
-                  <li key={`${card.cardNumber}-${index}`} className="flex justify-between items-center p-1 bg-white rounded shadow-sm text-[11px] hover:bg-slate-100">
+                  <li key={`${getCardInstanceId(card)}-${index}`} className="flex justify-between items-center p-1 bg-white rounded shadow-sm text-[11px] hover:bg-slate-100">
                     <span className="truncate" title={`${card.cardName} (${card.cardNumber})`}>
                       {card.cardNameOmm || card.cardName} <span className="text-slate-400">({card.cardNumber})</span>
                       {isKiraCard(card) && <span className="ml-1 text-xs font-bold" style={{background: 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>★</span>}

@@ -1,11 +1,12 @@
 
 import { Card } from '../types';
+import { getCardBaseId, getCardInstanceId } from './cardIdentity';
 
 /**
  * Creates a pool of card instances. For Mobile Powers, each unique base card
- * (e.g., M-001) is typically considered to have 3 copies available for deck building.
- * This function generates these instances, each with a unique ID (e.g., "M-001-1", "M-001-2", "M-001-3").
- * Deck codes will refer to these instance-specific cardNumbers.
+ * (e.g., M-001 or M-046-2) is typically considered to have 3 copies available for deck building.
+ * This function generates these instances, each with a unique instanceId (e.g., "M-001#1", "M-001#2").
+ * Deck codes refer to base-card identities, not display card numbers.
  * @param baseCards - An array of base cards (typically from parsing the main TSV data).
  * @returns An array of card instances, with each base card appearing 3 times with unique IDs.
  */
@@ -14,31 +15,23 @@ export const createFullCardInstancePool = (baseCards: Card[]): Card[] => {
   const gamePlayableBaseCards = baseCards.filter(card => card.type === 'M' || card.type === 'C');
 
   gamePlayableBaseCards.forEach(baseCard => {
+    const baseId = getCardBaseId(baseCard);
     for (let i = 0; i < 3; i++) {
       pool.push({
         ...baseCard,
-        cardNumber: `${baseCard.cardNumber}-${i + 1}`
+        instanceId: `${baseId}#${i + 1}`,
       });
     }
   });
   return pool;
 };
 
-const getBaseCardNumberFromInstance = (instanceCardNumber: string): string => {
-  const parts = instanceCardNumber.split('-');
-  if (parts.length >= 3) { // e.g., M-001-1 -> M-001
-    return `${parts[0]}-${parts[1]}`;
-  }
-  console.warn(`Could not get base card number from instance: ${instanceCardNumber}`);
-  return instanceCardNumber; // Fallback, though should not happen for valid instances
-};
-
 /**
  * Generates a compressed deck code string from an array of cards.
- * Uses short numeric IDs for base cards and counts for multiples.
+ * Uses short numeric IDs for base-card identities and counts for multiples.
  * Format: shortId1:count1_shortId2_shortId3:count3 (count of 1 is omitted)
- * @param deck - An array of Card objects (instances with e.g., "M-001-1").
- * @param baseCardToShortIdMap - Map from base card number (e.g., "M-001") to short ID (e.g., 0).
+ * @param deck - An array of Card objects with instanceId values.
+ * @param baseCardToShortIdMap - Map from base card identity (e.g., "M-001") to short ID (e.g., 0).
  * @returns A compressed deck code string.
  */
 export const generateCompressedDeckCode = (deck: Card[], baseCardToShortIdMap: Map<string, number>): string => {
@@ -46,7 +39,7 @@ export const generateCompressedDeckCode = (deck: Card[], baseCardToShortIdMap: M
 
   const baseCardCounts: Map<string, number> = new Map();
   deck.forEach(cardInstance => {
-    const baseNum = getBaseCardNumberFromInstance(cardInstance.cardNumber);
+    const baseNum = getCardBaseId(cardInstance);
     baseCardCounts.set(baseNum, (baseCardCounts.get(baseNum) || 0) + 1);
   });
 
@@ -72,8 +65,8 @@ export const generateCompressedDeckCode = (deck: Card[], baseCardToShortIdMap: M
 /**
  * Parses a compressed deck code string and reconstructs the deck.
  * @param code - The compressed deck code string (e.g., "0:2_1_57:3").
- * @param shortIdToBaseCardMap - Map from short ID (e.g., 0) to base card number (e.g., "M-001").
- * @param fullCardInstancePool - Array of all possible card instances (e.g., "M-001-1", "M-001-2", ...).
+ * @param shortIdToBaseCardMap - Map from short ID (e.g., 0) to base card identity (e.g., "M-001").
+ * @param fullCardInstancePool - Array of all possible card instances (e.g., instanceId "M-001#1", "M-001#2", ...).
  * @returns An array of Card objects for the deck, or null if parsing fails.
  */
 export const parseCompressedDeckCode = (
@@ -113,8 +106,8 @@ export const parseCompressedDeckCode = (
           return null;
       }
       
-      const instanceCardNumber = `${baseCardNumber}-${currentInstanceSuffix}`;
-      const cardInstance = fullCardInstancePool.find(c => c.cardNumber === instanceCardNumber);
+      const instanceCardNumber = `${baseCardNumber}#${currentInstanceSuffix}`;
+      const cardInstance = fullCardInstancePool.find(c => getCardInstanceId(c) === instanceCardNumber);
 
       if (!cardInstance) {
         console.error(`Deck code parsing error: Instance "${instanceCardNumber}" for base card ${baseCardNumber} (short ID ${shortId}) not found in pool.`);
