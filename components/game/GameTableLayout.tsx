@@ -409,15 +409,17 @@ const BattleMiniCards: React.FC<{
 const BattleAnimation: React.FC<{
   battleSummary?: BattleSummary | null;
   combatResultVisual: PlayerType | 'DRAW' | null;
+  headerTitle?: string;
   playerPoints: number;
   cpuPoints: number;
   onPreviewEnd: () => void;
   onPreviewStart: (card: Card) => void;
-  onConfirm: () => void;
+  onConfirm?: () => void;
   terrainAttribute: string | null;
 }> = ({
   battleSummary,
   combatResultVisual,
+  headerTitle = '戦闘結果',
   playerPoints,
   cpuPoints,
   onPreviewEnd,
@@ -442,11 +444,15 @@ const BattleAnimation: React.FC<{
     <aside className="game-battle-animation" aria-label="戦闘演出">
       <div className="game-battle-panel">
         <div className={`game-battle-header ${resultToneClass}`}>
-          <span>戦闘結果</span>
+          <span>{headerTitle}</span>
           <strong>{resultText}</strong>
-          <button className="game-battle-confirm-button" type="button" onClick={onConfirm}>
-            戦闘を確定
-          </button>
+          {onConfirm ? (
+            <button className="game-battle-confirm-button" type="button" onClick={onConfirm}>
+              戦闘を確定
+            </button>
+          ) : (
+            <span className="game-battle-auto-note">自動確定中</span>
+          )}
         </div>
         <div className="game-battle-scoreboard" aria-label={`戦闘ポイント ${resultSummary}`}>
           <div className={`game-battle-score-card game-battle-score-player ${playerWon ? 'game-battle-score-winner' : cpuWon ? 'game-battle-score-loser' : ''}`}>
@@ -674,6 +680,10 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     cpu.battlefield.map(getCardInstanceId).join(','),
   ].join('|');
   const hasRecentCombo = gameLog.slice(-4).some(logEntry => logEntry.message.includes('成立'));
+  const getBattlefieldBaseTotal = (cards: Card[]) =>
+    cards
+      .filter(card => card.type === 'M' && !card.isDestroyed)
+      .reduce((total, card) => total + (parseInt(card.points, 10) || 0), 0);
   const shouldShowFieldCounterCards = phase.startsWith('COUNTER_SUPPORT') || phase.startsWith('COMBAT');
   const fieldPlayedCCards = shouldShowFieldCounterCards
     ? playedCCards
@@ -811,6 +821,23 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
             </span>
           ) : currentTerrainCard ? (
             <>
+              <button
+                aria-label={`${currentTerrainCard.cardName} の画像を確認する`}
+                className="game-terrain-card-thumb"
+                disabled={!currentTerrainCard.imageUrl}
+                onBlur={() => setPreviewCard(null)}
+                onClick={() => currentTerrainCard.imageUrl && onOpenLargeCard(currentTerrainCard)}
+                onFocus={() => setPreviewCard(currentTerrainCard)}
+                onMouseEnter={() => setPreviewCard(currentTerrainCard)}
+                onMouseLeave={() => setPreviewCard(null)}
+                type="button"
+              >
+                {currentTerrainCard.imageUrl ? (
+                  <img alt="" src={currentTerrainCard.imageUrl} />
+                ) : (
+                  <span>{currentTerrainCard.type}</span>
+                )}
+              </button>
               <span className="game-terrain-name" title={currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}>
                 {currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}
               </span>
@@ -1035,6 +1062,18 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           onPreviewEnd={() => setPreviewCard(null)}
           onPreviewStart={setPreviewCard}
           playerPoints={player.combatPoints}
+          terrainAttribute={battlefieldTerrainAttribute}
+        />
+      )}
+      {isVisualizingUnilateralDeployment && (
+        <BattleAnimation
+          battleSummary={battleSummary}
+          combatResultVisual={unilateralDeploymentWinner}
+          cpuPoints={getBattlefieldBaseTotal(cpu.battlefield)}
+          headerTitle="一方的戦闘"
+          onPreviewEnd={() => setPreviewCard(null)}
+          onPreviewStart={setPreviewCard}
+          playerPoints={getBattlefieldBaseTotal(player.battlefield)}
           terrainAttribute={battlefieldTerrainAttribute}
         />
       )}

@@ -5,21 +5,49 @@ const root = process.cwd();
 const sourceManifestPath = path.join(root, 'public', 'assets', 'cards', 'card-image-sources.json');
 const outputDir = path.join(root, 'public', 'assets', 'cards');
 const auditDir = path.join(root, 'local-docs');
+const args = process.argv.slice(2);
+const forceDownload = args.includes('--force');
+const delayArg = args.find((arg) => arg.startsWith('--delay-ms='));
+const delayMs = delayArg ? Number(delayArg.split('=')[1]) : 750;
 
 const readSourceManifest = async () => {
   const raw = await fs.readFile(sourceManifestPath, 'utf8');
   return JSON.parse(raw);
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getExistingFileSize = async (filePath) => {
+  try {
+    const stat = await fs.stat(filePath);
+    return stat.size > 0 ? stat.size : null;
+  } catch {
+    return null;
+  }
+};
+
 const downloadCardImage = async (card) => {
   const outputPath = path.join(outputDir, card.localFile);
-  const response = await fetch(card.remoteUrl);
+  const existingSize = await getExistingFileSize(outputPath);
+  if (!forceDownload && existingSize !== null) {
+    return { bytes: existingSize, outputPath, status: 'cached' };
+  }
+
+  if (!card.remoteUrl) {
+    return { bytes: 0, outputPath, status: 'missing-source' };
+  }
+
+  const response = await fetch(card.remoteUrl, {
+    headers: {
+      'user-agent': 'SD-Gundam-Mobile-Powers local image audit; cached downloads',
+    },
+  });
   if (!response.ok) {
     throw new Error(`${card.cardNumber}: ${response.status} ${response.statusText}`);
   }
   const bytes = new Uint8Array(await response.arrayBuffer());
   await fs.writeFile(outputPath, bytes);
-  return bytes.length;
+  return { bytes: bytes.length, outputPath, status: 'downloaded' };
 };
 
 const escapeHtml = (value) =>
@@ -89,11 +117,13 @@ const main = async () => {
   const manifest = await readSourceManifest();
   const cards = [];
 
-  for (const card of manifest.cards) {
-    const outputPath = path.join(outputDir, card.localFile);
-    const bytes = await downloadCardImage(card);
-    cards.push({ ...card, bytes, status: 'downloaded' });
-    console.log(`downloaded ${card.cardNumber} -> ${path.relative(root, outputPath)}`);
+  for (const [index, card] of manifest.cards.entries()) {
+    const result = await downloadCardImage(card);
+    cards.push({ ...card, bytes: result.bytes, status: result.status });
+    console.log(`${result.status} ${card.cardNumber} -> ${path.relative(root, result.outputPath)}`);
+    if (result.status === 'downloaded' && delayMs > 0 && index < manifest.cards.length - 1) {
+      await sleep(delayMs);
+    }
   }
 
   await fs.writeFile(

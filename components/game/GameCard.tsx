@@ -45,7 +45,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   const showImage = !isFaceDown && card.imageUrl && !hasError;
   const isKira = !isFaceDown && isKiraCard(card);
   const isDestroyed = !isFaceDown && !!card.isDestroyed;
-  const isTapped = !isFaceDown && !!card.isTapped;
+  const isTapped = !!card.isTapped;
   const showTextOverlay = !isFaceDown && (!showImage || location === 'hand' || location === 'deck' || location === 'discardPile');
 
   const cardSizeSpecificClasses = 'game-card-size';
@@ -114,7 +114,7 @@ Var: ${card.gameVar || '-'}`;
                   ${isDestroyed ? 'cursor-help' : isEffectivelyDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
                   ${isKira ? 'kira-border-animated' : ''}`}
       title={cardTitle}
-      aria-label={isFaceDown ? `${location}の伏せられたMカード` : `${location}のカード ${card.cardNameOmm || card.cardName} ${isSelected ? '選択中' : ''} ${isTapped ? '待機中' : ''} ${isKira ? 'キラカード' : ''}`}
+      aria-label={isFaceDown ? `${location}の伏せられたMカード${isTapped ? ' 待機中' : ''}` : `${location}のカード ${card.cardNameOmm || card.cardName} ${isSelected ? '選択中' : ''} ${isTapped ? '待機中' : ''} ${isKira ? 'キラカード' : ''}`}
       aria-pressed={!isFaceDown && isSelected}
     >
       {isFaceDown ? (

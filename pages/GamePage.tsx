@@ -579,6 +579,33 @@ const customScrollbarAndAnimationStyles = `
     padding: 0.25rem 0.45rem;
     text-align: center;
   }
+  .game-terrain-card-thumb {
+    width: 1.85rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 4px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.62rem;
+    font-weight: 900;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+  }
+  .game-terrain-card-thumb:not(:disabled) {
+    cursor: zoom-in;
+  }
+  .game-terrain-card-thumb:disabled {
+    cursor: default;
+    opacity: 0.8;
+  }
+  .game-terrain-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #f8fafc;
+  }
   .game-terrain-name,
   .game-unilateral-text {
     max-width: 100%;
@@ -592,6 +619,12 @@ const customScrollbarAndAnimationStyles = `
   .game-terrain-empty {
     font-size: 0.68rem;
     color: #64748b;
+  }
+  .game-battle-auto-note {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
   }
   .game-center-info-node {
     grid-column: 2 / 5;
@@ -1683,6 +1716,10 @@ const customScrollbarAndAnimationStyles = `
     .game-terrain-node {
       padding: 0.15rem 0.3rem;
     }
+    .game-terrain-card-thumb {
+      width: 1.45rem;
+      height: 1.95rem;
+    }
     .game-center-info-node {
       grid-column: 2 / 5;
       gap: 0.16rem;
@@ -1983,6 +2020,11 @@ const getCCardTargetInstruction = (card: Card | null): string | null => {
 
 const isActiveMCard = (card: Card): boolean => card.type === 'M' && !card.isDestroyed;
 
+const getBattlefieldBaseTotal = (cards: Card[]): number =>
+  cards
+    .filter(isActiveMCard)
+    .reduce((total, card) => total + (parseInt(card.points, 10) || 0), 0);
+
 const clearDestroyedMarker = (card: Card): Card => (
   card.isDestroyed ? { ...card, isDestroyed: undefined } : card
 );
@@ -2091,6 +2133,21 @@ const createBattleSummary = (player: GameState['player'], cpu: GameState['cpu'],
     cCardLogs: getSupportLogSummaries(gameLog),
     tagLogs: [...playerSummary.tagLogs, ...cpuSummary.tagLogs],
     playedCCards: createPlayedCCardSummaries(playedCCards),
+  };
+};
+
+const createUnilateralBattleSummary = (player: GameState['player'], cpu: GameState['cpu']): BattleSummary => {
+  const playerBaseTotal = getBattlefieldBaseTotal(player.battlefield);
+  const cpuBaseTotal = getBattlefieldBaseTotal(cpu.battlefield);
+  const playerSummary = createCombatSideSummary(player.battlefield, playerBaseTotal, 'プレイヤー');
+  const cpuSummary = createCombatSideSummary(cpu.battlefield, cpuBaseTotal, 'CPU');
+
+  return {
+    player: { ...playerSummary, comboTotal: 0, supportDelta: 0, combos: [] },
+    cpu: { ...cpuSummary, comboTotal: 0, supportDelta: 0, combos: [] },
+    cCardLogs: [],
+    tagLogs: [],
+    playedCCards: [],
   };
 };
 
@@ -2750,6 +2807,20 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             case 'FORMATION_CPU_DRAW':
                 setGameState(prev => {
                     if(!prev) return null;
+                    if (prev.cpu.squad.length >= 3) {
+                      const playerDone = prev.player.squad.length >= 3;
+                      const skipLog: LogEntry = {
+                        message: 'CPUの小隊はすでに3枚のため、編成順をスキップします。',
+                        source: 'CPU',
+                        timestamp: Date.now(),
+                      };
+                      return {
+                        ...prev,
+                        phase: playerDone ? 'FORMATION_CHECK_FULL' : 'FORMATION_PLAYER_DRAW',
+                        isPlayerTurnInteractive: !playerDone,
+                        gameLog: [...prev.gameLog, skipLog],
+                      };
+                    }
                     const {newDeck, drawnCards} = drawCards(prev.cpu.deck, 1);
                     if (drawnCards.length === 0) {
                       addLogEntry('CPUのデッキが尽きた！プレイヤーの勝利！', 'SYSTEM');
@@ -3079,16 +3150,17 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         newCpuState.battlefield = [];
                     }
                     
-                    tempLogEntries.push({message: `ターン終了。次のターンは ${prev.turnOrder[0] === 'PLAYER' ? 'CPU' : 'プレイヤー'} が地形選択の先手です。編成フェイズへ。`, source: 'SYSTEM', timestamp: Date.now()});
+                    const nextTurnOrder: [PlayerType, PlayerType] = [prev.turnOrder[1], prev.turnOrder[0]];
+                    const nextActivePlayer = nextTurnOrder[0];
+                    const nextFormationPhase = nextActivePlayer === 'PLAYER' ? 'FORMATION_PLAYER_DRAW' : 'FORMATION_CPU_DRAW';
+                    tempLogEntries.push({message: `ターン終了。次のターンは ${nextActivePlayer === 'PLAYER' ? 'プレイヤー' : 'CPU'} が地形選択の先手です。編成フェイズへ。`, source: 'SYSTEM', timestamp: Date.now()});
 
-
-                    const nextActivePlayer = prev.activePlayer === 'PLAYER' ? 'CPU' : 'PLAYER';
                     return {
                         ...prev,
                         activePlayer: nextActivePlayer, 
-                        turnOrder: prev.activePlayer === prev.turnOrder[0] ? [prev.turnOrder[1], prev.turnOrder[0]] : [prev.turnOrder[0], prev.turnOrder[1]], 
-                        phase: 'FORMATION_PLAYER_DRAW', 
-                        isPlayerTurnInteractive: true, 
+                        turnOrder: nextTurnOrder,
+                        phase: nextFormationPhase,
+                        isPlayerTurnInteractive: nextActivePlayer === 'PLAYER',
                         player: {...newPlayerState, combatPoints: 0},
                         cpu: {...newCpuState, combatPoints: 0},
                         currentTerrainCard: null,
@@ -3106,6 +3178,20 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             case 'FORMATION_PLAYER_DRAW':
                 setGameState(prev => {
                     if (!prev) return null;
+                    if (prev.player.squad.length >= 3) {
+                      const cpuDone = prev.cpu.squad.length >= 3;
+                      const skipLog: LogEntry = {
+                        message: 'プレイヤーの小隊はすでに3枚のため、編成順をスキップします。',
+                        source: 'PLAYER',
+                        timestamp: Date.now(),
+                      };
+                      return {
+                        ...prev,
+                        phase: cpuDone ? 'FORMATION_CHECK_FULL' : 'FORMATION_CPU_DRAW',
+                        isPlayerTurnInteractive: false,
+                        gameLog: [...prev.gameLog, skipLog],
+                      };
+                    }
                     const {newDeck, drawnCards} = drawCards(prev.player.deck, 1);
                     if (drawnCards.length === 0) {
                         addLogEntry('プレイヤーのデッキが尽きた！CPUの勝利！', 'SYSTEM');
@@ -3183,7 +3269,11 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
     phaseInstructionStatusTextClass = 'text-red-700';
   }
 
-  const battleSummary = isVisualizingCombat ? createBattleSummary(player, cpu, gameLog, playedCCards) : null;
+  const battleSummary = isVisualizingCombat
+    ? createBattleSummary(player, cpu, gameLog, playedCCards)
+    : isVisualizingUnilateralDeployment
+      ? createUnilateralBattleSummary(player, cpu)
+      : null;
 
   return (
     <GamePageContext.Provider value={{ handleImageError, imageLoadErrors, setSelectedCard }}>
