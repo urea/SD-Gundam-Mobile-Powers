@@ -501,18 +501,19 @@ const customScrollbarAndAnimationStyles = `
     inset: 0.25rem 0.4rem;
     z-index: 1;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, clamp(5.25rem, 8.9vw, 8.1rem)));
+    justify-content: center;
     justify-items: center;
     align-items: center;
-    gap: 0.45rem;
+    gap: clamp(0.28rem, 0.65vw, 0.55rem);
     overflow: hidden;
     padding: 0.1rem 0.2rem;
   }
   .game-field-slot {
     position: relative;
     min-width: 0;
-    height: min(100%, 12rem);
-    max-width: 100%;
+    width: 100%;
+    height: auto;
     aspect-ratio: 5 / 7;
     display: grid;
     place-items: center;
@@ -1730,8 +1731,12 @@ const customScrollbarAndAnimationStyles = `
       max-height: 3.1rem;
       padding: 0.3rem 0.5rem;
     }
+    .game-lane-cards {
+      grid-template-columns: repeat(4, minmax(0, clamp(4.75rem, 8.35vw, 7rem)));
+    }
     .game-field-slot {
-      height: clamp(6rem, 16vh, 7.5rem);
+      width: 100%;
+      height: auto;
     }
     .game-hand-zone {
       min-height: clamp(9rem, 24vh, 12rem);
@@ -1835,10 +1840,13 @@ const customScrollbarAndAnimationStyles = `
     }
     .game-lane-cards {
       inset: 0.18rem 0.25rem;
+      grid-template-columns: repeat(4, minmax(0, clamp(3.65rem, 7.8vw, 5.2rem)));
+      gap: 0.25rem;
       padding: 0.05rem 0.15rem;
     }
     .game-field-slot {
-      height: min(100%, 6.4rem);
+      width: 100%;
+      height: auto;
     }
     .game-lane-cards .game-field-card {
       width: 100%;
