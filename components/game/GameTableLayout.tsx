@@ -83,6 +83,8 @@ const HiddenHand: React.FC<{ count: number }> = ({ count }) => (
   </div>
 );
 
+const laneBeamIndexes = [1, 2, 3, 4, 5, 6];
+
 const getLaneTerrainTone = (terrainAttribute: string | null | undefined): 'space' | 'sky' | 'land' | 'sea' | null => {
   if (!terrainAttribute) return null;
   if (terrainAttribute.includes('宇')) return 'space';
@@ -229,6 +231,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
     : '';
   const terrainTone = getLaneTerrainTone(battlefieldTerrainAttribute);
   const terrainClass = terrainTone ? `game-lane-terrain-${terrainTone}` : '';
+  const terrainActiveClass = terrainTone ? 'game-lane-terrain-active' : '';
   const squadDropClass = canDropToSquad && !isCPU ? 'game-drop-ready' : '';
   const orderedFieldCards = [
     ...playerState.squad.map((card, idx) => ({
@@ -314,7 +317,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   };
 
   return (
-    <section className={`game-field-lane ${toneClass} ${terrainClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
+    <section className={`game-field-lane ${toneClass} ${terrainClass} ${terrainActiveClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
       <div
         className={`game-lane-surface game-lane-attention ${squadDropClass}`}
         data-game-drop={!isCPU ? 'squad' : undefined}
@@ -322,6 +325,13 @@ const FieldLane: React.FC<FieldLaneProps> = ({
         onDragOver={handleDragOverToSquad}
         onDrop={handleDropToSquad}
       >
+        {terrainTone && (
+          <div className={`game-lane-beams game-lane-beams-${owner.toLowerCase()}`} aria-hidden="true">
+            {laneBeamIndexes.map(index => (
+              <span className={`game-lane-beam game-lane-beam-${index}`} key={`${owner}-beam-${index}`} />
+            ))}
+          </div>
+        )}
         <span className="game-lane-badge game-lane-badge-squad">{squadLabel}</span>
         <span className="game-lane-badge game-lane-badge-front">{frontLabel}</span>
         <div className={`game-lane-score game-lane-score-${owner.toLowerCase()} ${scoreClass}`} aria-label={`${owner} 戦闘ポイント ${playerState.combatPoints}`}>

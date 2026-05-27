@@ -379,6 +379,7 @@ const customScrollbarAndAnimationStyles = `
     border-radius: 7px;
     border: 1px dashed rgba(148, 163, 184, 0.55);
     overflow: hidden;
+    isolation: isolate;
     touch-action: none;
   }
   .game-lane-attention {
@@ -390,29 +391,126 @@ const customScrollbarAndAnimationStyles = `
   .game-lane-cpu .game-lane-surface {
     background: rgba(254, 242, 242, 0.84);
   }
-  .game-lane-terrain-space .game-lane-surface {
+  .game-lane-terrain-active .game-lane-surface {
+    background-image:
+      linear-gradient(90deg, rgba(14, 165, 233, 0.14), rgba(248, 250, 252, 0.16) 50%, rgba(248, 113, 113, 0.12)),
+      url('/assets/battle-terrain-layers.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%, 112% 400%;
+    background-position: center, 50% 0%;
+    border-style: solid;
+    border-color: rgba(226, 232, 240, 0.62);
+    box-shadow: inset 0 0 38px rgba(15, 23, 42, 0.18);
+    animation: lane-terrain-drift 18s ease-in-out infinite alternate;
+  }
+  .game-lane-terrain-active .game-lane-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
     background:
-      radial-gradient(circle at 50% 38%, rgba(125, 211, 252, 0.18), transparent 14rem),
-      linear-gradient(90deg, rgba(226, 232, 240, 0.78), rgba(30, 41, 59, 0.08) 46%, rgba(248, 250, 252, 0.6)),
-      rgba(241, 245, 249, 0.86);
+      linear-gradient(180deg, rgba(248, 250, 252, 0.12), rgba(15, 23, 42, 0.18)),
+      radial-gradient(circle at 50% 50%, rgba(248, 250, 252, 0.16), transparent 18rem);
+  }
+  .game-lane-terrain-space .game-lane-surface {
+    background-color: #020617;
+    background-position: center, 50% 0%;
   }
   .game-lane-terrain-sky .game-lane-surface {
-    background:
-      radial-gradient(circle at 45% 35%, rgba(186, 230, 253, 0.62), transparent 14rem),
-      linear-gradient(90deg, rgba(224, 242, 254, 0.84), rgba(240, 249, 255, 0.66)),
-      rgba(239, 246, 255, 0.86);
+    background-color: #dbeafe;
+    background-position: center, 50% 33.333%;
   }
   .game-lane-terrain-land .game-lane-surface {
-    background:
-      radial-gradient(circle at 42% 82%, rgba(187, 247, 208, 0.56), transparent 15rem),
-      linear-gradient(90deg, rgba(236, 253, 245, 0.84), rgba(241, 245, 249, 0.64)),
-      rgba(240, 253, 244, 0.86);
+    background-color: #422006;
+    background-position: center, 50% 66.666%;
   }
   .game-lane-terrain-sea .game-lane-surface {
-    background:
-      radial-gradient(circle at 50% 85%, rgba(103, 232, 249, 0.36), transparent 15rem),
-      linear-gradient(90deg, rgba(224, 242, 254, 0.82), rgba(207, 250, 254, 0.62)),
-      rgba(236, 254, 255, 0.86);
+    background-color: #083344;
+    background-position: center, 50% 100%;
+  }
+  .game-lane-beams {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    opacity: 0.52;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  .game-lane-battle-active .game-lane-beams {
+    opacity: 0.86;
+  }
+  .game-lane-beam {
+    position: absolute;
+    left: var(--beam-left, 50%);
+    top: var(--beam-top, 50%);
+    width: var(--beam-width, 42%);
+    height: var(--beam-height, 3px);
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, currentColor 18%, rgba(248, 250, 252, 0.95) 50%, currentColor 82%, transparent);
+    color: var(--beam-color, #67e8f9);
+    filter: drop-shadow(0 0 7px currentColor);
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(0.3);
+    transform-origin: center;
+    animation: lane-beam-sweep var(--beam-duration, 2.6s) ease-in-out infinite;
+    animation-delay: var(--beam-delay, 0s);
+  }
+  .game-lane-beams-player .game-lane-beam {
+    --beam-color: #67e8f9;
+  }
+  .game-lane-beams-cpu .game-lane-beam {
+    --beam-color: #fda4af;
+  }
+  .game-lane-beam-1 {
+    --beam-left: 35%;
+    --beam-top: 28%;
+    --beam-width: 58%;
+    --beam-angle: 9deg;
+    --beam-duration: 2.2s;
+    --beam-delay: -0.2s;
+  }
+  .game-lane-beam-2 {
+    --beam-left: 62%;
+    --beam-top: 42%;
+    --beam-width: 52%;
+    --beam-angle: -16deg;
+    --beam-duration: 2.7s;
+    --beam-delay: -1.05s;
+  }
+  .game-lane-beam-3 {
+    --beam-left: 48%;
+    --beam-top: 66%;
+    --beam-width: 68%;
+    --beam-angle: 4deg;
+    --beam-duration: 2.4s;
+    --beam-delay: -1.65s;
+  }
+  .game-lane-beam-4 {
+    --beam-left: 72%;
+    --beam-top: 72%;
+    --beam-width: 42%;
+    --beam-angle: 24deg;
+    --beam-duration: 3s;
+    --beam-delay: -0.7s;
+  }
+  .game-lane-beam-5 {
+    --beam-left: 25%;
+    --beam-top: 78%;
+    --beam-width: 44%;
+    --beam-angle: -28deg;
+    --beam-duration: 2.85s;
+    --beam-delay: -2.1s;
+  }
+  .game-lane-beam-6 {
+    --beam-left: 54%;
+    --beam-top: 16%;
+    --beam-width: 48%;
+    --beam-height: 2px;
+    --beam-angle: 34deg;
+    --beam-duration: 2.55s;
+    --beam-delay: -1.35s;
   }
   .game-lane-battle-player .game-lane-surface {
     border-color: rgba(14, 165, 233, 0.64);
@@ -629,7 +727,7 @@ const customScrollbarAndAnimationStyles = `
   .game-lane-cards {
     position: absolute;
     inset: 0.25rem 0.4rem;
-    z-index: 1;
+    z-index: 2;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, clamp(5.25rem, 8.9vw, 8.1rem)));
     justify-content: center;
@@ -1683,6 +1781,24 @@ const customScrollbarAndAnimationStyles = `
     0% { border-color: rgba(148, 163, 184, 0.55); box-shadow: none; }
     24% { border-color: rgba(14, 165, 233, 0.9); box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18), inset 0 0 28px rgba(14, 165, 233, 0.14); }
     100% { border-color: rgba(148, 163, 184, 0.55); box-shadow: none; }
+  }
+  @keyframes lane-terrain-drift {
+    from { background-position-x: center, 47%; }
+    to { background-position-x: center, 53%; }
+  }
+  @keyframes lane-beam-sweep {
+    0%, 16%, 100% {
+      opacity: 0;
+      transform: translate(-58%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(0.18);
+    }
+    28%, 72% {
+      opacity: 0.88;
+      transform: translate(-50%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(1);
+    }
+    86% {
+      opacity: 0;
+      transform: translate(-42%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(0.42);
+    }
   }
   @keyframes combo-pulse {
     0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
