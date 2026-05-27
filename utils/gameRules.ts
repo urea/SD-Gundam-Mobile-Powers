@@ -44,13 +44,12 @@ export const isCCardTerrainPlayable = (card: Card, terrainAttribute: string | nu
 export const canPlayCCard = (
   card: Card,
   actorState: PlayerState,
-  currentGameState: GameState,
+  _currentGameState: GameState,
 ): boolean => {
   if (card.type !== 'C') return false;
   const hasBattlefieldM = actorState.battlefield.some(isActiveMCard);
   const canPlayWithoutOwnM = card.cardNumber.startsWith('C-011');
-  if (!hasBattlefieldM && !canPlayWithoutOwnM) return false;
-  return isCCardTerrainPlayable(card, currentGameState.battlefieldTerrainAttribute);
+  return hasBattlefieldM || canPlayWithoutOwnM;
 };
 
 export type CCardTargetMode = 'OWN_M' | 'OPPONENT_M' | 'OPPONENT_SEA_M' | 'OPPONENT_LAND_M' | null;
@@ -64,6 +63,13 @@ interface CCardEffectResult {
 const getDisplayName = (card: Card): string => card.cardNameOmm || card.cardName;
 
 const isActiveMCard = (card: Card): boolean => card.type === 'M' && !card.isDestroyed;
+
+const clearBattlefieldEntryState = (card: Card): Card => {
+  const nextCard = { ...card };
+  delete nextCard.isDestroyed;
+  delete nextCard.isTapped;
+  return nextCard;
+};
 
 const getBattlefieldPower = (battlefield: Card[], ownerName: string): number => {
   const mCards = battlefield.filter(isActiveMCard);
@@ -273,7 +279,9 @@ export const applyCCardEffect = (
   const deployWaitingUnitsForAddedTerrain = (terrainToAdd: string) => {
     const actor = getActor();
     const effectiveTerrain = `${currentGameState.battlefieldTerrainAttribute || ''}${terrainToAdd}`;
-    const movingCards = actor.squad.filter(card => card.type === 'M' && canDeploy(card, effectiveTerrain));
+    const movingCards = actor.squad
+      .filter(card => card.type === 'M' && canDeploy(card, effectiveTerrain))
+      .map(clearBattlefieldEntryState);
     if (movingCards.length === 0) {
       logMessages.push({ message: `${actorName}側に${terrainToAdd}を追加しましたが、新たに出撃できる待機MSはありません。`, source: byPlayerType, timestamp: Date.now() });
       return;

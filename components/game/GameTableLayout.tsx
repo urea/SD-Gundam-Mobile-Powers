@@ -760,7 +760,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       <section className="game-opponent-strip" aria-label="CPU情報">
         <div className="game-opponent-identity">
           <span className="game-strip-title">CPU</span>
-          <span>敗北P {cpu.defeatPoints}</span>
+          <span className="game-defeat-points game-defeat-points-cpu">敗北P {cpu.defeatPoints}</span>
         </div>
         <HiddenHand count={cpu.hand.length} />
         <div className="game-zone-buttons">
@@ -820,7 +820,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               一方的な戦闘
             </span>
           ) : currentTerrainCard ? (
-            <>
+            <div className="game-terrain-content">
               <button
                 aria-label={`${currentTerrainCard.cardName} の画像を確認する`}
                 className="game-terrain-card-thumb"
@@ -838,11 +838,13 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
                   <span>{currentTerrainCard.type}</span>
                 )}
               </button>
-              <span className="game-terrain-name" title={currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}>
-                {currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}
+              <span className="game-terrain-copy">
+                <span className="game-terrain-name" title={currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}>
+                  {currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}
+                </span>
+                <span className="game-terrain-attr">属性 {battlefieldTerrainAttribute || 'なし'}</span>
               </span>
-              <span className="game-terrain-attr">属性 {battlefieldTerrainAttribute || 'なし'}</span>
-            </>
+            </div>
           ) : (
             <span className="game-terrain-empty">地形未定</span>
           )}
@@ -923,7 +925,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           <div className="game-player-zones">
             <div className="game-player-zone-row game-player-zone-summary">
               <span className="game-strip-title">PLAYER</span>
-              <span>敗北P {player.defeatPoints}</span>
+              <span className="game-defeat-points game-defeat-points-player">敗北P {player.defeatPoints}</span>
             </div>
             <div className="game-player-zone-row game-player-zone-links">
               <button

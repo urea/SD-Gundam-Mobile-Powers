@@ -208,6 +208,26 @@ const customScrollbarAndAnimationStyles = `
     font-weight: 700;
     color: #0369a1;
   }
+  .game-defeat-points {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.3rem;
+    border-radius: 6px;
+    border: 1px solid currentColor;
+    padding: 0.13rem 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1.05;
+  }
+  .game-defeat-points-player {
+    color: #0369a1;
+    background: #e0f2fe;
+  }
+  .game-defeat-points-cpu {
+    color: #b91c1c;
+    background: #fee2e2;
+  }
   .game-hidden-hand {
     display: flex;
     align-items: center;
@@ -574,14 +594,24 @@ const customScrollbarAndAnimationStyles = `
     line-height: 0.95;
   }
   .game-terrain-node {
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.25rem 0.45rem;
     text-align: center;
   }
+  .game-terrain-content {
+    max-width: 100%;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+  }
   .game-terrain-card-thumb {
-    width: 1.85rem;
-    height: 2.5rem;
+    width: 1.42rem;
+    height: 1.92rem;
+    flex: 0 0 1.42rem;
     display: grid;
     place-items: center;
     overflow: hidden;
@@ -605,6 +635,13 @@ const customScrollbarAndAnimationStyles = `
     height: 100%;
     object-fit: contain;
     background: #f8fafc;
+  }
+  .game-terrain-copy {
+    min-width: 0;
+    display: grid;
+    justify-items: start;
+    text-align: left;
+    line-height: 1.15;
   }
   .game-terrain-name,
   .game-unilateral-text {
@@ -1717,8 +1754,9 @@ const customScrollbarAndAnimationStyles = `
       padding: 0.15rem 0.3rem;
     }
     .game-terrain-card-thumb {
-      width: 1.45rem;
-      height: 1.95rem;
+      width: 1.25rem;
+      height: 1.68rem;
+      flex-basis: 1.25rem;
     }
     .game-center-info-node {
       grid-column: 2 / 5;
