@@ -68,6 +68,8 @@ const clearBattlefieldEntryState = (card: Card): Card => {
   const nextCard = { ...card };
   delete nextCard.isDestroyed;
   delete nextCard.isTapped;
+  delete nextCard.isPendingDiscard;
+  delete nextCard.isPendingDefeat;
   return nextCard;
 };
 

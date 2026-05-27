@@ -26,6 +26,8 @@ export interface Card {
   fieldOrder?: number; // Preserves the original squad order in mixed field displays.
   isDestroyed?: boolean; // Keeps a destroyed card visible on the battlefield until combat cleanup.
   isTapped?: boolean; // Marks an undeployed M-card waiting in the squad for one turn.
+  isPendingDiscard?: boolean; // Keeps a second-turn waiting M-card visible until combat cleanup.
+  isPendingDefeat?: boolean; // Keeps a one-sided battle loser visible until the deployment animation resolves.
 }
 
 export interface Combo {

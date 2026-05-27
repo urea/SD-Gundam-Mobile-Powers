@@ -46,6 +46,9 @@ export const GameCard: React.FC<GameCardProps> = ({
   const isKira = !isFaceDown && isKiraCard(card);
   const isDestroyed = !isFaceDown && !!card.isDestroyed;
   const isTapped = !!card.isTapped;
+  const isPendingDiscard = !!card.isPendingDiscard;
+  const isPendingDefeat = !!card.isPendingDefeat;
+  const hasPendingExit = isPendingDiscard || isPendingDefeat;
   const showTextOverlay = !isFaceDown && (!showImage || location === 'hand' || location === 'deck' || location === 'discardPile');
 
   const cardSizeSpecificClasses = 'game-card-size';
@@ -80,8 +83,8 @@ Flavor: ${card.textAbility}
 ${card.type === 'C' && card.effect ? `Effect: ${card.effect}\n` : ''}Tags: ${card.tags || '-'}
 Var: ${card.gameVar || '-'}`;
 
-  const effectiveOnClick = isFaceDown || isDestroyed ? undefined : onClick ? () => onClick(card) : () => contextSetSelectedCard(card);
-  const canDrag = !!isDraggable && !isDisabled && !isFaceDown && !isDestroyed;
+  const effectiveOnClick = isFaceDown || isDestroyed || hasPendingExit ? undefined : onClick ? () => onClick(card) : () => contextSetSelectedCard(card);
+  const canDrag = !!isDraggable && !isDisabled && !isFaceDown && !isDestroyed && !hasPendingExit;
   const isEffectivelyDisabled = !!isDisabled || !!isFaceDown;
 
   return (
@@ -110,11 +113,13 @@ Var: ${card.gameVar || '-'}`;
                   ${isSelected && !isFaceDown ? (isPlayerCard ? 'ring-4 ring-sky-400 shadow-xl' : 'ring-4 ring-red-400 shadow-xl') : 'ring-1 ring-slate-400'}
                   ${isTargetable && !isFaceDown && !isDestroyed ? 'game-card-targetable' : ''}
                   ${isDestroyed ? 'game-card-destroyed' : ''}
+                  ${isPendingDiscard ? 'game-card-pending-discard' : ''}
+                  ${isPendingDefeat ? 'game-card-pending-defeat' : ''}
                   ${isTapped ? 'game-card-tapped' : ''}
-                  ${isDestroyed ? 'cursor-help' : isEffectivelyDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
+                  ${isDestroyed || hasPendingExit ? 'cursor-help' : isEffectivelyDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
                   ${isKira ? 'kira-border-animated' : ''}`}
       title={cardTitle}
-      aria-label={isFaceDown ? `${location}の伏せられたMカード${isTapped ? ' 待機中' : ''}` : `${location}のカード ${card.cardNameOmm || card.cardName} ${isSelected ? '選択中' : ''} ${isTapped ? '待機中' : ''} ${isKira ? 'キラカード' : ''}`}
+      aria-label={isFaceDown ? `${location}の伏せられたMカード${isPendingDefeat ? ' 敗戦予定' : isPendingDiscard ? ' 捨て札予定' : isTapped ? ' 待機中' : ''}` : `${location}のカード ${card.cardNameOmm || card.cardName} ${isSelected ? '選択中' : ''} ${isPendingDefeat ? '敗戦予定' : isPendingDiscard ? '捨て札予定' : isTapped ? '待機中' : ''} ${isKira ? 'キラカード' : ''}`}
       aria-pressed={!isFaceDown && isSelected}
     >
       {isFaceDown ? (
@@ -159,7 +164,13 @@ Var: ${card.gameVar || '-'}`;
           <span className="game-card-destroyed-mark">×</span>
         </span>
       )}
-      {isTapped && !isDestroyed && (
+      {isPendingDefeat && !isDestroyed && (
+        <span className="game-card-pending-badge game-card-pending-defeat-badge" aria-hidden="true">敗戦</span>
+      )}
+      {isPendingDiscard && !isDestroyed && !isPendingDefeat && (
+        <span className="game-card-pending-badge game-card-pending-discard-badge" aria-hidden="true">捨て</span>
+      )}
+      {isTapped && !isDestroyed && !hasPendingExit && (
         <span className="game-card-tapped-badge" aria-hidden="true">待機</span>
       )}
     </button>

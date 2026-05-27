@@ -403,6 +403,16 @@ const customScrollbarAndAnimationStyles = `
     outline: 2px solid rgba(245, 158, 11, 0.75);
     outline-offset: -2px;
   }
+  .game-card-pending-discard {
+    filter: grayscale(0.2) saturate(0.72) brightness(0.94);
+    outline: 2px solid rgba(100, 116, 139, 0.82);
+    outline-offset: -2px;
+  }
+  .game-card-pending-defeat {
+    filter: saturate(0.72) brightness(0.92);
+    outline: 2px solid rgba(220, 38, 38, 0.82);
+    outline-offset: -2px;
+  }
   .game-card-tapped-badge {
     position: absolute;
     top: 0.25rem;
@@ -416,6 +426,25 @@ const customScrollbarAndAnimationStyles = `
     font-weight: 800;
     line-height: 1.15;
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22);
+  }
+  .game-card-pending-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    z-index: 5;
+    padding: 0.1rem 0.3rem;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.55rem;
+    font-weight: 900;
+    line-height: 1.15;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+  }
+  .game-card-pending-discard-badge {
+    background: rgba(71, 85, 105, 0.94);
+  }
+  .game-card-pending-defeat-badge {
+    background: rgba(185, 28, 28, 0.94);
   }
   .game-card-destroyed-overlay {
     position: absolute;
@@ -2071,7 +2100,36 @@ const clearTemporaryCardState = (card: Card): Card => {
   const nextCard = { ...card };
   delete nextCard.isDestroyed;
   delete nextCard.isTapped;
+  delete nextCard.isPendingDiscard;
+  delete nextCard.isPendingDefeat;
   return nextCard;
+};
+
+const getCardDisplayName = (card: Card): string => card.cardNameOmm || card.cardName;
+
+const flushPendingSquadDiscards = (
+  state: GameState['player'],
+  owner: PlayerType,
+): { state: GameState['player']; logEntry: LogEntry | null } => {
+  const pendingDiscardCards = state.squad.filter(card => card.type === 'M' && card.isPendingDiscard);
+  if (pendingDiscardCards.length === 0) {
+    return { state, logEntry: null };
+  }
+
+  const pendingIds = new Set(pendingDiscardCards.map(getCardInstanceId));
+  const ownerName = owner === 'PLAYER' ? 'プレイヤー' : 'CPU';
+  return {
+    state: {
+      ...state,
+      squad: state.squad.filter(card => !pendingIds.has(getCardInstanceId(card))),
+      discardPile: [...state.discardPile, ...pendingDiscardCards.map(clearTemporaryCardState)],
+    },
+    logEntry: {
+      message: `${ownerName}の捨て札予定Mカード (${pendingDiscardCards.map(getCardDisplayName).join(', ')}) は捨て札へ。`,
+      source: owner,
+      timestamp: Date.now(),
+    },
+  };
 };
 
 const findLastCombatStartIndex = (gameLog: LogEntry[]): number => {
@@ -2152,8 +2210,6 @@ const createCombatSideSummary = (
     tagLogs: [],
   };
 };
-
-const getCardDisplayName = (card: Card): string => card.cardNameOmm || card.cardName;
 
 const createPlayedCCardSummaries = (
   playedCCards: PlayedCCardSummary[],
@@ -2758,6 +2814,17 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
       newPlayerState.battlefield = [];
       newCpuState.battlefield = [];
 
+      const playerPendingDiscardResult = flushPendingSquadDiscards(newPlayerState, 'PLAYER');
+      newPlayerState = playerPendingDiscardResult.state;
+      if (playerPendingDiscardResult.logEntry) {
+        tempLogEntries.push(playerPendingDiscardResult.logEntry);
+      }
+      const cpuPendingDiscardResult = flushPendingSquadDiscards(newCpuState, 'CPU');
+      newCpuState = cpuPendingDiscardResult.state;
+      if (cpuPendingDiscardResult.logEntry) {
+        tempLogEntries.push(cpuPendingDiscardResult.logEntry);
+      }
+
       if (gameShouldEnd) {
         return {
           ...currentGs,
@@ -2939,6 +3006,8 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     if (!prev) return null;
                     let newPlayerState = { ...prev.player };
                     let newCpuState = { ...prev.cpu };
+                    let visualPlayerState = newPlayerState;
+                    let visualCpuState = newCpuState;
                     let tempLogEntries: LogEntry[] = [];
                     let gameShouldEnd = false;
                     let winnerOnEnd: PlayerType | null = null;
@@ -2952,10 +3021,19 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         visualizeUnilateral = 'PLAYER';
                         const cpuSquadMCards = newCpuState.squad.filter(c => c.type === 'M');
                         if (cpuSquadMCards.length > 0) {
-                            newCpuState.defeatPile = [...newCpuState.defeatPile, ...cpuSquadMCards];
+                            const pendingDefeatIds = new Set(cpuSquadMCards.map(getCardInstanceId));
+                            visualCpuState = {
+                                ...newCpuState,
+                                squad: newCpuState.squad.map(card =>
+                                    pendingDefeatIds.has(getCardInstanceId(card))
+                                        ? { ...card, isTapped: false, isPendingDiscard: false, isPendingDefeat: true }
+                                        : card,
+                                ),
+                            };
+                            newCpuState.defeatPile = [...newCpuState.defeatPile, ...cpuSquadMCards.map(clearTemporaryCardState)];
                             const defeatPointsReceived = cpuSquadMCards.length;
                             newCpuState.defeatPoints += defeatPointsReceived;
-                            newCpuState.squad = newCpuState.squad.filter(c => c.type !== 'M');
+                            newCpuState.squad = newCpuState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
                             tempLogEntries.push({message: `CPUは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newCpuState.defeatPoints}点 (演出後確定)`, source: 'CPU', timestamp: Date.now()});
                             if (newCpuState.defeatPoints >= 10) {
                                 gameShouldEnd = true; winnerOnEnd = 'PLAYER';
@@ -2966,10 +3044,19 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         visualizeUnilateral = 'CPU';
                         const playerSquadMCards = newPlayerState.squad.filter(c => c.type === 'M');
                          if (playerSquadMCards.length > 0) {
-                            newPlayerState.defeatPile = [...newPlayerState.defeatPile, ...playerSquadMCards];
+                            const pendingDefeatIds = new Set(playerSquadMCards.map(getCardInstanceId));
+                            visualPlayerState = {
+                                ...newPlayerState,
+                                squad: newPlayerState.squad.map(card =>
+                                    pendingDefeatIds.has(getCardInstanceId(card))
+                                        ? { ...card, isTapped: false, isPendingDiscard: false, isPendingDefeat: true }
+                                        : card,
+                                ),
+                            };
+                            newPlayerState.defeatPile = [...newPlayerState.defeatPile, ...playerSquadMCards.map(clearTemporaryCardState)];
                             const defeatPointsReceived = playerSquadMCards.length;
                             newPlayerState.defeatPoints += defeatPointsReceived;
-                            newPlayerState.squad = newPlayerState.squad.filter(c => c.type !== 'M'); 
+                            newPlayerState.squad = newPlayerState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
                             tempLogEntries.push({message: `プレイヤーは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newPlayerState.defeatPoints}点 (演出後確定)`, source: 'PLAYER', timestamp: Date.now()});
                             if (newPlayerState.defeatPoints >= 10) {
                                 gameShouldEnd = true; winnerOnEnd = 'CPU';
@@ -3016,7 +3103,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                             setIsVisualizingUnilateralDeployment(false);
                             setUnilateralDeploymentWinner(null);
                         }, 2000);
-                        return { ...prev, gameLog: [...prev.gameLog, ...tempLogEntries], isPlayerTurnInteractive: false };
+                        return { ...prev, player: visualPlayerState, cpu: visualCpuState, gameLog: [...prev.gameLog, ...tempLogEntries], isPlayerTurnInteractive: false };
                     }
                     return { ...prev, gameLog: [...prev.gameLog, ...tempLogEntries] };
                 });
@@ -3030,26 +3117,28 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
                     const handleWaitingM = (cards: Card[], owner: PlayerType) => {
                       const stillWaiting: Card[] = [];
-                      const discarded: Card[] = [];
+                      const pendingDiscard: Card[] = [];
                       cards.forEach(card => {
                         if (card.type !== 'M') {
                           stillWaiting.push(card);
                           return;
                         }
                         if (card.isTapped) {
-                          discarded.push(clearTemporaryCardState(card));
+                          const nextCard = { ...card, isTapped: false, isPendingDiscard: true };
+                          stillWaiting.push(nextCard);
+                          pendingDiscard.push(nextCard);
                         } else {
-                          stillWaiting.push({ ...card, isTapped: true });
+                          stillWaiting.push({ ...card, isTapped: true, isPendingDiscard: false, isPendingDefeat: false });
                         }
                       });
-                      if (discarded.length > 0) {
+                      if (pendingDiscard.length > 0) {
                         tempLogEntries.push({
-                          message: `${owner === 'PLAYER' ? 'プレイヤー' : 'CPU'}の前ターンから待機していたMカード (${discarded.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札へ。`,
+                          message: `${owner === 'PLAYER' ? 'プレイヤー' : 'CPU'}の前ターンから待機していたMカード (${pendingDiscard.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札予定として戦闘終了まで小隊に残します。`,
                           source: owner,
                           timestamp: Date.now(),
                         });
                       }
-                      const newlyTapped = stillWaiting.filter(card => card.type === 'M' && card.isTapped);
+                      const newlyTapped = stillWaiting.filter(card => card.type === 'M' && card.isTapped && !card.isPendingDiscard);
                       if (newlyTapped.length > 0) {
                         tempLogEntries.push({
                           message: `${owner === 'PLAYER' ? 'プレイヤー' : 'CPU'}の出撃できなかったMカード (${newlyTapped.map(c => c.cardNameOmm || c.cardName).join(', ')}) は小隊でタップ待機。`,
@@ -3057,7 +3146,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                           timestamp: Date.now(),
                         });
                       }
-                      return { stillWaiting, discarded };
+                      return { stillWaiting };
                     };
 
                     const playerResult = handleWaitingM(newPlayerState.squad, 'PLAYER');
@@ -3065,12 +3154,10 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     newPlayerState = {
                       ...newPlayerState,
                       squad: playerResult.stillWaiting,
-                      discardPile: [...newPlayerState.discardPile, ...playerResult.discarded],
                     };
                     newCpuState = {
                       ...newCpuState,
                       squad: cpuResult.stillWaiting,
-                      discardPile: [...newCpuState.discardPile, ...cpuResult.discarded],
                     };
 
                     return {
@@ -3171,8 +3258,19 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     let newCpuState = { ...prev.cpu };
                     let tempLogEntries: LogEntry[] = [];
 
-                    const playerWaitingCards = newPlayerState.squad.filter(c => c.type === 'M' && c.isTapped);
-                    const cpuWaitingCards = newCpuState.squad.filter(c => c.type === 'M' && c.isTapped);
+                    const playerPendingDiscardResult = flushPendingSquadDiscards(newPlayerState, 'PLAYER');
+                    newPlayerState = playerPendingDiscardResult.state;
+                    if (playerPendingDiscardResult.logEntry) {
+                        tempLogEntries.push(playerPendingDiscardResult.logEntry);
+                    }
+                    const cpuPendingDiscardResult = flushPendingSquadDiscards(newCpuState, 'CPU');
+                    newCpuState = cpuPendingDiscardResult.state;
+                    if (cpuPendingDiscardResult.logEntry) {
+                        tempLogEntries.push(cpuPendingDiscardResult.logEntry);
+                    }
+
+                    const playerWaitingCards = newPlayerState.squad.filter(c => c.type === 'M' && c.isTapped && !c.isPendingDiscard);
+                    const cpuWaitingCards = newCpuState.squad.filter(c => c.type === 'M' && c.isTapped && !c.isPendingDiscard);
                     if (playerWaitingCards.length > 0) {
                         tempLogEntries.push({message: `プレイヤーの待機Mカード (${playerWaitingCards.map(c => c.cardNameOmm || c.cardName).join(', ')}) は小隊に残ります。`, source: 'PLAYER', timestamp: Date.now()});
                     }
