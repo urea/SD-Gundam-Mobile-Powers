@@ -2445,6 +2445,18 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         return { phase: 'COMBAT_RESOLUTION', isPlayerTurnInteractive: false, gameLog: [...currentGameState.gameLog, newLogEntry] };
     }
 
+    const playerHasActiveM = currentGameState.player.battlefield.some(isActiveMCard);
+    const cpuHasActiveM = currentGameState.cpu.battlefield.some(isActiveMCard);
+    if (!playerHasActiveM || !cpuHasActiveM) {
+        const emptySideName = !playerHasActiveM && !cpuHasActiveM
+            ? '両者'
+            : !playerHasActiveM
+                ? 'プレイヤー'
+                : 'CPU';
+        const newLogEntry: LogEntry = { message: `${emptySideName}の最前線Mカードがいなくなったため、残りのカウンター／支援を省略して戦闘解決へ。`, source: 'SYSTEM', timestamp: Date.now() };
+        return { phase: 'COMBAT_RESOLUTION', isPlayerTurnInteractive: false, gameLog: [...currentGameState.gameLog, newLogEntry] };
+    }
+
     const newIndex = currentGameState.currentCounterSupportActorIndex + 1;
     if (newIndex < currentGameState.counterSupportTurnOrder.length) {
         const nextActor = currentGameState.counterSupportTurnOrder[newIndex];
