@@ -321,6 +321,30 @@ const customScrollbarAndAnimationStyles = `
   .game-lane-cpu .game-lane-surface {
     background: rgba(254, 242, 242, 0.84);
   }
+  .game-lane-terrain-space .game-lane-surface {
+    background:
+      radial-gradient(circle at 50% 38%, rgba(125, 211, 252, 0.18), transparent 14rem),
+      linear-gradient(90deg, rgba(226, 232, 240, 0.78), rgba(30, 41, 59, 0.08) 46%, rgba(248, 250, 252, 0.6)),
+      rgba(241, 245, 249, 0.86);
+  }
+  .game-lane-terrain-sky .game-lane-surface {
+    background:
+      radial-gradient(circle at 45% 35%, rgba(186, 230, 253, 0.62), transparent 14rem),
+      linear-gradient(90deg, rgba(224, 242, 254, 0.84), rgba(240, 249, 255, 0.66)),
+      rgba(239, 246, 255, 0.86);
+  }
+  .game-lane-terrain-land .game-lane-surface {
+    background:
+      radial-gradient(circle at 42% 82%, rgba(187, 247, 208, 0.56), transparent 15rem),
+      linear-gradient(90deg, rgba(236, 253, 245, 0.84), rgba(241, 245, 249, 0.64)),
+      rgba(240, 253, 244, 0.86);
+  }
+  .game-lane-terrain-sea .game-lane-surface {
+    background:
+      radial-gradient(circle at 50% 85%, rgba(103, 232, 249, 0.36), transparent 15rem),
+      linear-gradient(90deg, rgba(224, 242, 254, 0.82), rgba(207, 250, 254, 0.62)),
+      rgba(236, 254, 255, 0.86);
+  }
   .game-lane-battle-active .game-lane-surface::before,
   .game-lane-battle-active .game-lane-surface::after {
     content: '';
@@ -685,7 +709,7 @@ const customScrollbarAndAnimationStyles = `
   .game-center-strip {
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(24rem, 2.4fr) minmax(4rem, auto) minmax(7.5rem, 0.62fr) minmax(4rem, auto) minmax(10rem, 0.72fr);
+    grid-template-columns: minmax(20rem, 44%) minmax(4rem, auto) minmax(9rem, 18%) minmax(4rem, auto) minmax(7rem, 14%);
     grid-template-rows: auto auto;
     align-items: stretch;
     gap: 0.35rem;
@@ -2000,7 +2024,7 @@ const customScrollbarAndAnimationStyles = `
       max-height: none;
     }
     .game-center-strip {
-      grid-template-columns: minmax(14rem, 1.7fr) minmax(3.05rem, auto) minmax(5.8rem, 0.45fr) minmax(3.05rem, auto);
+      grid-template-columns: minmax(11.5rem, 48%) minmax(3.05rem, auto) minmax(5.75rem, 22%) minmax(3.05rem, auto);
       grid-template-rows: auto auto;
       padding: 0.25rem;
       gap: 0.25rem;

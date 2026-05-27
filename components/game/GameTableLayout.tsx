@@ -42,6 +42,7 @@ interface GameTableLayoutProps {
 interface FieldLaneProps {
   activeCCard?: PlayedCCardSummary;
   battleVisualResult?: PlayerType | 'DRAW' | null;
+  battlefieldTerrainAttribute?: string | null;
   canDropToSquad?: boolean;
   draggedCard?: Card | null;
   isBattleVisualActive?: boolean;
@@ -97,6 +98,15 @@ const getActiveBattleLayers = (terrainAttribute: string | null) => {
   const terrainChars = new Set(Array.from(terrainAttribute));
   const matched = terrainLayerDefs.filter(layer => terrainChars.has(layer.key));
   return matched.length > 0 ? matched : terrainLayerDefs;
+};
+
+const getLaneTerrainTone = (terrainAttribute: string | null | undefined): 'space' | 'sky' | 'land' | 'sea' | null => {
+  if (!terrainAttribute) return null;
+  if (terrainAttribute.includes('宇')) return 'space';
+  if (terrainAttribute.includes('空')) return 'sky';
+  if (terrainAttribute.includes('海')) return 'sea';
+  if (terrainAttribute.includes('陸')) return 'land';
+  return null;
 };
 
 const battleBeamVariants = Array.from({ length: 10 }, (_, index) => `game-battle-beam-chaos-${index + 1}`);
@@ -557,6 +567,7 @@ const getTouchDropTarget = (event: React.PointerEvent<HTMLElement>): 'squad' | '
 const FieldLane: React.FC<FieldLaneProps> = ({
   activeCCard,
   battleVisualResult,
+  battlefieldTerrainAttribute,
   canDropToSquad,
   draggedCard,
   isBattleVisualActive = false,
@@ -579,6 +590,8 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   const battleVisualClass = isBattleVisualActive
     ? `game-lane-battle-active game-lane-battle-${battleVisualResult === 'DRAW' ? 'draw' : battleVisualResult?.toLowerCase() || 'neutral'}`
     : '';
+  const terrainTone = getLaneTerrainTone(battlefieldTerrainAttribute);
+  const terrainClass = terrainTone ? `game-lane-terrain-${terrainTone}` : '';
   const squadDropClass = canDropToSquad && !isCPU ? 'game-drop-ready' : '';
   const orderedFieldCards = [
     ...playerState.squad.map((card, idx) => ({
@@ -664,7 +677,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   };
 
   return (
-    <section className={`game-field-lane ${toneClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
+    <section className={`game-field-lane ${toneClass} ${terrainClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
       <div
         className={`game-lane-surface game-lane-attention ${squadDropClass}`}
         data-game-drop={!isCPU ? 'squad' : undefined}
@@ -902,6 +915,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       <FieldLane
         activeCCard={cpuActiveCCard}
         battleVisualResult={combatResultVisual}
+        battlefieldTerrainAttribute={battlefieldTerrainAttribute}
         isBattleVisualActive={isVisualizingCombat}
         isCPU
         isCardDisabled={cpuFieldDisabled}
@@ -993,6 +1007,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       <FieldLane
         activeCCard={playerActiveCCard}
         battleVisualResult={combatResultVisual}
+        battlefieldTerrainAttribute={battlefieldTerrainAttribute}
         isBattleVisualActive={isVisualizingCombat}
         isCardDisabled={playerFieldDisabled}
         canDropToSquad={canDropDraggedToSquad}
