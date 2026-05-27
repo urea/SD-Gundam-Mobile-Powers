@@ -239,6 +239,9 @@ const customScrollbarAndAnimationStyles = `
     background: rgba(248, 250, 252, 0.9);
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.13);
     padding: 0.28rem 0.42rem;
+    pointer-events: auto;
+    -webkit-user-select: text;
+    user-select: text;
   }
   .game-battlefield-log-panel-battle {
     width: min(24rem, 38vw);
@@ -1047,11 +1050,17 @@ const customScrollbarAndAnimationStyles = `
     padding: 0.05rem 0.16rem 0.1rem;
     font-size: 0.62rem;
     color: #0369a1;
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
   }
   .game-log-node p {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-user-select: text;
+    user-select: text;
   }
   .game-center-battle-summary {
     min-width: 0;
@@ -2222,9 +2231,6 @@ const customScrollbarAndAnimationStyles = `
     .game-counter-copy span {
       display: none;
     }
-    .game-log-node {
-      display: none;
-    }
     .game-selected-node {
       display: none;
     }
@@ -2529,6 +2535,16 @@ const clearTemporaryCardState = (card: Card): Card => {
 
 const getCardDisplayName = (card: Card): string => card.cardNameOmm || card.cardName;
 
+const getCardLogList = (
+  cards: Card[],
+  owner?: PlayerType,
+  visibility: 'public' | 'faceDown' = 'public',
+): string => (
+  owner === 'CPU' && visibility === 'faceDown'
+    ? `${cards.length}枚`
+    : cards.map(getCardDisplayName).join(', ')
+);
+
 const flushPendingSquadDiscards = (
   state: GameState['player'],
   owner: PlayerType,
@@ -2547,7 +2563,7 @@ const flushPendingSquadDiscards = (
       discardPile: [...state.discardPile, ...pendingDiscardCards.map(clearTemporaryCardState)],
     },
     logEntry: {
-      message: `${ownerName}の捨て札予定Mカード (${pendingDiscardCards.map(getCardDisplayName).join(', ')}) は捨て札へ。`,
+      message: `${ownerName}の捨て札予定Mカード (${getCardLogList(pendingDiscardCards, owner, 'faceDown')}) は捨て札へ。`,
       source: owner,
       timestamp: Date.now(),
     },
@@ -2996,7 +3012,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
       const aiDecision: CPUAction = aiDecisionInput || { action: 'DISCARD_FROM_HAND', reasoning: 'AI service failed or returned null decision; discard fallback.' };
 
-      let newLog: LogEntry[] = [...prev.gameLog, {message: `CPU: ${aiDecision.action} ${aiDecision.cardId || ''} (${aiDecision.reasoning || '理由なし'})`, source: 'SYSTEM', timestamp: Date.now()}];
+      let newLog: LogEntry[] = [...prev.gameLog];
       let newPlayerState = { ...prev.player };
       let newCpuState = { ...prev.cpu };
       let nextPhasePartial: Partial<GameState> = {};
@@ -3009,10 +3025,10 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             const cardForSquad = { ...cardToPlay, fieldOrder: newCpuState.squad.length };
             newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToPlay));
             newCpuState.squad = [...newCpuState.squad, cardForSquad];
-            newLog = [...newLog, {message: `CPUが ${cardToPlay.cardName} を小隊に配置。`, source: 'CPU', timestamp: Date.now()}];
+            newLog = [...newLog, {message: 'CPUがMカードを小隊に伏せて配置。', source: 'CPU', timestamp: Date.now()}];
             actionTakenSuccessfully = true;
           } else {
-            newLog = [...newLog, {message: `CPU AI提案 (${aiDecision.cardId} 配置)は無効でした。`, source: 'SYSTEM', timestamp: Date.now()}];
+            newLog = [...newLog, {message: 'CPUの配置提案は無効でした。', source: 'SYSTEM', timestamp: Date.now()}];
           }
         } else if (aiDecision.action === 'DISCARD_TO_DEFEAT' && aiDecision.cardId) {
           const cardToDiscard = newCpuState.hand.find(c => getCardInstanceId(c) === aiDecision.cardId);
@@ -3020,13 +3036,13 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscard));
             newCpuState.defeatPile = [...newCpuState.defeatPile, cardToDiscard];
             newCpuState.defeatPoints += 1;
-            newLog = [...newLog, {message: `CPUが ${cardToDiscard.cardName} を手札から敗戦フィールドへ (編成時Mカード配置不可のため)。敗北ポイント: ${newCpuState.defeatPoints}。`, source: 'CPU', timestamp: Date.now()}];
+            newLog = [...newLog, {message: `CPUが手札1枚を敗戦フィールドへ (編成時Mカード配置不可のため)。敗北ポイント: ${newCpuState.defeatPoints}。`, source: 'CPU', timestamp: Date.now()}];
             if (newCpuState.defeatPoints >= 10) {
               return { ...prev, player: newPlayerState, cpu: newCpuState, gameLog: newLog, phase: 'GAME_OVER', winner: 'PLAYER', isPlayerTurnInteractive: false, isCPUMoving: false };
             }
             actionTakenSuccessfully = true;
           } else {
-            newLog = [...newLog, {message: `CPU AI提案 (${aiDecision.cardId} 敗戦フィールドへ)は手札にないため無効でした。`, source: 'SYSTEM', timestamp: Date.now()}];
+            newLog = [...newLog, {message: 'CPUの敗戦フィールド配置提案は無効でした。', source: 'SYSTEM', timestamp: Date.now()}];
           }
         }
 
@@ -3038,13 +3054,13 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             const cardForSquad = { ...cardToPlay, fieldOrder: newCpuState.squad.length };
             newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToPlay));
             newCpuState.squad = [...newCpuState.squad, cardForSquad];
-            newLog = [...newLog, {message: `CPUフォールバック: ${cardToPlay.cardName} を小隊に配置。`, source: 'CPU', timestamp: Date.now()}];
+            newLog = [...newLog, {message: 'CPUフォールバック: Mカードを小隊に伏せて配置。', source: 'CPU', timestamp: Date.now()}];
           } else if (newCpuState.hand.length > 0) {
             const cardToDiscard = newCpuState.hand[Math.floor(Math.random() * newCpuState.hand.length)];
             newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscard));
             newCpuState.defeatPile = [...newCpuState.defeatPile, cardToDiscard];
             newCpuState.defeatPoints += 1;
-            newLog = [...newLog, {message: `CPUフォールバック: ${cardToDiscard.cardName} を手札から敗戦フィールドへ (編成時Mカード配置不可のため)。敗北ポイント: ${newCpuState.defeatPoints}。`, source: 'CPU', timestamp: Date.now()}];
+            newLog = [...newLog, {message: `CPUフォールバック: 手札1枚を敗戦フィールドへ (編成時Mカード配置不可のため)。敗北ポイント: ${newCpuState.defeatPoints}。`, source: 'CPU', timestamp: Date.now()}];
             if (newCpuState.defeatPoints >= 10) {
               return { ...prev, player: newPlayerState, cpu: newCpuState, gameLog: newLog, phase: 'GAME_OVER', winner: 'PLAYER', isPlayerTurnInteractive: false, isCPUMoving: false };
             }
@@ -3072,12 +3088,12 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
         if (aiDecision.action === 'PLAY_C_CARD' && cardToAct && cardToAct.type === 'C') {
             if (!canPlayCCard(cardToAct, newCpuState, { ...prev, player: newPlayerState, cpu: newCpuState })) {
-                newLog.push({message: `CPUはCカード(${cardToAct.cardName})を出そうとしましたが、戦場にMカードがいません。フォールバック。`, source: 'CPU', timestamp: Date.now()});
+                newLog.push({message: 'CPUはCカードを出そうとしましたが、戦場にMカードがいません。フォールバック。', source: 'CPU', timestamp: Date.now()});
                 const cardToDiscardFallback = cardToAct || (newCpuState.hand.length > 0 ? newCpuState.hand[0] : null);
                 if (cardToDiscardFallback) {
                     newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscardFallback));
                     newCpuState.discardPile = [...newCpuState.discardPile, cardToDiscardFallback];
-                    newLog.push({message: `CPUフォールバック: ${cardToDiscardFallback.cardName} を捨てました。`, source: 'CPU', timestamp: Date.now()});
+                    newLog.push({message: 'CPUフォールバック: 手札1枚を捨てました。', source: 'CPU', timestamp: Date.now()});
                 }
             } else {
                 newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToAct));
@@ -3098,7 +3114,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         } else if (aiDecision.action === 'DISCARD_FROM_HAND' && cardToAct) {
             newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToAct));
             newCpuState.discardPile = [...newCpuState.discardPile, cardToAct];
-            newLog.push({message: `CPUが手札から ${cardToAct.cardName} を捨てました。`, source: 'CPU', timestamp: Date.now()});
+            newLog.push({message: 'CPUが手札1枚を捨てました。', source: 'CPU', timestamp: Date.now()});
         } else { 
             newLog.push({message: `CPUはCカードを使用しないか、無効な行動でした。`, source: 'CPU', timestamp: Date.now()});
             if (newCpuState.hand.length > 0) {
@@ -3106,7 +3122,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                 const cardToDiscard = newCpuState.hand[Math.floor(Math.random() * newCpuState.hand.length)];
                 newCpuState.hand = newCpuState.hand.filter(c => !isSameCardInstance(c, cardToDiscard));
                 newCpuState.discardPile = [...newCpuState.discardPile, cardToDiscard];
-                newLog.push({message: `CPUフォールバック: ${cardToDiscard.cardName} を捨てました。`, source: 'CPU', timestamp: Date.now()});
+                newLog.push({message: 'CPUフォールバック: 手札1枚を捨てました。', source: 'CPU', timestamp: Date.now()});
             } else {
                  newLog.push({message: `CPUフォールバック: 手札が空で捨てられません。`, source: 'CPU', timestamp: Date.now()});
             }
@@ -3153,11 +3169,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
       let gameShouldEnd = false;
       let winnerOnEnd: PlayerType | null = null;
 
-      const lastLog = currentGs.gameLog[currentGs.gameLog.length - 1];
-      let currentLog = [...currentGs.gameLog];
-      if (lastLog && lastLog.message.includes("結果表示中...")) {
-        currentLog.pop();
-      }
+      const currentLog = currentGs.gameLog;
       tempLogEntries.push({message: `戦闘解決確定: プレイヤー ${newPlayerState.combatPoints} vs CPU ${newCpuState.combatPoints}`, source: 'SYSTEM', timestamp: Date.now()});
 
       const playerDestroyedMOnBattlefield = newPlayerState.battlefield.filter(c => c.type === 'M' && c.isDestroyed);
@@ -3505,14 +3517,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         setTimeout(() => {
                             setGameState(currentGs => {
                                 if (!currentGs) return null;
-                                let finalLog = currentGs.gameLog.filter(entry => !entry.message.includes("演出表示中..."));
-                                const finalLogLastIndex = finalLog.length - 1;
-                                if (finalLogLastIndex >= 0 && finalLog[finalLogLastIndex].message.includes("(演出後確定)")) {
-                                    finalLog[finalLogLastIndex] = {
-                                        ...finalLog[finalLogLastIndex],
-                                        message: finalLog[finalLogLastIndex].message.replace(" (演出後確定)", ""),
-                                    };
-                                }
+                                const finalLog = [...currentGs.gameLog];
 
                                 if (gameShouldEnd) {
                                     finalLog.push({message: winnerOnEnd === 'PLAYER' ? "CPUの敗北ポイントが10に達しました！プレイヤーの勝利！" : "プレイヤーの敗北ポイントが10に達しました！CPUの勝利！", source: 'SYSTEM', timestamp: Date.now()});
@@ -3555,7 +3560,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                       });
                       if (pendingDiscard.length > 0) {
                         tempLogEntries.push({
-                          message: `${owner === 'PLAYER' ? 'プレイヤー' : 'CPU'}の前ターンから待機していたMカード (${pendingDiscard.map(c => c.cardNameOmm || c.cardName).join(', ')}) は捨て札予定として戦闘終了まで小隊に残します。`,
+                          message: `${owner === 'PLAYER' ? 'プレイヤー' : 'CPU'}の前ターンから待機していたMカード (${getCardLogList(pendingDiscard, owner, 'faceDown')}) は捨て札予定として戦闘終了まで小隊に残します。`,
                           source: owner,
                           timestamp: Date.now(),
                         });
@@ -3563,7 +3568,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                       const newlyTapped = stillWaiting.filter(card => card.type === 'M' && card.isTapped && !card.isPendingDiscard);
                       if (newlyTapped.length > 0) {
                         tempLogEntries.push({
-                          message: `${owner === 'PLAYER' ? 'プレイヤー' : 'CPU'}の出撃できなかったMカード (${newlyTapped.map(c => c.cardNameOmm || c.cardName).join(', ')}) は小隊でタップ待機。`,
+                          message: `${owner === 'PLAYER' ? 'プレイヤー' : 'CPU'}の出撃できなかったMカード (${getCardLogList(newlyTapped, owner, 'faceDown')}) は小隊でタップ待機。`,
                           source: owner,
                           timestamp: Date.now(),
                         });
@@ -3697,7 +3702,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         tempLogEntries.push({message: `プレイヤーの待機Mカード (${playerWaitingCards.map(c => c.cardNameOmm || c.cardName).join(', ')}) は小隊に残ります。`, source: 'PLAYER', timestamp: Date.now()});
                     }
                     if (cpuWaitingCards.length > 0) {
-                        tempLogEntries.push({message: `CPUの待機Mカード (${cpuWaitingCards.map(c => c.cardNameOmm || c.cardName).join(', ')}) は小隊に残ります。`, source: 'CPU', timestamp: Date.now()});
+                        tempLogEntries.push({message: `CPUの待機Mカード (${getCardLogList(cpuWaitingCards, 'CPU', 'faceDown')}) は小隊に残ります。`, source: 'CPU', timestamp: Date.now()});
                     }
                     if (newPlayerState.battlefield.length > 0) {
                         newPlayerState.discardPile = [...newPlayerState.discardPile, ...newPlayerState.battlefield.map(clearDestroyedMarker)];

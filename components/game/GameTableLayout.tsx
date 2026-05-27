@@ -757,6 +757,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   const [previewCard, setPreviewCard] = React.useState<Card | null>(null);
   const battlefieldAreaRef = React.useRef<HTMLElement | null>(null);
   const cpuLaneCardsRef = React.useRef<HTMLDivElement | null>(null);
+  const logNodeRef = React.useRef<HTMLDivElement | null>(null);
   const [battlefieldLogPanelStyle, setBattlefieldLogPanelStyle] = React.useState<React.CSSProperties>({});
   const playerFieldDisabled =
     isVisualizingCombat ||
@@ -933,6 +934,14 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     };
   }, [updateBattlefieldOverlayMetrics]);
 
+  React.useLayoutEffect(() => {
+    const logNode = logNodeRef.current;
+    if (!logNode) {
+      return;
+    }
+    logNode.scrollTop = logNode.scrollHeight;
+  }, [gameLog.length]);
+
   return (
     <main
       aria-label="対戦盤面"
@@ -1004,8 +1013,8 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               onConfirm={isVisualizingCombat ? onConfirmCombatResolution : undefined}
               playerPoints={isVisualizingCombat ? player.combatPoints : getBattlefieldBaseTotal(player.battlefield)}
             />
-            <div className="game-log-node custom-scrollbar-xs" role="log" aria-live="polite">
-              {gameLog.slice(battleSummary ? -3 : -4).map((logEntry, index) => (
+            <div className="game-log-node custom-scrollbar-xs" role="log" aria-live="polite" ref={logNodeRef}>
+              {gameLog.map((logEntry, index) => (
                 <p key={`${logEntry.timestamp}-${index}`}>
                   {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
                   {logEntry.message}
