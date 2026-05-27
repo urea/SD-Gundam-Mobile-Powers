@@ -1642,9 +1642,12 @@ const customScrollbarAndAnimationStyles = `
   .game-hand-scroll {
     min-width: 0;
     min-height: 0;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, clamp(3.35rem, 5.25vw, 4.7rem)));
+    justify-content: center;
+    justify-items: center;
     align-items: center;
-    gap: 0.4rem;
+    gap: clamp(0.2rem, 0.42vw, 0.4rem);
     overflow-x: auto;
     overflow-y: hidden;
     border-radius: 7px;
@@ -1654,11 +1657,27 @@ const customScrollbarAndAnimationStyles = `
     overscroll-behavior-x: contain;
     touch-action: pan-x;
   }
+  .game-hand-slot {
+    width: 100%;
+    aspect-ratio: 5 / 7;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+  }
+  .game-hand-slot-empty {
+    border: 1px dashed rgba(100, 116, 139, 0.18);
+    background: rgba(255, 255, 255, 0.25);
+  }
   .game-table-layout .game-card-size {
     width: clamp(3rem, 5.2vw, 4.75rem);
     height: auto;
     aspect-ratio: 5 / 7;
     flex: 0 0 auto;
+  }
+  .game-hand-slot .game-card-size {
+    width: 100%;
+    height: auto;
+    max-width: none;
   }
   .game-lane-cards .game-card-size {
     width: 100%;
@@ -1838,6 +1857,9 @@ const customScrollbarAndAnimationStyles = `
     .game-hand-scroll {
       gap: 0.25rem;
     }
+    .game-hand-scroll {
+      grid-template-columns: repeat(8, minmax(0, clamp(2.75rem, 5.6vw, 3.85rem)));
+    }
     .game-lane-cards {
       inset: 0.18rem 0.25rem;
       grid-template-columns: repeat(4, minmax(0, clamp(3.65rem, 7.8vw, 5.2rem)));
@@ -1935,6 +1957,10 @@ const customScrollbarAndAnimationStyles = `
     }
     .game-table-layout .game-card-size {
       width: clamp(2.55rem, 6vw, 3.65rem);
+    }
+    .game-hand-slot .game-card-size {
+      width: 100%;
+      height: auto;
     }
     .game-lane-cards .game-card-size {
       width: 100%;

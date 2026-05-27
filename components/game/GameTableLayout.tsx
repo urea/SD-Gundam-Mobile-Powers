@@ -1064,24 +1064,33 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
         </div>
 
         <div className="game-hand-scroll custom-scrollbar-xs">
-          {player.hand.map((card, idx) => (
-            <GameCard
-              card={card}
-              isDisabled={!isPlayerTurnInteractive || isVisualizingCombat || isVisualizingUnilateralDeployment || !!winner}
-              isPlayerCard
-              isSelected={isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
-              isDraggable={canDragHandCard}
-              key={`player-hand-${getCardInstanceId(card)}-${idx}`}
-              location="hand"
-              onClick={onSelectCard}
-              onDragEnd={() => setDraggedCard(null)}
-              onDragStart={setDraggedCard}
-              onPointerDragStart={setDraggedCard}
-              onPreviewEnd={() => setPreviewCard(null)}
-              onPreviewStart={setPreviewCard}
-              uniqueKey={`player-hand-${getCardInstanceId(card)}-${idx}`}
-            />
-          ))}
+          {Array.from({ length: 8 }).map((_, idx) => {
+            const card = player.hand[idx];
+            return (
+              <div
+                className={`game-hand-slot ${card ? 'game-hand-slot-filled' : 'game-hand-slot-empty'}`}
+                key={card ? `player-hand-slot-${getCardInstanceId(card)}-${idx}` : `player-hand-slot-empty-${idx}`}
+              >
+                {card && (
+                  <GameCard
+                    card={card}
+                    isDisabled={!isPlayerTurnInteractive || isVisualizingCombat || isVisualizingUnilateralDeployment || !!winner}
+                    isPlayerCard
+                    isSelected={isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
+                    isDraggable={canDragHandCard}
+                    location="hand"
+                    onClick={onSelectCard}
+                    onDragEnd={() => setDraggedCard(null)}
+                    onDragStart={setDraggedCard}
+                    onPointerDragStart={setDraggedCard}
+                    onPreviewEnd={() => setPreviewCard(null)}
+                    onPreviewStart={setPreviewCard}
+                    uniqueKey={`player-hand-${getCardInstanceId(card)}-${idx}`}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
