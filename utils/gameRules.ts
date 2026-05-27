@@ -399,14 +399,7 @@ export const getPhaseInstruction = (
   phase: GamePhase,
   playerHand: Card[],
   playerSquad: Card[],
-  isVisualizingUnilateral: boolean,
-  unilateralWinner: PlayerType | null
 ): string => {
-  if (isVisualizingUnilateral) {
-    if (unilateralWinner === 'PLAYER') return '一方的出撃！プレイヤーの勝利！';
-    if (unilateralWinner === 'CPU') return '一方的出撃！CPUの勝利！';
-  }
-
   switch (phase) {
     case 'FORMATION_PLAYER_DRAW':
       return '編成: カードをドロー中...';

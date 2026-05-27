@@ -414,33 +414,6 @@ const customScrollbarAndAnimationStyles = `
       linear-gradient(90deg, rgba(224, 242, 254, 0.82), rgba(207, 250, 254, 0.62)),
       rgba(236, 254, 255, 0.86);
   }
-  .game-lane-battle-active .game-lane-surface::before,
-  .game-lane-battle-active .game-lane-surface::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-  }
-  .game-lane-battle-active .game-lane-surface::before {
-    opacity: 0.72;
-    background:
-      radial-gradient(circle at 50% 48%, rgba(248, 250, 252, 0.48), transparent 10rem),
-      linear-gradient(90deg, rgba(14, 165, 233, 0.16), transparent 42%, rgba(248, 113, 113, 0.16));
-    animation: battle-lane-glow 1.2s ease-in-out infinite alternate;
-  }
-  .game-lane-battle-active .game-lane-surface::after {
-    top: 50%;
-    left: 10%;
-    right: 10%;
-    bottom: auto;
-    height: 0.18rem;
-    border-radius: 999px;
-    background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.88), rgba(248, 113, 113, 0.88), transparent);
-    box-shadow: 0 0 16px rgba(59, 130, 246, 0.5), 0 0 24px rgba(248, 113, 113, 0.4);
-    transform: translateY(-50%) skewX(-14deg);
-    animation: battle-lane-beam 0.68s ease-in-out infinite alternate;
-  }
   .game-lane-battle-player .game-lane-surface {
     border-color: rgba(14, 165, 233, 0.64);
   }
@@ -941,8 +914,7 @@ const customScrollbarAndAnimationStyles = `
     text-align: left;
     line-height: 1.15;
   }
-  .game-terrain-name,
-  .game-unilateral-text {
+  .game-terrain-name {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -954,12 +926,6 @@ const customScrollbarAndAnimationStyles = `
   .game-terrain-empty {
     font-size: 0.68rem;
     color: #64748b;
-  }
-  .game-battle-auto-note {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.72rem;
-    font-weight: 800;
-    white-space: nowrap;
   }
   .game-counter-node {
     min-width: 0;
@@ -1180,657 +1146,6 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-combo-pulse {
     animation: combo-pulse 1.1s ease-out;
-  }
-  .game-battle-animation {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    display: grid;
-    place-items: center;
-    padding: 2rem;
-    pointer-events: auto;
-    background:
-      radial-gradient(circle at 50% 42%, rgba(248, 250, 252, 0.16), transparent 28rem),
-      rgba(2, 6, 23, 0.58);
-    animation: battle-overlay-in 0.22s ease-out;
-  }
-  .game-battle-panel {
-    width: min(62rem, 92vw);
-    height: min(34rem, 82vh);
-    display: grid;
-    grid-template-rows: auto auto auto auto minmax(0, 1fr);
-    overflow: hidden;
-    border-radius: 10px;
-    border: 1px solid rgba(226, 232, 240, 0.55);
-    background: rgba(15, 23, 42, 0.82);
-    box-shadow: 0 26px 80px rgba(2, 6, 23, 0.6);
-  }
-  .game-battle-header {
-    height: 2.3rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0 0.85rem;
-    color: #e2e8f0;
-    font-size: 0.82rem;
-    font-weight: 800;
-    letter-spacing: 0;
-    background: rgba(15, 23, 42, 0.78);
-  }
-  .game-battle-header.game-battle-result-player {
-    background: linear-gradient(90deg, rgba(14, 165, 233, 0.72), rgba(15, 23, 42, 0.78));
-  }
-  .game-battle-header.game-battle-result-cpu {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.72), rgba(15, 23, 42, 0.78));
-  }
-  .game-battle-header.game-battle-result-draw {
-    background: linear-gradient(90deg, rgba(234, 179, 8, 0.72), rgba(15, 23, 42, 0.78));
-  }
-  .game-battle-header strong {
-    margin-left: auto;
-    font-size: 1.25rem;
-    color: #f8fafc;
-  }
-  .game-battle-confirm-button {
-    flex: 0 0 auto;
-    border-radius: 999px;
-    border: 1px solid rgba(248, 250, 252, 0.45);
-    background: rgba(248, 250, 252, 0.92);
-    color: #0f172a;
-    padding: 0.24rem 0.7rem;
-    font-size: 0.72rem;
-    font-weight: 900;
-    line-height: 1;
-    box-shadow: 0 0 18px rgba(248, 250, 252, 0.18);
-    transition: transform 0.15s ease, background 0.15s ease;
-  }
-  .game-battle-confirm-button:hover,
-  .game-battle-confirm-button:focus-visible {
-    background: #ffffff;
-    transform: translateY(-1px);
-  }
-  .game-battle-scoreboard {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    gap: 0.65rem;
-    padding: 0.5rem 0.75rem;
-    background:
-      linear-gradient(90deg, rgba(14, 165, 233, 0.15), rgba(15, 23, 42, 0.68) 44%, rgba(239, 68, 68, 0.14)),
-      rgba(15, 23, 42, 0.72);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.2);
-  }
-  .game-battle-score-card {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(3.5rem, auto) auto minmax(3.2rem, auto);
-    align-items: center;
-    gap: 0.45rem;
-    border-radius: 8px;
-    border: 1px solid rgba(226, 232, 240, 0.22);
-    padding: 0.35rem 0.55rem;
-    color: #e2e8f0;
-    background: rgba(15, 23, 42, 0.62);
-  }
-  .game-battle-score-card span {
-    font-size: 0.72rem;
-    font-weight: 900;
-    letter-spacing: 0;
-  }
-  .game-battle-score-card strong {
-    font-size: clamp(1.55rem, 4vw, 2.45rem);
-    line-height: 0.9;
-    color: #f8fafc;
-    text-align: center;
-  }
-  .game-battle-score-card em {
-    justify-self: end;
-    border-radius: 999px;
-    padding: 0.16rem 0.45rem;
-    font-size: 0.66rem;
-    font-style: normal;
-    font-weight: 900;
-    background: rgba(148, 163, 184, 0.18);
-  }
-  .game-battle-score-player {
-    border-color: rgba(56, 189, 248, 0.34);
-  }
-  .game-battle-score-cpu {
-    border-color: rgba(251, 113, 133, 0.34);
-  }
-  .game-battle-score-winner {
-    transform: scale(1.03);
-    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.32), 0 0 28px rgba(250, 204, 21, 0.26);
-  }
-  .game-battle-score-loser {
-    opacity: 0.62;
-    filter: grayscale(0.25);
-  }
-  .game-battle-result-badge {
-    display: grid;
-    place-items: center;
-    min-width: 7.2rem;
-    min-height: 2.45rem;
-    border-radius: 999px;
-    border: 1px solid rgba(248, 250, 252, 0.42);
-    padding: 0 0.8rem;
-    color: #f8fafc;
-    font-size: 0.88rem;
-    font-weight: 900;
-    white-space: nowrap;
-    box-shadow: 0 0 22px rgba(248, 250, 252, 0.14);
-    animation: battle-result-pop 10s ease-out forwards;
-  }
-  .game-battle-result-player {
-    background: rgba(14, 165, 233, 0.75);
-  }
-  .game-battle-result-cpu {
-    background: rgba(239, 68, 68, 0.78);
-  }
-  .game-battle-result-draw {
-    background: rgba(202, 138, 4, 0.78);
-  }
-  .game-battle-counter-cards {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.5rem;
-    padding: 0.45rem 0.75rem;
-    color: #e2e8f0;
-    background:
-      linear-gradient(90deg, rgba(14, 165, 233, 0.12), rgba(15, 23, 42, 0.72) 50%, rgba(239, 68, 68, 0.12)),
-      rgba(15, 23, 42, 0.76);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.2);
-  }
-  .game-battle-counter-side {
-    min-width: 0;
-    border-radius: 8px;
-    border: 1px solid rgba(226, 232, 240, 0.2);
-    background: rgba(15, 23, 42, 0.54);
-    padding: 0.35rem 0.45rem;
-  }
-  .game-battle-counter-player {
-    border-color: rgba(56, 189, 248, 0.34);
-  }
-  .game-battle-counter-cpu {
-    border-color: rgba(251, 113, 133, 0.34);
-  }
-  .game-battle-counter-title {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.45rem;
-    margin-bottom: 0.25rem;
-    color: #f8fafc;
-    font-size: 0.66rem;
-    font-weight: 900;
-  }
-  .game-battle-counter-title span:last-child {
-    color: #94a3b8;
-  }
-  .game-battle-counter-list {
-    display: grid;
-    gap: 0.25rem;
-  }
-  .game-battle-counter-card {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr);
-    align-items: center;
-    gap: 0.35rem;
-    border: 0;
-    border-radius: 6px;
-    padding: 0.18rem 0.25rem;
-    color: inherit;
-    background: rgba(248, 250, 252, 0.08);
-    text-align: left;
-    cursor: zoom-in;
-  }
-  .game-battle-counter-card:hover,
-  .game-battle-counter-card:focus-visible {
-    background: rgba(248, 250, 252, 0.14);
-    outline: 2px solid rgba(125, 211, 252, 0.65);
-    outline-offset: 1px;
-  }
-  .game-battle-counter-card img,
-  .game-battle-counter-fallback {
-    width: 2.25rem;
-    aspect-ratio: 5 / 7;
-    border-radius: 4px;
-    object-fit: cover;
-    background: rgba(15, 23, 42, 0.78);
-  }
-  .game-battle-counter-fallback {
-    display: grid;
-    place-items: center;
-    color: #f8fafc;
-    font-size: 0.58rem;
-    font-weight: 900;
-  }
-  .game-battle-counter-copy {
-    min-width: 0;
-    display: grid;
-    gap: 0.12rem;
-  }
-  .game-battle-counter-copy strong,
-  .game-battle-counter-copy span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .game-battle-counter-copy strong {
-    color: #f8fafc;
-    font-size: 0.68rem;
-  }
-  .game-battle-counter-copy span {
-    color: #cbd5e1;
-    font-size: 0.58rem;
-    line-height: 1.2;
-  }
-  .game-battle-counter-empty {
-    color: #94a3b8;
-    font-size: 0.62rem;
-    font-weight: 800;
-  }
-  .game-battle-summary {
-    min-height: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.82fr) minmax(0, 1fr);
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    color: #e2e8f0;
-    background:
-      linear-gradient(90deg, rgba(14, 165, 233, 0.1), rgba(15, 23, 42, 0.7) 50%, rgba(239, 68, 68, 0.1)),
-      rgba(15, 23, 42, 0.76);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.2);
-  }
-  .game-battle-summary-side,
-  .game-battle-events {
-    min-width: 0;
-    border-radius: 8px;
-    border: 1px solid rgba(226, 232, 240, 0.2);
-    background: rgba(15, 23, 42, 0.54);
-    padding: 0.42rem 0.5rem;
-  }
-  .game-battle-summary-player {
-    border-color: rgba(56, 189, 248, 0.34);
-  }
-  .game-battle-summary-cpu {
-    border-color: rgba(251, 113, 133, 0.34);
-  }
-  .game-battle-summary-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.45rem;
-    margin-bottom: 0.28rem;
-    font-size: 0.68rem;
-    font-weight: 900;
-  }
-  .game-battle-summary-title strong {
-    font-size: 1rem;
-    color: #f8fafc;
-  }
-  .game-battle-summary-cards {
-    display: grid;
-    gap: 0.2rem;
-  }
-  .game-battle-summary-card {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.35rem;
-    border-radius: 5px;
-    background: rgba(248, 250, 252, 0.08);
-    padding: 0.16rem 0.28rem;
-    font-size: 0.64rem;
-  }
-  .game-battle-card-name {
-    min-width: 0;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    padding: 0;
-    text-align: left;
-    cursor: zoom-in;
-  }
-  .game-battle-card-name:hover,
-  .game-battle-card-name:focus-visible {
-    color: #f8fafc;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    outline: none;
-  }
-  .game-battle-card-name,
-  .game-battle-combo-line,
-  .game-battle-events p {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .game-battle-card-points {
-    color: #f8fafc;
-    font-weight: 900;
-  }
-  .game-battle-summary-empty {
-    color: #94a3b8;
-    font-size: 0.64rem;
-  }
-  .game-battle-combo-line {
-    margin-top: 0.22rem;
-    color: #fde68a;
-    font-size: 0.62rem;
-    font-weight: 800;
-  }
-  .game-battle-formula {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.2rem;
-    margin-top: 0.28rem;
-    color: #cbd5e1;
-    font-size: 0.62rem;
-    font-weight: 800;
-  }
-  .game-battle-formula span:last-child {
-    color: #f8fafc;
-  }
-  .game-battle-formula-operator {
-    color: #64748b;
-  }
-  .game-battle-events {
-    display: grid;
-    align-content: start;
-    gap: 0.18rem;
-  }
-  .game-battle-events-title {
-    color: #f8fafc;
-    font-size: 0.66rem;
-    font-weight: 900;
-  }
-  .game-battle-events p {
-    color: #cbd5e1;
-    font-size: 0.58rem;
-    line-height: 1.25;
-  }
-  .game-battle-layer-stack {
-    position: relative;
-    min-height: 0;
-    display: grid;
-    grid-auto-rows: 1fr;
-  }
-  .game-battle-card-strip {
-    position: absolute;
-    inset: 0.45rem 0.75rem auto 0.75rem;
-    z-index: 5;
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    pointer-events: none;
-  }
-  .game-battle-card-strip-side {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    max-width: min(42%, 18rem);
-    pointer-events: auto;
-  }
-  .game-battle-card-strip-player {
-    justify-content: flex-start;
-  }
-  .game-battle-card-strip-cpu {
-    justify-content: flex-end;
-  }
-  .game-battle-mini-card {
-    width: clamp(2.15rem, 4.2vw, 3.35rem);
-    aspect-ratio: 5 / 7;
-    flex: 0 0 auto;
-    overflow: hidden;
-    border-radius: 5px;
-    border: 1px solid rgba(248, 250, 252, 0.62);
-    background: rgba(15, 23, 42, 0.7);
-    box-shadow: 0 8px 22px rgba(2, 6, 23, 0.36);
-    cursor: zoom-in;
-  }
-  .game-battle-mini-card:hover,
-  .game-battle-mini-card:focus-visible {
-    outline: 2px solid rgba(250, 204, 21, 0.86);
-    outline-offset: 2px;
-  }
-  .game-battle-mini-card img,
-  .game-battle-mini-fallback {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: grid;
-    place-items: center;
-    color: #e2e8f0;
-    font-size: 0.8rem;
-    font-weight: 900;
-  }
-  .game-battle-layer {
-    position: relative;
-    min-height: 0;
-    overflow: hidden;
-    background-image:
-      linear-gradient(90deg, rgba(14, 165, 233, 0.28), transparent 36%, transparent 64%, rgba(239, 68, 68, 0.24)),
-      url('/assets/battle-terrain-layers.png');
-    background-size: 100% 400%;
-    animation: battle-layer-pan 10s linear;
-  }
-  .game-battle-layer::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(180deg, rgba(15, 23, 42, 0.1), rgba(15, 23, 42, 0.42)),
-      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 24px);
-    mix-blend-mode: screen;
-    opacity: 0.38;
-  }
-  .game-battle-layer-space {
-    background-position: center 0%;
-  }
-  .game-battle-layer-sky {
-    background-position: center 33.333%;
-  }
-  .game-battle-layer-land {
-    background-position: center 66.666%;
-  }
-  .game-battle-layer-sea {
-    background-position: center 100%;
-  }
-  .game-battle-layer-label {
-    position: absolute;
-    left: 0.75rem;
-    top: 0.5rem;
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.72);
-    color: #f8fafc;
-    font-weight: 900;
-    box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.42);
-  }
-  .game-battle-unit,
-  .game-battle-beam,
-  .game-battle-burst,
-  .game-battle-clash {
-    position: absolute;
-    z-index: 3;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  .game-battle-unit {
-    width: 0.72rem;
-    height: 0.72rem;
-    border-radius: 999px;
-    box-shadow: 0 0 18px currentColor, 0 0 4px #fff inset;
-  }
-  .game-battle-unit-player {
-    left: 17%;
-    color: #38bdf8;
-    animation: battle-unit-player 10s ease-in-out infinite;
-  }
-  .game-battle-unit-cpu {
-    right: 17%;
-    color: #fb7185;
-    animation: battle-unit-cpu 10s ease-in-out infinite;
-  }
-  .game-battle-beam {
-    height: 2px;
-    width: var(--beam-width, 34%);
-    opacity: 0;
-    transform-origin: center;
-    filter: drop-shadow(0 0 6px currentColor);
-  }
-  .game-battle-beam-chaos {
-    left: var(--beam-left, 50%);
-    top: var(--beam-top, 50%);
-    color: var(--beam-color, #67e8f9);
-    background: linear-gradient(90deg, transparent, currentColor 14%, #f8fafc 50%, currentColor 86%, transparent);
-    transform: translate(-50%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(0.18);
-    animation: battle-beam-chaos var(--beam-duration, 1.2s) linear infinite;
-    animation-delay: var(--beam-delay, 0s);
-  }
-  .game-battle-beam-chaos-1 {
-    --beam-left: 30%;
-    --beam-top: 30%;
-    --beam-width: 58%;
-    --beam-angle: 12deg;
-    --beam-color: #67e8f9;
-    --beam-duration: 0.92s;
-    --beam-delay: -0.12s;
-  }
-  .game-battle-beam-chaos-2 {
-    --beam-left: 68%;
-    --beam-top: 36%;
-    --beam-width: 52%;
-    --beam-angle: -18deg;
-    --beam-color: #fda4af;
-    --beam-duration: 1.08s;
-    --beam-delay: -0.46s;
-  }
-  .game-battle-beam-chaos-3 {
-    --beam-left: 44%;
-    --beam-top: 62%;
-    --beam-width: 70%;
-    --beam-angle: 5deg;
-    --beam-color: #a5f3fc;
-    --beam-duration: 1.18s;
-    --beam-delay: -0.74s;
-  }
-  .game-battle-beam-chaos-4 {
-    --beam-left: 54%;
-    --beam-top: 48%;
-    --beam-width: 48%;
-    --beam-angle: -31deg;
-    --beam-color: #fecdd3;
-    --beam-duration: 0.98s;
-    --beam-delay: -0.28s;
-  }
-  .game-battle-beam-chaos-5 {
-    --beam-left: 27%;
-    --beam-top: 76%;
-    --beam-width: 50%;
-    --beam-angle: -10deg;
-    --beam-color: #fef08a;
-    --beam-duration: 1.24s;
-    --beam-delay: -0.62s;
-  }
-  .game-battle-beam-chaos-6 {
-    --beam-left: 78%;
-    --beam-top: 66%;
-    --beam-width: 42%;
-    --beam-angle: 24deg;
-    --beam-color: #fda4af;
-    --beam-duration: 1.02s;
-    --beam-delay: -0.88s;
-  }
-  .game-battle-beam-chaos-7 {
-    --beam-left: 38%;
-    --beam-top: 19%;
-    --beam-width: 46%;
-    --beam-angle: 34deg;
-    --beam-color: #bae6fd;
-    --beam-duration: 1.16s;
-    --beam-delay: -0.36s;
-  }
-  .game-battle-beam-chaos-8 {
-    --beam-left: 63%;
-    --beam-top: 82%;
-    --beam-width: 56%;
-    --beam-angle: -36deg;
-    --beam-color: #fca5a5;
-    --beam-duration: 1.1s;
-    --beam-delay: -0.52s;
-  }
-  .game-battle-beam-chaos-9 {
-    --beam-left: 51%;
-    --beam-top: 52%;
-    --beam-width: 76%;
-    --beam-angle: -2deg;
-    --beam-color: #fde68a;
-    --beam-duration: 0.86s;
-    --beam-delay: -0.2s;
-  }
-  .game-battle-beam-chaos-10 {
-    --beam-left: 49%;
-    --beam-top: 43%;
-    --beam-width: 66%;
-    --beam-angle: 20deg;
-    --beam-color: #93c5fd;
-    --beam-duration: 1.3s;
-    --beam-delay: -0.96s;
-  }
-  .game-battle-burst {
-    width: 3.8rem;
-    height: 3.8rem;
-    z-index: 5;
-    border-radius: 999px;
-    opacity: 0;
-    background:
-      radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 10%, rgba(250, 204, 21, 0.9) 11% 25%, rgba(249, 115, 22, 0.72) 26% 47%, transparent 48%),
-      radial-gradient(circle, rgba(239, 68, 68, 0.72), transparent 68%);
-    filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.9));
-    animation: battle-burst 0.9s ease-in-out 2s infinite;
-  }
-  .game-battle-burst::before,
-  .game-battle-burst::after {
-    content: '';
-    position: absolute;
-    inset: 22%;
-    border-radius: 999px;
-    border: 2px solid rgba(254, 240, 138, 0.78);
-  }
-  .game-battle-burst::after {
-    inset: 8%;
-    border-color: rgba(248, 113, 113, 0.55);
-  }
-  .game-battle-burst-player {
-    left: 15.5%;
-  }
-  .game-battle-burst-cpu {
-    right: 15.5%;
-  }
-  .game-battle-clash {
-    left: 50%;
-    width: 4rem;
-    height: 4rem;
-    z-index: 5;
-    border-radius: 999px;
-    opacity: 0.9;
-    background:
-      radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 12%, rgba(250, 204, 21, 0.8) 13% 32%, rgba(14, 165, 233, 0.44) 33% 48%, rgba(248, 113, 113, 0.42) 49% 64%, transparent 65%);
-    transform: translate(-50%, -50%) scale(0.2);
-    filter: drop-shadow(0 0 22px rgba(250, 204, 21, 0.85));
-    animation: battle-clash 0.95s ease-in-out infinite;
   }
   .game-player-dock {
     position: relative;
@@ -2318,113 +1633,6 @@ const customScrollbarAndAnimationStyles = `
     .game-card-hover-copy {
       display: none;
     }
-    .game-battle-animation {
-      padding: 0.8rem;
-    }
-    .game-battle-panel {
-      width: min(42rem, 94vw);
-      height: min(21.5rem, 86vh);
-    }
-    .game-battle-header {
-      height: 1.8rem;
-      font-size: 0.68rem;
-    }
-    .game-battle-header strong {
-      font-size: 1rem;
-    }
-    .game-battle-confirm-button {
-      padding: 0.2rem 0.45rem;
-      font-size: 0.6rem;
-    }
-    .game-battle-scoreboard {
-      gap: 0.35rem;
-      padding: 0.35rem 0.45rem;
-    }
-    .game-battle-score-card {
-      grid-template-columns: minmax(2.8rem, auto) auto;
-      gap: 0.25rem;
-      padding: 0.25rem 0.35rem;
-    }
-    .game-battle-score-card em {
-      display: none;
-    }
-    .game-battle-score-card span {
-      font-size: 0.58rem;
-    }
-    .game-battle-result-badge {
-      min-width: 4.8rem;
-      min-height: 1.85rem;
-      padding: 0 0.45rem;
-      font-size: 0.66rem;
-    }
-    .game-battle-counter-cards {
-      gap: 0.35rem;
-      padding: 0.3rem 0.45rem;
-    }
-    .game-battle-counter-side {
-      padding: 0.24rem 0.3rem;
-    }
-    .game-battle-counter-title {
-      margin-bottom: 0.16rem;
-      font-size: 0.56rem;
-    }
-    .game-battle-counter-card {
-      grid-template-columns: 1.65rem minmax(0, 1fr);
-      gap: 0.24rem;
-      padding: 0.12rem 0.18rem;
-    }
-    .game-battle-counter-card img,
-    .game-battle-counter-fallback {
-      width: 1.65rem;
-      border-radius: 3px;
-    }
-    .game-battle-counter-copy strong {
-      font-size: 0.54rem;
-    }
-    .game-battle-counter-copy span {
-      display: none;
-    }
-    .game-battle-counter-empty {
-      font-size: 0.52rem;
-    }
-    .game-battle-summary {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 0.35rem;
-      padding: 0.35rem 0.45rem;
-    }
-    .game-battle-events {
-      display: none;
-    }
-    .game-battle-summary-side {
-      padding: 0.28rem 0.35rem;
-    }
-    .game-battle-summary-title {
-      margin-bottom: 0.18rem;
-      font-size: 0.58rem;
-    }
-    .game-battle-summary-title strong {
-      font-size: 0.78rem;
-    }
-    .game-battle-summary-card {
-      padding: 0.12rem 0.22rem;
-      font-size: 0.54rem;
-    }
-    .game-battle-card-strip {
-      inset: 0.35rem 0.45rem auto 0.45rem;
-      gap: 0.45rem;
-    }
-    .game-battle-card-strip-side {
-      max-width: 46%;
-      gap: 0.18rem;
-    }
-    .game-battle-mini-card {
-      width: clamp(1.75rem, 6vw, 2.45rem);
-      border-radius: 4px;
-    }
-    .game-battle-combo-line,
-    .game-battle-formula {
-      font-size: 0.52rem;
-    }
   }
   .custom-scrollbar-xs::-webkit-scrollbar {
     width: 4px; /* Thinner scrollbar */
@@ -2476,61 +1684,10 @@ const customScrollbarAndAnimationStyles = `
     24% { border-color: rgba(14, 165, 233, 0.9); box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18), inset 0 0 28px rgba(14, 165, 233, 0.14); }
     100% { border-color: rgba(148, 163, 184, 0.55); box-shadow: none; }
   }
-  @keyframes battle-lane-glow {
-    from { opacity: 0.42; filter: saturate(1); }
-    to { opacity: 0.82; filter: saturate(1.35); }
-  }
-  @keyframes battle-lane-beam {
-    from { opacity: 0.38; transform: translateY(-50%) skewX(-14deg) scaleX(0.76); }
-    to { opacity: 0.9; transform: translateY(-50%) skewX(-14deg) scaleX(1.04); }
-  }
   @keyframes combo-pulse {
     0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
     22% { box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.34), 0 10px 34px rgba(250, 204, 21, 0.18); }
     100% { box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08); }
-  }
-  @keyframes battle-overlay-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes battle-layer-pan {
-    from { background-position-x: 48%; }
-    to { background-position-x: 52%; }
-  }
-  @keyframes battle-result-pop {
-    0%, 44% { transform: scale(0.94); box-shadow: 0 0 0 rgba(248, 250, 252, 0); }
-    56% { transform: scale(1.08); box-shadow: 0 0 34px rgba(250, 204, 21, 0.38); }
-    100% { transform: scale(1); box-shadow: 0 0 22px rgba(248, 250, 252, 0.14); }
-  }
-  @keyframes battle-unit-player {
-    0%, 100% { transform: translate(0, -50%) scale(1); }
-    35% { transform: translate(18%, -74%) scale(1.18); }
-    70% { transform: translate(46%, -35%) scale(0.9); }
-  }
-  @keyframes battle-unit-cpu {
-    0%, 100% { transform: translate(0, -50%) scale(1); }
-    35% { transform: translate(-20%, -30%) scale(1.14); }
-    70% { transform: translate(-44%, -68%) scale(0.94); }
-  }
-  @keyframes battle-beam-chaos {
-    0%, 10%, 88%, 100% {
-      opacity: 0;
-      transform: translate(-50%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(0.12);
-    }
-    18%, 64% {
-      opacity: 1;
-      transform: translate(-50%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(1);
-    }
-  }
-  @keyframes battle-burst {
-    0% { opacity: 0.52; transform: translateY(-50%) scale(0.76); }
-    46% { opacity: 1; transform: translateY(-50%) scale(1.16); }
-    100% { opacity: 0.66; transform: translateY(-50%) scale(0.92); }
-  }
-  @keyframes battle-clash {
-    0% { opacity: 0.58; transform: translate(-50%, -50%) scale(0.72); }
-    48% { opacity: 1; transform: translate(-50%, -50%) scale(1.18); }
-    100% { opacity: 0.68; transform: translate(-50%, -50%) scale(0.9); }
   }
 `;
 
@@ -2720,21 +1877,6 @@ const createBattleSummary = (player: GameState['player'], cpu: GameState['cpu'],
   };
 };
 
-const createUnilateralBattleSummary = (player: GameState['player'], cpu: GameState['cpu']): BattleSummary => {
-  const playerBaseTotal = getBattlefieldBaseTotal(player.battlefield);
-  const cpuBaseTotal = getBattlefieldBaseTotal(cpu.battlefield);
-  const playerSummary = createCombatSideSummary(player.battlefield, playerBaseTotal, 'プレイヤー');
-  const cpuSummary = createCombatSideSummary(cpu.battlefield, cpuBaseTotal, 'CPU');
-
-  return {
-    player: { ...playerSummary, comboTotal: 0, supportDelta: 0, combos: [] },
-    cpu: { ...cpuSummary, comboTotal: 0, supportDelta: 0, combos: [] },
-    cCardLogs: [],
-    tagLogs: [],
-    playedCCards: [],
-  };
-};
-
 export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, initialCpuDeckCode }) => {
   const gameScreenRef = useRef<HTMLDivElement | null>(null);
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
@@ -2748,9 +1890,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   
   const [combatResultVisual, setCombatResultVisual] = useState<PlayerType | 'DRAW' | null>(null);
   const [isVisualizingCombat, setIsVisualizingCombat] = useState(false);
-  
-  const [isVisualizingUnilateralDeployment, setIsVisualizingUnilateralDeployment] = useState(false);
-  const [unilateralDeploymentWinner, setUnilateralDeploymentWinner] = useState<PlayerType | null>(null);
 
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
 
@@ -2911,8 +2050,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
     setPendingTargetCCard(null);
     setCombatResultVisual(null);
     setIsVisualizingCombat(false);
-    setIsVisualizingUnilateralDeployment(false);
-    setUnilateralDeploymentWinner(null);
     setImageLoadErrors({});
   }, [allBaseCards, fullInstancePool, baseCardToShortIdMap, shortIdToBaseCardMap, addLogEntry]);
 
@@ -3391,8 +2528,8 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         return;
     }
 
-    if (isVisualizingCombat || isVisualizingUnilateralDeployment) {
-        return;
+    if (isVisualizingCombat) {
+      return;
     }
 
     if (!gameState.isPlayerTurnInteractive && !gameState.isCPUMoving) {
@@ -3541,58 +2678,37 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     if (prev.phase !== currentPhase) return prev;
                     let newPlayerState = { ...prev.player };
                     let newCpuState = { ...prev.cpu };
-                    let visualPlayerState = newPlayerState;
-                    let visualCpuState = newCpuState;
                     let tempLogEntries: LogEntry[] = [];
                     let gameShouldEnd = false;
                     let winnerOnEnd: PlayerType | null = null;
-                    let visualizeUnilateral: PlayerType | null = null;
 
                     const playerCanDeploy = newPlayerState.battlefield.length > 0;
                     const cpuCanDeploy = newCpuState.battlefield.length > 0;
 
                     if (playerCanDeploy && !cpuCanDeploy) {
-                        tempLogEntries.push({message: "一方的出撃！プレイヤーのみ出撃。CPUは小隊の残存Mカード分の敗北ポイントを受けます。演出表示中...", source: 'SYSTEM', timestamp: Date.now()});
-                        visualizeUnilateral = 'PLAYER';
+                        tempLogEntries.push({message: "一方的出撃！プレイヤーのみ出撃。CPUは小隊の残存Mカード分の敗北ポイントを受けます。", source: 'SYSTEM', timestamp: Date.now()});
                         const cpuSquadMCards = newCpuState.squad.filter(c => c.type === 'M');
                         if (cpuSquadMCards.length > 0) {
                             const pendingDefeatIds = new Set(cpuSquadMCards.map(getCardInstanceId));
-                            visualCpuState = {
-                                ...newCpuState,
-                                squad: newCpuState.squad.map(card =>
-                                    pendingDefeatIds.has(getCardInstanceId(card))
-                                        ? { ...card, isTapped: false, isPendingDiscard: false, isPendingDefeat: true }
-                                        : card,
-                                ),
-                            };
                             newCpuState.defeatPile = [...newCpuState.defeatPile, ...cpuSquadMCards.map(clearTemporaryCardState)];
                             const defeatPointsReceived = cpuSquadMCards.length;
                             newCpuState.defeatPoints += defeatPointsReceived;
                             newCpuState.squad = newCpuState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
-                            tempLogEntries.push({message: `CPUは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newCpuState.defeatPoints}点 (演出後確定)`, source: 'CPU', timestamp: Date.now()});
+                            tempLogEntries.push({message: `CPUは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newCpuState.defeatPoints}点。`, source: 'CPU', timestamp: Date.now()});
                             if (newCpuState.defeatPoints >= 10) {
                                 gameShouldEnd = true; winnerOnEnd = 'PLAYER';
                             }
                         }
                     } else if (!playerCanDeploy && cpuCanDeploy) {
-                        tempLogEntries.push({message: "一方的出撃！CPUのみ出撃。プレイヤーは小隊の残存Mカード分の敗北ポイントを受けます。演出表示中...", source: 'SYSTEM', timestamp: Date.now()});
-                        visualizeUnilateral = 'CPU';
+                        tempLogEntries.push({message: "一方的出撃！CPUのみ出撃。プレイヤーは小隊の残存Mカード分の敗北ポイントを受けます。", source: 'SYSTEM', timestamp: Date.now()});
                         const playerSquadMCards = newPlayerState.squad.filter(c => c.type === 'M');
                          if (playerSquadMCards.length > 0) {
                             const pendingDefeatIds = new Set(playerSquadMCards.map(getCardInstanceId));
-                            visualPlayerState = {
-                                ...newPlayerState,
-                                squad: newPlayerState.squad.map(card =>
-                                    pendingDefeatIds.has(getCardInstanceId(card))
-                                        ? { ...card, isTapped: false, isPendingDiscard: false, isPendingDefeat: true }
-                                        : card,
-                                ),
-                            };
                             newPlayerState.defeatPile = [...newPlayerState.defeatPile, ...playerSquadMCards.map(clearTemporaryCardState)];
                             const defeatPointsReceived = playerSquadMCards.length;
                             newPlayerState.defeatPoints += defeatPointsReceived;
                             newPlayerState.squad = newPlayerState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
-                            tempLogEntries.push({message: `プレイヤーは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newPlayerState.defeatPoints}点 (演出後確定)`, source: 'PLAYER', timestamp: Date.now()});
+                            tempLogEntries.push({message: `プレイヤーは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newPlayerState.defeatPoints}点。`, source: 'PLAYER', timestamp: Date.now()});
                             if (newPlayerState.defeatPoints >= 10) {
                                 gameShouldEnd = true; winnerOnEnd = 'CPU';
                             }
@@ -3617,30 +2733,35 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                           gameLog: appendLogEntries(prev.gameLog, [createLogEntry('両者ユニット出撃。戦闘計算へ。', 'SYSTEM')]),
                         };
                     }
-                    
-                    if (visualizeUnilateral) {
-                        setIsVisualizingUnilateralDeployment(true);
-                        setUnilateralDeploymentWinner(visualizeUnilateral);
-                        
-                        setTimeout(() => {
-                            setGameState(currentGs => {
-                                if (!currentGs) return null;
-                                const finalLog = [...currentGs.gameLog];
 
-                                if (gameShouldEnd) {
-                                    finalLog.push({message: winnerOnEnd === 'PLAYER' ? "CPUの敗北ポイントが10に達しました！プレイヤーの勝利！" : "プレイヤーの敗北ポイントが10に達しました！CPUの勝利！", source: 'SYSTEM', timestamp: Date.now()});
-                                    return { ...currentGs, player: newPlayerState, cpu: newCpuState, phase: 'GAME_OVER', winner: winnerOnEnd, gameLog: finalLog, isPlayerTurnInteractive: false, isCPUMoving: false };
-                                } else {
-                                    finalLog.push({message: "一方的出撃処理完了。ターン終了処理へ。", source: 'SYSTEM', timestamp: Date.now()});
-                                    return { ...currentGs, player: newPlayerState, cpu: newCpuState, phase: 'END_TURN_CLEANUP', gameLog: finalLog, isPlayerTurnInteractive: false, isCPUMoving: false };
-                                }
-                            });
-                            setIsVisualizingUnilateralDeployment(false);
-                            setUnilateralDeploymentWinner(null);
-                        }, 2000);
-                        return { ...prev, player: visualPlayerState, cpu: visualCpuState, gameLog: appendLogEntries(prev.gameLog, tempLogEntries), isPlayerTurnInteractive: false };
+                    if (gameShouldEnd) {
+                        tempLogEntries.push({
+                          message: winnerOnEnd === 'PLAYER' ? "CPUの敗北ポイントが10に達しました！プレイヤーの勝利！" : "プレイヤーの敗北ポイントが10に達しました！CPUの勝利！",
+                          source: 'SYSTEM',
+                          timestamp: Date.now(),
+                        });
+                        return {
+                          ...prev,
+                          player: newPlayerState,
+                          cpu: newCpuState,
+                          phase: 'GAME_OVER',
+                          winner: winnerOnEnd,
+                          gameLog: appendLogEntries(prev.gameLog, tempLogEntries),
+                          isPlayerTurnInteractive: false,
+                          isCPUMoving: false,
+                        };
                     }
-                    return { ...prev, gameLog: appendLogEntries(prev.gameLog, tempLogEntries) };
+
+                    tempLogEntries.push({message: "一方的出撃処理完了。ターン終了処理へ。", source: 'SYSTEM', timestamp: Date.now()});
+                    return {
+                      ...prev,
+                      player: newPlayerState,
+                      cpu: newCpuState,
+                      phase: 'END_TURN_CLEANUP',
+                      gameLog: appendLogEntries(prev.gameLog, tempLogEntries),
+                      isPlayerTurnInteractive: false,
+                      isCPUMoving: false,
+                    };
                 });
                 break;
             case 'DEPLOYMENT_HANDLE_TAPPED':
@@ -3917,7 +3038,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         }
     }
 
-  }, [gameState, processCPUAction, isVisualizingCombat, isVisualizingUnilateralDeployment, addLogEntry]); 
+  }, [gameState, processCPUAction, isVisualizingCombat, addLogEntry]);
 
 
   if (!gameState) {
@@ -3925,7 +3046,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   }
 
   const { player, cpu, phase, gameLog, winner, currentTerrainCard, battlefieldTerrainAttribute, isCPUMoving, isPlayerTurnInteractive, playedCCards } = gameState;
-  const phaseInstructionText = getPhaseInstruction(phase, player.hand, player.squad, isVisualizingUnilateralDeployment, unilateralDeploymentWinner);
+  const phaseInstructionText = getPhaseInstruction(phase, player.hand, player.squad);
   const canPlayerPlaySelectedCCard = selectedCardLocal && canPlayCCard(selectedCardLocal, player, gameState);
   const pendingTargetMode = getCCardTargetMode(pendingTargetCCard);
   const cCardTargetCandidates = pendingTargetCCard
@@ -3948,9 +3069,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
   const battleSummary = isVisualizingCombat
     ? createBattleSummary(player, cpu, gameLog, playedCCards)
-    : isVisualizingUnilateralDeployment
-      ? createUnilateralBattleSummary(player, cpu)
-      : null;
+    : null;
 
   return (
     <GamePageContext.Provider value={{ handleImageError, imageLoadErrors, setSelectedCard }}>
@@ -4035,16 +3154,13 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
           gameLog={gameLog}
           isCPUMoving={isCPUMoving}
           isCpuWinnerVisualizing={
-            ((combatResultVisual === 'CPU' || combatResultVisual === 'DRAW') && isVisualizingCombat) ||
-            (isVisualizingUnilateralDeployment && unilateralDeploymentWinner === 'CPU')
+            (combatResultVisual === 'CPU' || combatResultVisual === 'DRAW') && isVisualizingCombat
           }
           isPlayerTurnInteractive={isPlayerTurnInteractive}
           isPlayerWinnerVisualizing={
-            ((combatResultVisual === 'PLAYER' || combatResultVisual === 'DRAW') && isVisualizingCombat) ||
-            (isVisualizingUnilateralDeployment && unilateralDeploymentWinner === 'PLAYER')
+            (combatResultVisual === 'PLAYER' || combatResultVisual === 'DRAW') && isVisualizingCombat
           }
           isVisualizingCombat={isVisualizingCombat}
-          isVisualizingUnilateralDeployment={isVisualizingUnilateralDeployment}
           onConfirmCombatResolution={confirmCombatResolution}
           onOpenDiscardPile={openDiscardPileModal}
           onOpenLargeCard={openLargeCardModal}
@@ -4060,7 +3176,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
           playedCCards={playedCCards}
           pendingTargetCCard={pendingTargetCCard}
           selectedCard={selectedCardLocal}
-          unilateralDeploymentWinner={unilateralDeploymentWinner}
           winner={winner}
         />
       </div>

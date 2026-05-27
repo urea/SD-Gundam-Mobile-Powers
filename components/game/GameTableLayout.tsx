@@ -1,6 +1,5 @@
 import React from 'react';
 import { BattleSummary, Card, CombatSideSummary, GamePhase, LogEntry, PlayedCCardSummary, PlayerState, PlayerType } from '../../types';
-import { isKiraCard } from '../../utils/gameRules';
 import { getCardInstanceId, isSameCardInstance } from '../../utils/cardIdentity';
 import { GameCard } from './GameCard';
 
@@ -19,7 +18,6 @@ interface GameTableLayoutProps {
   isPlayerTurnInteractive: boolean;
   isPlayerWinnerVisualizing: boolean;
   isVisualizingCombat: boolean;
-  isVisualizingUnilateralDeployment: boolean;
   onConfirmCombatResolution: () => void;
   onOpenDiscardPile: (owner: PlayerType) => void;
   onOpenLargeCard: (card: Card) => void;
@@ -35,7 +33,6 @@ interface GameTableLayoutProps {
   playerCCardTargetableNumbers?: Set<string>;
   playedCCards: PlayedCCardSummary[];
   selectedCard: Card | null;
-  unilateralDeploymentWinner: PlayerType | null;
   winner: PlayerType | null;
 }
 
@@ -64,15 +61,13 @@ interface FieldLaneProps {
 const getScoreClass = (
   isVisualizingWinner: boolean,
   combatResultVisual: PlayerType | 'DRAW' | null,
-  unilateralDeploymentWinner: PlayerType | null,
-  isVisualizingUnilateralDeployment: boolean,
   owner: PlayerType,
 ) => {
   if (!isVisualizingWinner) {
     return owner === 'PLAYER' ? 'bg-sky-100 text-sky-700' : 'bg-red-100 text-red-700';
   }
 
-  if (combatResultVisual === owner || (isVisualizingUnilateralDeployment && unilateralDeploymentWinner === owner)) {
+  if (combatResultVisual === owner) {
     return owner === 'PLAYER' ? 'blinking-winner-player' : 'blinking-winner-cpu';
   }
 
@@ -88,20 +83,6 @@ const HiddenHand: React.FC<{ count: number }> = ({ count }) => (
   </div>
 );
 
-const terrainLayerDefs = [
-  { key: '宇', label: '宇', className: 'game-battle-layer-space' },
-  { key: '空', label: '空', className: 'game-battle-layer-sky' },
-  { key: '陸', label: '陸', className: 'game-battle-layer-land' },
-  { key: '海', label: '海', className: 'game-battle-layer-sea' },
-];
-
-const getActiveBattleLayers = (terrainAttribute: string | null) => {
-  if (!terrainAttribute) return terrainLayerDefs;
-  const terrainChars = new Set(Array.from(terrainAttribute));
-  const matched = terrainLayerDefs.filter(layer => terrainChars.has(layer.key));
-  return matched.length > 0 ? matched : terrainLayerDefs;
-};
-
 const getLaneTerrainTone = (terrainAttribute: string | null | undefined): 'space' | 'sky' | 'land' | 'sea' | null => {
   if (!terrainAttribute) return null;
   if (terrainAttribute.includes('宇')) return 'space';
@@ -110,8 +91,6 @@ const getLaneTerrainTone = (terrainAttribute: string | null | undefined): 'space
   if (terrainAttribute.includes('陸')) return 'land';
   return null;
 };
-
-const battleBeamVariants = Array.from({ length: 10 }, (_, index) => `game-battle-beam-chaos-${index + 1}`);
 
 const formatSignedPoints = (points: number): string => {
   if (points > 0) return `+${points}`;
@@ -172,148 +151,6 @@ const createFieldPlayedCCardSummaries = (
   return played;
 };
 
-const BattleSummarySide: React.FC<{
-  label: string;
-  onPreviewEnd: () => void;
-  onPreviewStart: (card: Card) => void;
-  summary: CombatSideSummary;
-  tone: 'player' | 'cpu';
-}> = ({ label, onPreviewEnd, onPreviewStart, summary, tone }) => (
-  <section className={`game-battle-summary-side game-battle-summary-${tone}`} aria-label={`${label} 戦闘計算`}>
-    <div className="game-battle-summary-title">
-      <span>{label}</span>
-      <strong>{summary.finalTotal}P</strong>
-    </div>
-    <div className="game-battle-summary-cards">
-      {summary.cards.slice(0, 3).map(card => (
-        <div className="game-battle-summary-card" key={getCardInstanceId(card.sourceCard)}>
-          <button
-            className="game-battle-card-name"
-            type="button"
-            title={card.name}
-            onBlur={onPreviewEnd}
-            onFocus={() => onPreviewStart(card.sourceCard)}
-            onMouseEnter={() => onPreviewStart(card.sourceCard)}
-            onMouseLeave={onPreviewEnd}
-          >
-            {card.name}
-          </button>
-          <span className="game-battle-card-points">
-            {card.basePoints}{card.tagBonus !== 0 ? `+${card.tagBonus}` : ''}
-          </span>
-        </div>
-      ))}
-      {summary.cards.length === 0 && <span className="game-battle-summary-empty">有効Mなし</span>}
-    </div>
-    {summary.combos.length > 0 && (
-      <div className="game-battle-combo-line">
-        {summary.combos.map(combo => `${combo.name} +${combo.points}`).join(' / ')}
-      </div>
-    )}
-    <div className="game-battle-formula">
-      {getFormulaParts(summary).map((part, index) => (
-        <React.Fragment key={`${label}-${part}`}>
-          {index > 0 && <span className="game-battle-formula-operator">{part.startsWith('=') ? '' : '+'}</span>}
-          <span>{part}</span>
-        </React.Fragment>
-      ))}
-    </div>
-  </section>
-);
-
-const FieldCounterCards: React.FC<{
-  playedCCards: PlayedCCardSummary[];
-  onPreviewEnd: () => void;
-  onPreviewStart: (card: Card) => void;
-}> = ({ playedCCards, onPreviewEnd, onPreviewStart }) => {
-  const renderSide = (owner: PlayerType, label: string) => {
-    const cards = playedCCards.filter(card => card.owner === owner);
-
-    return (
-      <section className={`game-counter-side ${owner === 'PLAYER' ? 'game-counter-side-player' : 'game-counter-side-cpu'}`}>
-        <div className="game-counter-title">
-          <span>{label}</span>
-          <span>使用C</span>
-        </div>
-        <div className="game-counter-list">
-          {cards.length > 0 ? (
-            cards.map((card, index) => (
-              <button
-                aria-label={`${label}が使用したCカード ${card.name} の画像を表示`}
-                className="game-counter-card"
-                key={`${owner}-${getCardInstanceId(card.sourceCard)}-${index}`}
-                title={card.effect ? `${card.name}: ${card.effect}` : card.name}
-                type="button"
-                onBlur={onPreviewEnd}
-                onFocus={() => onPreviewStart(card.sourceCard)}
-                onMouseEnter={() => onPreviewStart(card.sourceCard)}
-                onMouseLeave={onPreviewEnd}
-              >
-                {card.imageUrl ? (
-                  <img alt="" src={card.imageUrl} />
-                ) : (
-                  <span className="game-counter-fallback">C</span>
-                )}
-                <span className="game-counter-copy">
-                  <strong>{card.name}</strong>
-                  <span>{card.effect || '-'}</span>
-                </span>
-              </button>
-            ))
-          ) : (
-            <span className="game-counter-empty">未使用</span>
-          )}
-        </div>
-      </section>
-    );
-  };
-
-  return (
-    <div className="game-counter-node" aria-label="戦場の使用Cカード">
-      {renderSide('PLAYER', 'PLAYER')}
-      {renderSide('CPU', 'CPU')}
-    </div>
-  );
-};
-
-const BattleCalculationSummary: React.FC<{
-  battleSummary: BattleSummary | null | undefined;
-  onPreviewEnd: () => void;
-  onPreviewStart: (card: Card) => void;
-}> = ({ battleSummary, onPreviewEnd, onPreviewStart }) => {
-  if (!battleSummary) return null;
-  const calculationLogs = battleSummary.cCardLogs.slice(0, 6);
-
-  return (
-    <div className="game-battle-summary" aria-label="戦闘計算サマリ">
-      <BattleSummarySide
-        label="PLAYER"
-        onPreviewEnd={onPreviewEnd}
-        onPreviewStart={onPreviewStart}
-        summary={battleSummary.player}
-        tone="player"
-      />
-      <section className="game-battle-events" aria-label="戦闘計算ログ">
-        <span className="game-battle-events-title">計算ログ</span>
-        {calculationLogs.length > 0 ? (
-          calculationLogs.map((message, index) => (
-            <p key={`${message}-${index}`}>{message}</p>
-          ))
-        ) : (
-          <p>C/S補正なし</p>
-        )}
-      </section>
-      <BattleSummarySide
-        label="CPU"
-        onPreviewEnd={onPreviewEnd}
-        onPreviewStart={onPreviewStart}
-        summary={battleSummary.cpu}
-        tone="cpu"
-      />
-    </div>
-  );
-};
-
 const CenterBattleSummary: React.FC<{
   battleSummary: BattleSummary | null | undefined;
   combatResultVisual: PlayerType | 'DRAW' | null;
@@ -352,204 +189,6 @@ const CenterBattleSummary: React.FC<{
         </span>
       </div>
     </section>
-  );
-};
-
-const BattleCounterCards: React.FC<{
-  battleSummary: BattleSummary | null | undefined;
-  onPreviewEnd: () => void;
-  onPreviewStart: (card: Card) => void;
-}> = ({ battleSummary, onPreviewEnd, onPreviewStart }) => {
-  if (!battleSummary) return null;
-
-  const renderSide = (owner: PlayerType, label: string) => {
-    const cards = battleSummary.playedCCards.filter(card => card.owner === owner);
-
-    return (
-      <section className={`game-battle-counter-side ${owner === 'PLAYER' ? 'game-battle-counter-player' : 'game-battle-counter-cpu'}`}>
-        <div className="game-battle-counter-title">
-          <span>{label}</span>
-          <span>使用Cカード</span>
-        </div>
-        <div className="game-battle-counter-list">
-          {cards.length > 0 ? (
-            cards.map(card => (
-              <button
-                aria-label={`${label}が使用したCカード ${card.name} の画像を表示`}
-                className="game-battle-counter-card"
-                key={`${owner}-${getCardInstanceId(card.sourceCard)}`}
-                title={card.effect ? `${card.name}: ${card.effect}` : card.name}
-                type="button"
-                onBlur={onPreviewEnd}
-                onFocus={() => onPreviewStart(card.sourceCard)}
-                onMouseEnter={() => onPreviewStart(card.sourceCard)}
-                onMouseLeave={onPreviewEnd}
-              >
-                {card.imageUrl ? (
-                  <img alt="" src={card.imageUrl} />
-                ) : (
-                  <span className="game-battle-counter-fallback">C</span>
-                )}
-                <span className="game-battle-counter-copy">
-                  <strong>{card.name}</strong>
-                  <span>{card.effect || '-'}</span>
-                </span>
-              </button>
-            ))
-          ) : (
-            <span className="game-battle-counter-empty">C使用なし</span>
-          )}
-        </div>
-      </section>
-    );
-  };
-
-  return (
-    <div className="game-battle-counter-cards" aria-label="使用Cカード">
-      {renderSide('PLAYER', 'PLAYER')}
-      {renderSide('CPU', 'CPU')}
-    </div>
-  );
-};
-
-const BattleMiniCards: React.FC<{
-  battleSummary: BattleSummary | null | undefined;
-  onPreviewEnd: () => void;
-  onPreviewStart: (card: Card) => void;
-}> = ({ battleSummary, onPreviewEnd, onPreviewStart }) => {
-  if (!battleSummary) return null;
-
-  const renderCards = (cards: CombatSideSummary['cards'], owner: PlayerType) => (
-    cards.slice(0, 3).map(card => {
-      const isKira = isKiraCard(card.sourceCard);
-
-      return (
-        <button
-          aria-label={`${owner === 'PLAYER' ? 'PLAYER' : 'CPU'} ${card.name} のカード画像を表示${isKira ? ' キラカード' : ''}`}
-          className={`game-battle-mini-card ${isKira ? 'kira-border-animated' : ''}`}
-          key={`${owner}-${getCardInstanceId(card.sourceCard)}`}
-          title={card.name}
-          type="button"
-          onBlur={onPreviewEnd}
-          onFocus={() => onPreviewStart(card.sourceCard)}
-          onMouseEnter={() => onPreviewStart(card.sourceCard)}
-          onMouseLeave={onPreviewEnd}
-        >
-          {card.imageUrl ? (
-            <img alt="" src={card.imageUrl} />
-          ) : (
-            <span className="game-battle-mini-fallback">M</span>
-          )}
-        </button>
-      );
-    })
-  );
-
-  return (
-    <div className="game-battle-card-strip" aria-label="戦闘参加カード">
-      <div className="game-battle-card-strip-side game-battle-card-strip-player">
-        {renderCards(battleSummary.player.cards, 'PLAYER')}
-      </div>
-      <div className="game-battle-card-strip-side game-battle-card-strip-cpu">
-        {renderCards(battleSummary.cpu.cards, 'CPU')}
-      </div>
-    </div>
-  );
-};
-
-const BattleAnimation: React.FC<{
-  battleSummary?: BattleSummary | null;
-  combatResultVisual: PlayerType | 'DRAW' | null;
-  headerTitle?: string;
-  playerPoints: number;
-  cpuPoints: number;
-  onPreviewEnd: () => void;
-  onPreviewStart: (card: Card) => void;
-  onConfirm?: () => void;
-  terrainAttribute: string | null;
-}> = ({
-  battleSummary,
-  combatResultVisual,
-  headerTitle = '戦闘結果',
-  playerPoints,
-  cpuPoints,
-  onPreviewEnd,
-  onPreviewStart,
-  onConfirm,
-  terrainAttribute,
-}) => {
-  const layers = getActiveBattleLayers(terrainAttribute);
-  const playerWon = combatResultVisual === 'PLAYER';
-  const cpuWon = combatResultVisual === 'CPU';
-  const isDraw = combatResultVisual === 'DRAW';
-  const resultText =
-    playerWon
-      ? 'PLAYER WIN'
-      : cpuWon
-        ? 'CPU WIN'
-        : 'DRAW';
-  const resultSummary = playerWon ? 'PLAYER 勝利' : cpuWon ? 'CPU 勝利' : '引き分け';
-  const resultToneClass = playerWon ? 'game-battle-result-player' : cpuWon ? 'game-battle-result-cpu' : 'game-battle-result-draw';
-
-  return (
-    <aside className="game-battle-animation" aria-label="戦闘演出">
-      <div className="game-battle-panel">
-        <div className={`game-battle-header ${resultToneClass}`}>
-          <span>{headerTitle}</span>
-          <strong>{resultText}</strong>
-          {onConfirm ? (
-            <button className="game-battle-confirm-button" type="button" onClick={onConfirm}>
-              戦闘を確定
-            </button>
-          ) : (
-            <span className="game-battle-auto-note">自動確定中</span>
-          )}
-        </div>
-        <div className="game-battle-scoreboard" aria-label={`戦闘ポイント ${resultSummary}`}>
-          <div className={`game-battle-score-card game-battle-score-player ${playerWon ? 'game-battle-score-winner' : cpuWon ? 'game-battle-score-loser' : ''}`}>
-            <span>PLAYER</span>
-            <strong>{playerPoints}</strong>
-            <em>{playerWon ? 'WIN' : cpuWon ? 'LOSE' : 'DRAW'}</em>
-          </div>
-          <div className={`game-battle-result-badge ${resultToneClass}`}>{resultSummary}</div>
-          <div className={`game-battle-score-card game-battle-score-cpu ${cpuWon ? 'game-battle-score-winner' : playerWon ? 'game-battle-score-loser' : ''}`}>
-            <span>CPU</span>
-            <strong>{cpuPoints}</strong>
-            <em>{cpuWon ? 'WIN' : playerWon ? 'LOSE' : 'DRAW'}</em>
-          </div>
-        </div>
-        <BattleCounterCards
-          battleSummary={battleSummary}
-          onPreviewEnd={onPreviewEnd}
-          onPreviewStart={onPreviewStart}
-        />
-        <BattleCalculationSummary
-          battleSummary={battleSummary}
-          onPreviewEnd={onPreviewEnd}
-          onPreviewStart={onPreviewStart}
-        />
-        <div className="game-battle-layer-stack">
-          <BattleMiniCards
-            battleSummary={battleSummary}
-            onPreviewEnd={onPreviewEnd}
-            onPreviewStart={onPreviewStart}
-          />
-          {layers.map((layer) => (
-            <div className={`game-battle-layer ${layer.className}`} key={layer.key}>
-              <span className="game-battle-layer-label">{layer.label}</span>
-              <span className="game-battle-unit game-battle-unit-player" />
-              <span className="game-battle-unit game-battle-unit-cpu" />
-              {battleBeamVariants.map(beamClass => (
-                <span className={`game-battle-beam game-battle-beam-chaos ${beamClass}`} key={`${layer.key}-${beamClass}`} />
-              ))}
-              {playerWon && <span className="game-battle-burst game-battle-burst-cpu" />}
-              {cpuWon && <span className="game-battle-burst game-battle-burst-player" />}
-              {isDraw && <span className="game-battle-clash" />}
-            </div>
-          ))}
-        </div>
-      </div>
-    </aside>
   );
 };
 
@@ -728,7 +367,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   isPlayerTurnInteractive,
   isPlayerWinnerVisualizing,
   isVisualizingCombat,
-  isVisualizingUnilateralDeployment,
   onConfirmCombatResolution,
   onOpenDiscardPile,
   onOpenLargeCard,
@@ -744,7 +382,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   playerCCardTargetableNumbers,
   playedCCards,
   selectedCard,
-  unilateralDeploymentWinner,
   winner,
 }) => {
   const [draggedCard, setDraggedCard] = React.useState<Card | null>(null);
@@ -755,22 +392,17 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   const [battlefieldLogPanelStyle, setBattlefieldLogPanelStyle] = React.useState<React.CSSProperties>({});
   const playerFieldDisabled =
     isVisualizingCombat ||
-    isVisualizingUnilateralDeployment ||
     !!winner ||
     (!isPlayerTurnInteractive && phase !== 'COUNTER_SUPPORT_PLAYER_PLAY_C');
-  const cpuFieldDisabled = isVisualizingCombat || isVisualizingUnilateralDeployment || !!winner;
+  const cpuFieldDisabled = isVisualizingCombat || !!winner;
   const playerScoreClass = getScoreClass(
     isPlayerWinnerVisualizing,
     combatResultVisual,
-    unilateralDeploymentWinner,
-    isVisualizingUnilateralDeployment,
     'PLAYER',
   );
   const cpuScoreClass = getScoreClass(
     isCpuWinnerVisualizing,
     combatResultVisual,
-    unilateralDeploymentWinner,
-    isVisualizingUnilateralDeployment,
     'CPU',
   );
   const isCpuPhase =
@@ -781,9 +413,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     ? 'ゲーム終了'
     : isVisualizingCombat
       ? '結果確認'
-      : isVisualizingUnilateralDeployment
-        ? '一方的戦闘'
-        : cCardTargetInstruction
+      : cCardTargetInstruction
           ? '対象選択'
           : isCPUMoving && isCpuPhase
             ? 'CPU処理中'
@@ -798,7 +428,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
                     : '進行中';
   const centerStatusTone = winner
     ? 'neutral'
-    : isVisualizingCombat || isVisualizingUnilateralDeployment || phase.startsWith('COMBAT')
+    : isVisualizingCombat || phase.startsWith('COMBAT')
       ? 'battle'
       : cCardTargetInstruction || phase.startsWith('COUNTER_SUPPORT')
         ? 'counter'
@@ -840,7 +470,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   const canDragHandCard =
     isPlayerTurnInteractive &&
     !isVisualizingCombat &&
-    !isVisualizingUnilateralDeployment &&
     !winner;
   const canDropDraggedToSquad =
     !!draggedCard &&
@@ -1002,7 +631,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
             </div>
             <CenterBattleSummary
               battleSummary={battleSummary}
-              combatResultVisual={isVisualizingCombat ? combatResultVisual : unilateralDeploymentWinner}
+              combatResultVisual={combatResultVisual}
               cpuPoints={isVisualizingCombat ? cpu.combatPoints : getBattlefieldBaseTotal(cpu.battlefield)}
               playerPoints={isVisualizingCombat ? player.combatPoints : getBattlefieldBaseTotal(player.battlefield)}
             />
@@ -1031,11 +660,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
             className="game-battlefield-terrain-node game-attention-flash"
             key={`terrain-${currentTerrainCard ? getCardInstanceId(currentTerrainCard) : 'none'}-${battlefieldTerrainAttribute || 'none'}`}
           >
-            {isVisualizingUnilateralDeployment && unilateralDeploymentWinner ? (
-              <span className={`game-unilateral-text ${unilateralDeploymentWinner === 'PLAYER' ? 'text-sky-500' : 'text-red-500'}`}>
-                一方的な戦闘
-              </span>
-            ) : currentTerrainCard ? (
+            {currentTerrainCard ? (
               <div className="game-terrain-content">
                 <button
                   aria-label={`${currentTerrainCard.cardName} の画像を確認する`}
@@ -1195,7 +820,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
                 {card && (
                   <GameCard
                     card={card}
-                    isDisabled={!isPlayerTurnInteractive || isVisualizingCombat || isVisualizingUnilateralDeployment || !!winner}
+                    isDisabled={!isPlayerTurnInteractive || isVisualizingCombat || !!winner}
                     isPlayerCard
                     isSelected={isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
                     isDraggable={canDragHandCard}
@@ -1231,18 +856,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
             </span>
           </div>
         </aside>
-      )}
-      {isVisualizingUnilateralDeployment && (
-        <BattleAnimation
-          battleSummary={battleSummary}
-          combatResultVisual={unilateralDeploymentWinner}
-          cpuPoints={getBattlefieldBaseTotal(cpu.battlefield)}
-          headerTitle="一方的戦闘"
-          onPreviewEnd={() => setPreviewCard(null)}
-          onPreviewStart={setPreviewCard}
-          playerPoints={getBattlefieldBaseTotal(player.battlefield)}
-          terrainAttribute={battlefieldTerrainAttribute}
-        />
       )}
     </main>
   );
