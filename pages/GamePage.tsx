@@ -269,6 +269,14 @@ const customScrollbarAndAnimationStyles = `
   .game-center-confirm-button {
     pointer-events: auto;
   }
+  .game-battlefield-confirm-node {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 14;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
   .game-defeat-points {
     display: inline-flex;
     align-items: center;
@@ -1049,7 +1057,7 @@ const customScrollbarAndAnimationStyles = `
     overflow: auto;
     padding: 0.05rem 0.16rem 0.1rem;
     font-size: 0.62rem;
-    color: #0369a1;
+    color: #111827;
     cursor: text;
     -webkit-user-select: text;
     user-select: text;
@@ -1061,6 +1069,15 @@ const customScrollbarAndAnimationStyles = `
     overflow-wrap: anywhere;
     -webkit-user-select: text;
     user-select: text;
+  }
+  .game-log-entry-player {
+    color: #0369a1;
+  }
+  .game-log-entry-cpu {
+    color: #b91c1c;
+  }
+  .game-log-entry-system {
+    color: #111827;
   }
   .game-center-battle-summary {
     min-width: 0;
@@ -1086,7 +1103,7 @@ const customScrollbarAndAnimationStyles = `
   .game-center-battle-head {
     min-width: 0;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: 0.4rem;
     color: #334155;
@@ -1115,6 +1132,14 @@ const customScrollbarAndAnimationStyles = `
     font-weight: 900;
     line-height: 1.2;
     white-space: nowrap;
+  }
+  .game-battlefield-confirm-button {
+    min-width: 8.6rem;
+    border-color: rgba(14, 165, 233, 0.62);
+    border-radius: 7px;
+    box-shadow: 0 12px 26px rgba(2, 132, 199, 0.24);
+    padding: 0.35rem 0.8rem;
+    font-size: 0.74rem;
   }
   .game-center-confirm-button:hover,
   .game-center-confirm-button:focus-visible {
@@ -2197,6 +2222,11 @@ const customScrollbarAndAnimationStyles = `
     .game-center-confirm-button {
       padding: 0.08rem 0.25rem;
       font-size: 0.5rem;
+    }
+    .game-battlefield-confirm-button {
+      min-width: 6.8rem;
+      padding: 0.24rem 0.5rem;
+      font-size: 0.6rem;
     }
     .game-center-battle-formulas {
       grid-template-columns: minmax(0, 1fr);

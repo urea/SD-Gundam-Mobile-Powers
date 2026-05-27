@@ -318,9 +318,8 @@ const CenterBattleSummary: React.FC<{
   battleSummary: BattleSummary | null | undefined;
   combatResultVisual: PlayerType | 'DRAW' | null;
   cpuPoints: number;
-  onConfirm?: () => void;
   playerPoints: number;
-}> = ({ battleSummary, combatResultVisual, cpuPoints, onConfirm, playerPoints }) => {
+}> = ({ battleSummary, combatResultVisual, cpuPoints, playerPoints }) => {
   if (!battleSummary || !combatResultVisual) return null;
 
   const resultLabel =
@@ -341,11 +340,6 @@ const CenterBattleSummary: React.FC<{
       <div className="game-center-battle-head">
         <strong>{resultLabel}</strong>
         <span>PLAYER {playerPoints} / CPU {cpuPoints}</span>
-        {onConfirm && (
-          <button className="game-center-confirm-button" type="button" onClick={onConfirm}>
-            戦闘を確定
-          </button>
-        )}
       </div>
       <div className="game-center-battle-formulas">
         <span>
@@ -1010,18 +1004,28 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               battleSummary={battleSummary}
               combatResultVisual={isVisualizingCombat ? combatResultVisual : unilateralDeploymentWinner}
               cpuPoints={isVisualizingCombat ? cpu.combatPoints : getBattlefieldBaseTotal(cpu.battlefield)}
-              onConfirm={isVisualizingCombat ? onConfirmCombatResolution : undefined}
               playerPoints={isVisualizingCombat ? player.combatPoints : getBattlefieldBaseTotal(player.battlefield)}
             />
             <div className="game-log-node custom-scrollbar-xs" role="log" aria-live="polite" ref={logNodeRef}>
               {gameLog.map((logEntry, index) => (
-                <p key={`${logEntry.timestamp}-${index}`}>
+                <p
+                  className={`game-log-entry game-log-entry-${logEntry.source.toLowerCase()}`}
+                  key={`${logEntry.timestamp}-${index}`}
+                >
                   {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
                   {logEntry.message}
                 </p>
               ))}
             </div>
           </div>
+
+          {isVisualizingCombat && (
+            <div className="game-battlefield-confirm-node">
+              <button className="game-center-confirm-button game-battlefield-confirm-button" type="button" onClick={onConfirmCombatResolution}>
+                戦闘結果を確定
+              </button>
+            </div>
+          )}
 
           <div
             className="game-battlefield-terrain-node game-attention-flash"
