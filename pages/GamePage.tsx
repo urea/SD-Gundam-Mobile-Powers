@@ -225,10 +225,11 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-battlefield-log-panel {
     position: absolute;
-    left: clamp(0.5rem, 1.8vw, 1.5rem);
-    top: 50%;
-    width: min(46rem, calc(100% - 10.5rem));
-    max-height: min(6.1rem, 46%);
+    left: 0.5rem;
+    top: clamp(0.45rem, 1.2vw, 0.9rem);
+    bottom: clamp(0.45rem, 1.2vw, 0.9rem);
+    width: min(22rem, 36vw);
+    max-height: none;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     gap: 0.2rem;
@@ -238,11 +239,10 @@ const customScrollbarAndAnimationStyles = `
     background: rgba(248, 250, 252, 0.9);
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.13);
     padding: 0.28rem 0.42rem;
-    transform: translateY(-50%);
   }
   .game-battlefield-log-panel-battle {
-    width: min(54rem, calc(100% - 9rem));
-    max-height: min(8.4rem, 62%);
+    width: min(24rem, 38vw);
+    max-height: none;
     grid-template-rows: auto auto minmax(0, 1fr);
   }
   .game-battlefield-terrain-node {
@@ -2130,14 +2130,16 @@ const customScrollbarAndAnimationStyles = `
     }
     .game-battlefield-log-panel {
       left: 0.42rem;
-      width: min(31rem, calc(100% - 7.2rem));
-      max-height: min(4.7rem, 46%);
+      top: 0.36rem;
+      bottom: 0.36rem;
+      width: min(15rem, 34vw);
+      max-height: none;
       gap: 0.12rem;
       padding: 0.16rem 0.26rem;
     }
     .game-battlefield-log-panel-battle {
-      width: min(33rem, calc(100% - 6.4rem));
-      max-height: min(6.2rem, 62%);
+      width: min(16.5rem, 36vw);
+      max-height: none;
     }
     .game-battlefield-terrain-node {
       right: 0.42rem;

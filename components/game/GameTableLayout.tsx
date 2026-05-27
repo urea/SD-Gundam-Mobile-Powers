@@ -52,6 +52,7 @@ interface FieldLaneProps {
   onDropToSquad?: () => void;
   onPreviewEnd: () => void;
   onPreviewStart: (card: Card) => void;
+  laneCardsRef?: React.Ref<HTMLDivElement>;
   onSelectCard: (card: Card) => void;
   onTargetCard?: (card: Card) => void;
   playerState: PlayerState;
@@ -578,6 +579,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   onDropToSquad,
   onPreviewEnd,
   onPreviewStart,
+  laneCardsRef,
   onSelectCard,
   onTargetCard,
   playerState,
@@ -693,7 +695,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
           <span>{owner}</span>
           <strong>{playerState.combatPoints}</strong>
         </div>
-        <div className="game-lane-cards" aria-label={`${owner} cards`}>
+        <div className="game-lane-cards" aria-label={`${owner} cards`} ref={laneCardsRef}>
           {[0, 1, 2].map(slotIndex => (
             <div
               className={`game-field-slot ${primaryFieldCards[slotIndex] ? 'game-field-slot-filled' : 'game-field-slot-empty'}`}
@@ -753,6 +755,9 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
 }) => {
   const [draggedCard, setDraggedCard] = React.useState<Card | null>(null);
   const [previewCard, setPreviewCard] = React.useState<Card | null>(null);
+  const battlefieldAreaRef = React.useRef<HTMLElement | null>(null);
+  const cpuLaneCardsRef = React.useRef<HTMLDivElement | null>(null);
+  const [battlefieldLogPanelStyle, setBattlefieldLogPanelStyle] = React.useState<React.CSSProperties>({});
   const playerFieldDisabled =
     isVisualizingCombat ||
     isVisualizingUnilateralDeployment ||
@@ -886,6 +891,47 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     }
     setDraggedCard(null);
   };
+  const updateBattlefieldOverlayMetrics = React.useCallback(() => {
+    const battlefieldArea = battlefieldAreaRef.current;
+    const laneCards = cpuLaneCardsRef.current;
+    const firstSlot = laneCards?.querySelector<HTMLElement>('.game-field-slot');
+    if (!battlefieldArea || !firstSlot) {
+      setBattlefieldLogPanelStyle(prev => (Object.keys(prev).length === 0 ? prev : {}));
+      return;
+    }
+
+    const areaRect = battlefieldArea.getBoundingClientRect();
+    const firstSlotRect = firstSlot.getBoundingClientRect();
+    const left = Math.max(8, Math.round(Math.min(24, areaRect.width * 0.012)));
+    const rightGap = Math.max(8, Math.round(Math.min(18, areaRect.width * 0.008)));
+    const width = Math.max(0, Math.floor(firstSlotRect.left - areaRect.left - left - rightGap));
+    const nextStyle: React.CSSProperties = {
+      left: `${left}px`,
+      width: `${width}px`,
+    };
+
+    setBattlefieldLogPanelStyle(prev => (
+      prev.left === nextStyle.left && prev.width === nextStyle.width ? prev : nextStyle
+    ));
+  }, []);
+
+  React.useLayoutEffect(() => {
+    updateBattlefieldOverlayMetrics();
+
+    const battlefieldArea = battlefieldAreaRef.current;
+    const laneCards = cpuLaneCardsRef.current;
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updateBattlefieldOverlayMetrics)
+      : null;
+    if (battlefieldArea && resizeObserver) resizeObserver.observe(battlefieldArea);
+    if (laneCards && resizeObserver) resizeObserver.observe(laneCards);
+    window.addEventListener('resize', updateBattlefieldOverlayMetrics);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateBattlefieldOverlayMetrics);
+    };
+  }, [updateBattlefieldOverlayMetrics]);
 
   return (
     <main
@@ -918,7 +964,11 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
         </div>
       </section>
 
-      <section className={`game-battlefield-area ${hasRecentCombo ? 'game-combo-pulse' : ''}`} aria-label="戦場">
+      <section
+        className={`game-battlefield-area ${hasRecentCombo ? 'game-combo-pulse' : ''}`}
+        aria-label="戦場"
+        ref={battlefieldAreaRef}
+      >
         <FieldLane
           activeCCard={cpuActiveCCard}
           battleVisualResult={combatResultVisual}
@@ -927,6 +977,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           isCPU
           isCardDisabled={cpuFieldDisabled}
           laneAttentionKey={cpuLaneAttentionKey}
+          laneCardsRef={cpuLaneCardsRef}
           onPreviewEnd={() => setPreviewCard(null)}
           onPreviewStart={setPreviewCard}
           onSelectCard={onSelectCard}
@@ -938,7 +989,10 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
         />
 
         <div className={`game-battlefield-overlay ${battleSummary ? 'game-battlefield-overlay-with-battle' : ''}`}>
-          <div className={`game-battlefield-log-panel ${battleSummary ? 'game-battlefield-log-panel-battle' : ''}`}>
+          <div
+            className={`game-battlefield-log-panel ${battleSummary ? 'game-battlefield-log-panel-battle' : ''}`}
+            style={battlefieldLogPanelStyle}
+          >
             <div className={`game-center-status-row game-center-status-${centerStatusTone}`} title={centerStatusDetail}>
               <strong>{centerStatusText}</strong>
               <span>{centerStatusDetail}</span>
