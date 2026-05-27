@@ -30,9 +30,6 @@ interface GameTableLayoutProps {
   onTargetCard?: (card: Card) => void;
   pendingTargetCCard?: Card | null;
   phase: GamePhase;
-  phaseInstructionBaseTextClass: string;
-  phaseInstructionContainerClass: string;
-  phaseInstructionStatusTextClass: string;
   phaseInstructionText: string;
   player: PlayerState;
   playerCCardTargetableNumbers?: Set<string>;
@@ -85,6 +82,23 @@ const HiddenHand: React.FC<{ count: number }> = ({ count }) => (
     <span className="game-hand-count">x{count}</span>
   </div>
 );
+
+type PhaseStepKey = 'formation' | 'deployment' | 'combat' | 'counter';
+
+const PHASE_STEPS: Array<{ key: PhaseStepKey; label: string }> = [
+  { key: 'formation', label: '編成フェイズ' },
+  { key: 'deployment', label: '出陣フェイズ' },
+  { key: 'combat', label: '戦闘フェイズ' },
+  { key: 'counter', label: 'カウンターフェイズ' },
+];
+
+const getActivePhaseStep = (phase: GamePhase): PhaseStepKey | null => {
+  if (phase.startsWith('FORMATION')) return 'formation';
+  if (phase.startsWith('DEPLOYMENT')) return 'deployment';
+  if (phase.startsWith('COMBAT')) return 'combat';
+  if (phase.startsWith('COUNTER_SUPPORT')) return 'counter';
+  return null;
+};
 
 const terrainLayerDefs = [
   { key: '宇', label: '宇', className: 'game-battle-layer-space' },
@@ -673,9 +687,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   onTargetCard,
   pendingTargetCCard,
   phase,
-  phaseInstructionBaseTextClass,
-  phaseInstructionContainerClass,
-  phaseInstructionStatusTextClass,
   phaseInstructionText,
   player,
   playerCCardTargetableNumbers,
@@ -710,6 +721,17 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     phase === 'FORMATION_CPU_PLACE' ||
     phase === 'COUNTER_SUPPORT_CPU_PLAY_C' ||
     phase === 'DEPLOYMENT_CPU_TERRAIN';
+  const activePhaseStep = getActivePhaseStep(phase);
+  const phaseBadgeText = cCardTargetInstruction
+    ? '対象'
+    : isCPUMoving && isCpuPhase
+      ? 'CPU'
+      : (isVisualizingCombat || isVisualizingUnilateralDeployment)
+        ? '演出'
+        : null;
+  const phaseBannerLabel = cCardTargetInstruction
+    ? `${phaseInstructionText} ${cCardTargetInstruction}`
+    : phaseInstructionText;
   const isSelectingCCardTarget = !!pendingTargetCCard && !!cCardTargetInstruction;
   const playerLaneAttentionKey = [
     player.squad.map(getCardInstanceId).join(','),
@@ -836,19 +858,27 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
 
       <section className={`game-center-strip ${hasRecentCombo ? 'game-combo-pulse' : ''}`} aria-label="中央戦場">
         <div
-          className={`game-phase-banner game-attention-flash ${phaseInstructionContainerClass} ${phaseInstructionBaseTextClass}`}
-          key={`phase-${phase}-${phaseInstructionText}`}
+          aria-label={phaseBannerLabel}
+          className="game-phase-banner game-attention-flash"
+          key={`phase-${phase}-${phaseInstructionText}-${phaseBadgeText || 'none'}`}
+          title={phaseBannerLabel}
         >
-          {phaseInstructionText}
-          {isCPUMoving && isCpuPhase && (
-            <span className={`ml-1 italic animate-pulse ${phaseInstructionStatusTextClass}`}>(CPU思考中...)</span>
-          )}
-          {(isVisualizingCombat || isVisualizingUnilateralDeployment) && (
-            <span className={`ml-1 italic animate-pulse ${phaseInstructionStatusTextClass}`}>(演出表示中...)</span>
-          )}
-          {cCardTargetInstruction && (
-            <span className="game-target-note">{cCardTargetInstruction}</span>
-          )}
+          {PHASE_STEPS.map((step) => {
+            const isActive = step.key === activePhaseStep;
+            return (
+              <div
+                aria-current={isActive ? 'step' : undefined}
+                className={`game-phase-step ${isActive ? `game-phase-step-active game-phase-step-${step.key}` : ''}`}
+                key={step.key}
+              >
+                <span className="game-phase-marker" aria-hidden="true" />
+                <span className="game-phase-label">{step.label}</span>
+                {isActive && phaseBadgeText && (
+                  <span className="game-phase-mini-status">{phaseBadgeText}</span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className={`game-score-node game-attention-flash ${playerScoreClass}`} key={`player-score-${player.combatPoints}`}>

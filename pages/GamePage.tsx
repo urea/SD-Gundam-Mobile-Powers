@@ -657,22 +657,79 @@ const customScrollbarAndAnimationStyles = `
   .game-phase-banner {
     grid-column: 1 / 2;
     grid-row: 1 / 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    min-width: 0;
+    display: grid;
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+    align-content: center;
+    gap: 0.12rem;
     border-radius: 7px;
+    border: 1px solid rgba(148, 163, 184, 0.42);
+    background: rgba(248, 250, 252, 0.86);
     padding: 0.25rem 0.45rem;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-align: center;
+    color: #64748b;
+    font-size: 0.58rem;
+    font-weight: 800;
+    text-align: left;
+    overflow: hidden;
   }
-  .game-target-note {
-    display: block;
-    width: 100%;
-    margin-top: 0.16rem;
-    color: #854d0e;
-    font-size: 0.62rem;
+  .game-phase-step {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 0.42rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.22rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    padding: 0.1rem 0.28rem;
+    background: rgba(255, 255, 255, 0.42);
+    line-height: 1.05;
+  }
+  .game-phase-marker {
+    width: 0.34rem;
+    height: 0.34rem;
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.38);
+  }
+  .game-phase-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .game-phase-step-active {
+    font-weight: 900;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.58), 0 1px 4px rgba(15, 23, 42, 0.08);
+  }
+  .game-phase-step-active .game-phase-marker {
+    background: currentColor;
+  }
+  .game-phase-step-formation {
+    border-color: rgba(14, 165, 233, 0.32);
+    background: rgba(224, 242, 254, 0.92);
+    color: #0369a1;
+  }
+  .game-phase-step-deployment {
+    border-color: rgba(34, 197, 94, 0.32);
+    background: rgba(220, 252, 231, 0.92);
+    color: #166534;
+  }
+  .game-phase-step-combat {
+    border-color: rgba(244, 63, 94, 0.3);
+    background: rgba(255, 228, 230, 0.9);
+    color: #be123c;
+  }
+  .game-phase-step-counter {
+    border-color: rgba(168, 85, 247, 0.3);
+    background: rgba(243, 232, 255, 0.9);
+    color: #7e22ce;
+  }
+  .game-phase-mini-status {
+    padding: 0.02rem 0.16rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: currentColor;
+    font-size: 0.46rem;
+    font-weight: 900;
     line-height: 1.15;
   }
   .game-score-node,
@@ -1865,8 +1922,21 @@ const customScrollbarAndAnimationStyles = `
       gap: 0.25rem;
     }
     .game-phase-banner {
-      font-size: 0.68rem;
-      padding: 0.15rem 0.3rem;
+      gap: 0.08rem;
+      padding: 0.12rem 0.22rem;
+      font-size: 0.55rem;
+    }
+    .game-phase-step {
+      gap: 0.16rem;
+      padding: 0.08rem 0.18rem;
+    }
+    .game-phase-marker {
+      width: 0.3rem;
+      height: 0.3rem;
+    }
+    .game-phase-mini-status {
+      padding: 0 0.12rem;
+      font-size: 0.42rem;
     }
     .game-score-node {
       min-width: 3.05rem;
@@ -3484,30 +3554,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
     setPendingTargetCCard(null);
   };
 
-
-  let phaseInstructionContainerClass = 'bg-slate-100';
-  let phaseInstructionBaseTextClass = 'text-slate-700';
-  let phaseInstructionStatusTextClass = 'text-slate-500';
-
-  if (isVisualizingCombat || isVisualizingUnilateralDeployment) {
-    phaseInstructionContainerClass = 'bg-purple-100';
-    phaseInstructionBaseTextClass = 'text-purple-700';
-    phaseInstructionStatusTextClass = 'text-purple-700';
-  } else if (isPlayerTurnInteractive) {
-    phaseInstructionContainerClass = 'bg-sky-100';
-    phaseInstructionBaseTextClass = 'text-sky-700';
-  } else if (
-    phase === 'FORMATION_CPU_DRAW' ||
-    phase === 'FORMATION_CPU_PLACE' ||
-    phase === 'DEPLOYMENT_CPU_TERRAIN' ||
-    phase === 'COUNTER_SUPPORT_CPU_DRAW' ||
-    phase === 'COUNTER_SUPPORT_CPU_PLAY_C'
-  ) {
-    phaseInstructionContainerClass = 'bg-red-100';
-    phaseInstructionBaseTextClass = 'text-red-700';
-    phaseInstructionStatusTextClass = 'text-red-700';
-  }
-
   const battleSummary = isVisualizingCombat
     ? createBattleSummary(player, cpu, gameLog, playedCCards)
     : isVisualizingUnilateralDeployment
@@ -3616,9 +3662,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
           onSelectCard={setSelectedCard}
           onTargetCard={handleTargetCard}
           phase={phase}
-          phaseInstructionBaseTextClass={phaseInstructionBaseTextClass}
-          phaseInstructionContainerClass={phaseInstructionContainerClass}
-          phaseInstructionStatusTextClass={phaseInstructionStatusTextClass}
           phaseInstructionText={phaseInstructionText}
           player={player}
           playerCCardTargetableNumbers={playerCCardTargetableNumbers}
