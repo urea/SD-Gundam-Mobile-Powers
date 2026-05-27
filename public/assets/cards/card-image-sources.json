@@ -1394,7 +1394,7 @@
       "battlefieldTerrain": "宇海",
       "factionAffiliation": "アイテム",
       "tags": "",
-      "effect": "●自分の最前線から好きなカード1枚を小隊にもどせる",
+      "effect": "●自分の最前線から好きなカード1枚を小隊にもどせる（自分の最前線に2枚以上出撃している場合に有効）",
       "var": "St1",
       "remoteUrl": "https://assets.st-note.com/img/1748414581-vzrbWhcxfE6XjkeAVSaY8Q0q.jpg",
       "localPath": "/assets/cards/069-C-012.jpg",

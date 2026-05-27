@@ -47,7 +47,9 @@ export const canPlayCCard = (
   _currentGameState: GameState,
 ): boolean => {
   if (card.type !== 'C') return false;
-  const hasBattlefieldM = actorState.battlefield.some(isActiveMCard);
+  const activeMCount = actorState.battlefield.filter(isActiveMCard).length;
+  if (card.cardNumber.startsWith('C-012')) return activeMCount >= 2;
+  const hasBattlefieldM = activeMCount > 0;
   const canPlayWithoutOwnM = card.cardNumber.startsWith('C-011');
   return hasBattlefieldM || canPlayWithoutOwnM;
 };
@@ -120,6 +122,7 @@ export const getCCardTargetCandidates = (
 
   switch (mode) {
     case 'OWN_M':
+      if (card.cardNumber.startsWith('C-012') && ownM.length < 2) return [];
       return ownM;
     case 'OPPONENT_M':
       return opponentM;
@@ -353,8 +356,12 @@ export const applyCCardEffect = (
   } else if (playedCard.cardNumber.startsWith('C-011')) {
     destroyOpponentCard(chooseLowestPointMCard(opponentM), '相手最前線のポイントが一番低いカードを対象。');
   } else if (playedCard.cardNumber.startsWith('C-012')) {
-    const target = selectedTarget || chooseHighestPointMCard(ownM);
-    moveActorCardToSquad(target);
+    if (ownM.length < 2) {
+      logMessages.push({ message: '自軍の最前線Mカードが2枚未満のため、チョバムアーマーは効果なし。', source: byPlayerType, timestamp: Date.now() });
+    } else {
+      const target = selectedTarget || chooseHighestPointMCard(ownM);
+      moveActorCardToSquad(target);
+    }
   } else if (playedCard.cardNumber.startsWith('C-013')) {
     zeroOpponentNonNTPower();
   } else if (playedCard.cardNumber.startsWith('C-014')) {

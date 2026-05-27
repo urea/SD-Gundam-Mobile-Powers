@@ -184,8 +184,9 @@ export const getCPUCounterSupportAction = async (gameState: GameState): Promise<
     return { action: 'PLAY_C_CARD', cardId: getCardInstanceId(minovskyCard), reasoning };
   }
   
+  const activeCpuMCount = cpuState.battlefield.filter(c => c.type === 'M' && !c.isDestroyed).length;
   const chobhamCard = playableCCards.find(c => c.cardNumber.startsWith('C-012'));
-  if (chobhamCard && cpuState.battlefield.filter(c => c.type === 'M').length > 0 && (cpuState.combatPoints <= playerState.combatPoints + 3)){
+  if (chobhamCard && activeCpuMCount >= 2 && (cpuState.combatPoints <= playerState.combatPoints + 3)){
     reasoning += `Play ${chobhamCard.cardNameOmm || chobhamCard.cardName} to return an M-card to squad.`;
     return { action: 'PLAY_C_CARD', cardId: getCardInstanceId(chobhamCard), reasoning };
   }
