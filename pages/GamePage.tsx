@@ -1574,23 +1574,30 @@ const customScrollbarAndAnimationStyles = `
     white-space: nowrap;
   }
   .game-player-dock {
+    position: relative;
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(11rem, 14rem) minmax(0, 1fr);
-    gap: 0.45rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
     align-items: stretch;
     padding: 0.35rem;
   }
   .game-player-command-panel {
-    align-self: stretch;
+    position: absolute;
+    left: 0.35rem;
+    top: 0.35rem;
+    bottom: 0.35rem;
+    z-index: 5;
+    width: clamp(11rem, 15vw, 14rem);
     min-width: 0;
     display: grid;
     grid-template-rows: auto 1fr;
     align-content: center;
     gap: 0.25rem;
     border-radius: 7px;
-    background: rgba(248, 250, 252, 0.82);
-    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(239, 246, 255, 0.92));
+    border: 1px solid rgba(14, 165, 233, 0.28);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.11);
     padding: 0.3rem 0.45rem;
     font-size: 0.72rem;
   }
@@ -1640,6 +1647,7 @@ const customScrollbarAndAnimationStyles = `
     border-color: #cbd5e1;
   }
   .game-hand-scroll {
+    grid-column: 1 / -1;
     min-width: 0;
     min-height: 0;
     display: grid;
@@ -1935,11 +1943,15 @@ const customScrollbarAndAnimationStyles = `
       display: none;
     }
     .game-player-dock {
-      grid-template-columns: minmax(7.9rem, 8.75rem) minmax(0, 1fr);
-      gap: 0.25rem;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
       padding: 0.2rem;
     }
     .game-player-command-panel {
+      left: 0.2rem;
+      top: 0.2rem;
+      bottom: 0.2rem;
+      width: clamp(7.9rem, 17vw, 8.75rem);
       gap: 0.25rem;
       padding: 0.2rem 0.3rem;
       font-size: 0.62rem;
