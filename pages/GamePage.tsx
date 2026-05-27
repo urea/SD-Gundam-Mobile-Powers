@@ -2545,6 +2545,28 @@ const getCardLogList = (
     : cards.map(getCardDisplayName).join(', ')
 );
 
+const createLogEntry = (message: string, source: LogEntry['source'] = 'SYSTEM'): LogEntry => ({
+  message,
+  source,
+  timestamp: Date.now(),
+});
+
+const appendLogEntries = (gameLog: LogEntry[], entries: LogEntry[]): LogEntry[] => {
+  const nextLog = [...gameLog];
+  entries.forEach(entry => {
+    const lastEntry = nextLog[nextLog.length - 1];
+    const isDuplicate =
+      lastEntry &&
+      lastEntry.source === entry.source &&
+      lastEntry.message === entry.message &&
+      Math.abs(entry.timestamp - lastEntry.timestamp) < 1000;
+    if (!isDuplicate) {
+      nextLog.push(entry);
+    }
+  });
+  return nextLog;
+};
+
 const flushPendingSquadDiscards = (
   state: GameState['player'],
   owner: PlayerType,
@@ -2765,8 +2787,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   const addLogEntry = useCallback((message: string, source: LogEntry['source'] = 'SYSTEM') => {
     setGameState(prev => {
       if (!prev) return prev;
-      const newEntry: LogEntry = { message, source, timestamp: Date.now() };
-      return { ...prev, gameLog: [...prev.gameLog, newEntry] };
+      return { ...prev, gameLog: appendLogEntries(prev.gameLog, [createLogEntry(message, source)]) };
     });
   }, []);
 
@@ -2879,27 +2900,27 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
   const goToNextCounterSupportStepOrCombatResolution = (currentGameState: GameState): Partial<GameState> => {
     if (!currentGameState.counterSupportTurnOrder) {
-        const newLogEntry: LogEntry = { message: "エラー: C/S順序不明、戦闘解決へ。", source: 'SYSTEM', timestamp: Date.now() };
-        return { phase: 'COMBAT_RESOLUTION', isPlayerTurnInteractive: false, gameLog: [...currentGameState.gameLog, newLogEntry] };
+        const newLogEntry = createLogEntry("エラー: C/S順序不明、戦闘解決へ。", 'SYSTEM');
+        return { phase: 'COMBAT_RESOLUTION', isPlayerTurnInteractive: false, gameLog: appendLogEntries(currentGameState.gameLog, [newLogEntry]) };
     }
 
     const newIndex = currentGameState.currentCounterSupportActorIndex + 1;
     if (newIndex < currentGameState.counterSupportTurnOrder.length) {
         const nextActor = currentGameState.counterSupportTurnOrder[newIndex];
         const nextPhase = nextActor === 'PLAYER' ? 'COUNTER_SUPPORT_PLAYER_DRAW' : 'COUNTER_SUPPORT_CPU_DRAW';
-        const newLogEntry: LogEntry = { message: `${nextActor === 'PLAYER' ? 'プレイヤー' : 'CPU'}のカウンター／支援ドローフェイズへ。`, source: 'SYSTEM', timestamp: Date.now()};
+        const newLogEntry = createLogEntry(`${nextActor === 'PLAYER' ? 'プレイヤー' : 'CPU'}のカウンター／支援ドローフェイズへ。`, 'SYSTEM');
         return {
             phase: nextPhase,
             currentCounterSupportActorIndex: newIndex,
             isPlayerTurnInteractive: nextActor === 'PLAYER',
-            gameLog: [...currentGameState.gameLog, newLogEntry]
+            gameLog: appendLogEntries(currentGameState.gameLog, [newLogEntry])
         };
     } else {
-        const newLogEntry: LogEntry = { message: "両者のカウンター／支援終了。戦闘解決へ。", source: 'SYSTEM', timestamp: Date.now()};
+        const newLogEntry = createLogEntry("両者のカウンター／支援終了。戦闘解決へ。", 'SYSTEM');
         return {
             phase: 'COMBAT_RESOLUTION',
             isPlayerTurnInteractive: false,
-            gameLog: [...currentGameState.gameLog, newLogEntry]
+            gameLog: appendLogEntries(currentGameState.gameLog, [newLogEntry])
         };
     }
   };
@@ -3009,6 +3030,9 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   const processCPUAction = useCallback((aiDecisionInput: CPUAction | null) => {
     setGameState(prev => {
       if (!prev) return prev;
+      if (prev.phase !== 'FORMATION_CPU_PLACE' && prev.phase !== 'COUNTER_SUPPORT_CPU_PLAY_C') {
+        return prev;
+      }
 
       const aiDecision: CPUAction = aiDecisionInput || { action: 'DISCARD_FROM_HAND', reasoning: 'AI service failed or returned null decision; discard fallback.' };
 
@@ -3156,7 +3180,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         ...nextPhasePartial
       };
     });
-  }, [addLogEntry]); 
+  }, []);
 
   const confirmCombatResolution = useCallback(() => {
     setCombatResultVisual(null);
@@ -3268,7 +3292,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
           winner: winnerOnEnd,
           isPlayerTurnInteractive: false,
           playedCCards: [],
-          gameLog: [...currentLog, ...tempLogEntries],
+          gameLog: appendLogEntries(currentLog, tempLogEntries),
           isCPUMoving: false,
         };
       }
@@ -3280,7 +3304,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         cpu: newCpuState,
         phase: 'END_TURN_CLEANUP',
         playedCCards: [],
-        gameLog: [...currentLog, ...tempLogEntries],
+        gameLog: appendLogEntries(currentLog, tempLogEntries),
         isPlayerTurnInteractive: false,
         isCPUMoving: false,
       };
@@ -3346,27 +3370,34 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             case 'FORMATION_CPU_DRAW':
                 setGameState(prev => {
                     if(!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     if (prev.cpu.squad.length >= 3) {
                       const playerDone = prev.player.squad.length >= 3;
-                      const skipLog: LogEntry = {
-                        message: 'CPUの小隊はすでに3枚のため、編成順をスキップします。',
-                        source: 'CPU',
-                        timestamp: Date.now(),
-                      };
+                      const skipLog = createLogEntry('CPUの小隊はすでに3枚のため、編成順をスキップします。', 'CPU');
                       return {
                         ...prev,
                         phase: playerDone ? 'FORMATION_CHECK_FULL' : 'FORMATION_PLAYER_DRAW',
                         isPlayerTurnInteractive: !playerDone,
-                        gameLog: [...prev.gameLog, skipLog],
+                        gameLog: appendLogEntries(prev.gameLog, [skipLog]),
                       };
                     }
                     const {newDeck, drawnCards} = drawCards(prev.cpu.deck, 1);
                     if (drawnCards.length === 0) {
-                      addLogEntry('CPUのデッキが尽きた！プレイヤーの勝利！', 'SYSTEM');
-                      return {...prev, phase: 'GAME_OVER', winner: 'PLAYER', isPlayerTurnInteractive: false};
+                      return {
+                        ...prev,
+                        phase: 'GAME_OVER',
+                        winner: 'PLAYER',
+                        isPlayerTurnInteractive: false,
+                        gameLog: appendLogEntries(prev.gameLog, [createLogEntry('CPUのデッキが尽きた！プレイヤーの勝利！', 'SYSTEM')]),
+                      };
                     }
-                    addLogEntry('CPUが編成フェイズでカードを1枚引きました。', 'CPU');
-                    return {...prev, cpu: {...prev.cpu, deck: newDeck, hand: [...prev.cpu.hand, ...drawnCards]}, phase: 'FORMATION_CPU_PLACE', isPlayerTurnInteractive: false};
+                    return {
+                      ...prev,
+                      cpu: {...prev.cpu, deck: newDeck, hand: [...prev.cpu.hand, ...drawnCards]},
+                      phase: 'FORMATION_CPU_PLACE',
+                      isPlayerTurnInteractive: false,
+                      gameLog: appendLogEntries(prev.gameLog, [createLogEntry('CPUが編成フェイズでカードを1枚引きました。', 'CPU')]),
+                    };
                 });
                 break;
             case 'FORMATION_CPU_PLACE':
@@ -3376,49 +3407,81 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             case 'FORMATION_CHECK_FULL':
                 setGameState(prev => {
                     if (!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     const nextTerrainSelector = prev.turnOrder[0]; 
-                    addLogEntry(`編成完了。${nextTerrainSelector === 'PLAYER' ? 'プレイヤー' : 'CPU'} が地形カードを決定します。`, 'SYSTEM');
                     return {
                         ...prev,
                         phase: nextTerrainSelector === 'PLAYER' ? 'DEPLOYMENT_PLAYER_TERRAIN' : 'DEPLOYMENT_CPU_TERRAIN',
                         activePlayer: nextTerrainSelector,
                         isPlayerTurnInteractive: false, 
+                        gameLog: appendLogEntries(
+                          prev.gameLog,
+                          [createLogEntry(`編成完了。${nextTerrainSelector === 'PLAYER' ? 'プレイヤー' : 'CPU'} が地形カードを決定します。`, 'SYSTEM')],
+                        ),
                     };
                 });
                 break;
             case 'DEPLOYMENT_PLAYER_TERRAIN':
                 setGameState(prev => {
                     if (!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     const { newDeck: playerDeckAfterDraw, drawnCards: terrainCardsDrawn } = drawCards(prev.player.deck, 1);
                     if (terrainCardsDrawn.length === 0) {
-                        addLogEntry('プレイヤーのデッキが尽き、地形を引けませんでした。CPUの勝利！', 'SYSTEM');
-                        return { ...prev, phase: 'GAME_OVER', winner: 'CPU', isPlayerTurnInteractive: false };
+                        return {
+                          ...prev,
+                          phase: 'GAME_OVER',
+                          winner: 'CPU',
+                          isPlayerTurnInteractive: false,
+                          gameLog: appendLogEntries(prev.gameLog, [createLogEntry('プレイヤーのデッキが尽き、地形を引けませんでした。CPUの勝利！', 'SYSTEM')]),
+                        };
                     }
                     const terrainCard = terrainCardsDrawn[0];
                     const terrainAttribute = terrainCard.battlefieldTerrain || "";
-                    addLogEntry(`プレイヤーが地形カードとして ${terrainCard.cardName} (属性: ${terrainAttribute}) を引きました。`, 'PLAYER');
-                    return { ...prev, player: { ...prev.player, deck: playerDeckAfterDraw, discardPile: [...prev.player.discardPile, terrainCard] }, currentTerrainCard: terrainCard, battlefieldTerrainAttribute: terrainAttribute, phase: 'DEPLOYMENT_MOVE_CARDS', isPlayerTurnInteractive: false };
+                    return {
+                      ...prev,
+                      player: { ...prev.player, deck: playerDeckAfterDraw, discardPile: [...prev.player.discardPile, terrainCard] },
+                      currentTerrainCard: terrainCard,
+                      battlefieldTerrainAttribute: terrainAttribute,
+                      phase: 'DEPLOYMENT_MOVE_CARDS',
+                      isPlayerTurnInteractive: false,
+                      gameLog: appendLogEntries(prev.gameLog, [createLogEntry(`プレイヤーが地形カードとして ${terrainCard.cardName} (属性: ${terrainAttribute}) を引きました。`, 'PLAYER')]),
+                    };
                 });
                 break;
              case 'DEPLOYMENT_CPU_TERRAIN':
                 // Note: Rules say draw from deck, so we don't use AI decision here to keep consistent with rules.
-                setGameState(prev => prev ? ({ ...prev, isCPUMoving: true }) : null);
                 setGameState(prev => {
                      if (!prev) return null;
+                     if (prev.phase !== currentPhase) return prev;
                      const { newDeck: cpuDeckAfterDraw, drawnCards: terrainCardsDrawn } = drawCards(prev.cpu.deck, 1);
                      if (terrainCardsDrawn.length === 0) {
-                        addLogEntry('CPUのデッキが尽き、地形を引けませんでした。プレイヤーの勝利！', 'SYSTEM');
-                        return { ...prev, phase: 'GAME_OVER', winner: 'PLAYER', isPlayerTurnInteractive: false };
+                        return {
+                          ...prev,
+                          phase: 'GAME_OVER',
+                          winner: 'PLAYER',
+                          isPlayerTurnInteractive: false,
+                          isCPUMoving: false,
+                          gameLog: appendLogEntries(prev.gameLog, [createLogEntry('CPUのデッキが尽き、地形を引けませんでした。プレイヤーの勝利！', 'SYSTEM')]),
+                        };
                      }
                      const terrainCard = terrainCardsDrawn[0];
                      const terrainAttribute = terrainCard.battlefieldTerrain || ""; 
-                     addLogEntry(`CPUが地形カードとして ${terrainCard.cardName} (属性: ${terrainAttribute}) を引きました。`, 'CPU');
-                     return { ...prev, cpu: { ...prev.cpu, deck: cpuDeckAfterDraw, discardPile: [...prev.cpu.discardPile, terrainCard] }, currentTerrainCard: terrainCard, battlefieldTerrainAttribute: terrainAttribute, phase: 'DEPLOYMENT_MOVE_CARDS', isPlayerTurnInteractive: false, isCPUMoving: false };
+                     return {
+                       ...prev,
+                       cpu: { ...prev.cpu, deck: cpuDeckAfterDraw, discardPile: [...prev.cpu.discardPile, terrainCard] },
+                       currentTerrainCard: terrainCard,
+                       battlefieldTerrainAttribute: terrainAttribute,
+                       phase: 'DEPLOYMENT_MOVE_CARDS',
+                       isPlayerTurnInteractive: false,
+                       isCPUMoving: false,
+                       gameLog: appendLogEntries(prev.gameLog, [createLogEntry(`CPUが地形カードとして ${terrainCard.cardName} (属性: ${terrainAttribute}) を引きました。`, 'CPU')]),
+                     };
                 });
                 break;
             case 'DEPLOYMENT_MOVE_CARDS':
                 setGameState(prev => {
                     if (!prev || !prev.battlefieldTerrainAttribute) return prev;
+                    if (prev.phase !== currentPhase) return prev;
                     let newPlayerSquad = [...prev.player.squad];
                     let newPlayerBattlefield = [...prev.player.battlefield];
                     let newCpuSquad = [...prev.cpu.squad];
@@ -3432,12 +3495,20 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                     newCpuSquad = newCpuSquad.filter(card => {
                         if (canDeploy(card, terrain)) { newCpuBattlefield.push(clearTemporaryCardState(card)); tempLogEntries.push({message: `CPUの ${card.cardNameOmm || card.cardName} が戦場へ。`, source: 'CPU', timestamp: Date.now()}); return false; } return true;
                     });
-                    return { ...prev, player: { ...prev.player, squad: newPlayerSquad, battlefield: newPlayerBattlefield }, cpu: { ...prev.cpu, squad: newCpuSquad, battlefield: newCpuBattlefield }, phase: 'DEPLOYMENT_CHECK_UNILATERAL', gameLog: [...prev.gameLog, ...tempLogEntries], isPlayerTurnInteractive: false };
+                    return {
+                      ...prev,
+                      player: { ...prev.player, squad: newPlayerSquad, battlefield: newPlayerBattlefield },
+                      cpu: { ...prev.cpu, squad: newCpuSquad, battlefield: newCpuBattlefield },
+                      phase: 'DEPLOYMENT_CHECK_UNILATERAL',
+                      gameLog: appendLogEntries(prev.gameLog, tempLogEntries),
+                      isPlayerTurnInteractive: false,
+                    };
                 });
                 break;
             case 'DEPLOYMENT_CHECK_UNILATERAL':
                 setGameState(prev => {
                     if (!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     let newPlayerState = { ...prev.player };
                     let newCpuState = { ...prev.cpu };
                     let visualPlayerState = newPlayerState;
@@ -3498,16 +3569,23 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         }
                     } else if (!playerCanDeploy && !cpuCanDeploy) {
                         const nextTerrainSelector = prev.activePlayer === 'PLAYER' ? 'CPU' : 'PLAYER';
-                        addLogEntry(`両者ともユニットを出撃できませんでした。${nextTerrainSelector === 'PLAYER' ? 'プレイヤー' : 'CPU'} が新たな地形カードを出します。`, "SYSTEM");
                         return {
                             ...prev,
                             activePlayer: nextTerrainSelector,
                             phase: nextTerrainSelector === 'PLAYER' ? 'DEPLOYMENT_PLAYER_TERRAIN' : 'DEPLOYMENT_CPU_TERRAIN',
                             isPlayerTurnInteractive: false,
+                            gameLog: appendLogEntries(
+                              prev.gameLog,
+                              [createLogEntry(`両者ともユニットを出撃できませんでした。${nextTerrainSelector === 'PLAYER' ? 'プレイヤー' : 'CPU'} が新たな地形カードを出します。`, 'SYSTEM')],
+                            ),
                         };
                     } else {
-                        addLogEntry("両者ユニット出撃。戦闘計算へ。", "SYSTEM");
-                        return { ...prev, phase: 'DEPLOYMENT_HANDLE_TAPPED', isPlayerTurnInteractive: false };
+                        return {
+                          ...prev,
+                          phase: 'DEPLOYMENT_HANDLE_TAPPED',
+                          isPlayerTurnInteractive: false,
+                          gameLog: appendLogEntries(prev.gameLog, [createLogEntry('両者ユニット出撃。戦闘計算へ。', 'SYSTEM')]),
+                        };
                     }
                     
                     if (visualizeUnilateral) {
@@ -3530,14 +3608,15 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                             setIsVisualizingUnilateralDeployment(false);
                             setUnilateralDeploymentWinner(null);
                         }, 2000);
-                        return { ...prev, player: visualPlayerState, cpu: visualCpuState, gameLog: [...prev.gameLog, ...tempLogEntries], isPlayerTurnInteractive: false };
+                        return { ...prev, player: visualPlayerState, cpu: visualCpuState, gameLog: appendLogEntries(prev.gameLog, tempLogEntries), isPlayerTurnInteractive: false };
                     }
-                    return { ...prev, gameLog: [...prev.gameLog, ...tempLogEntries] };
+                    return { ...prev, gameLog: appendLogEntries(prev.gameLog, tempLogEntries) };
                 });
                 break;
             case 'DEPLOYMENT_HANDLE_TAPPED':
                 setGameState(prev => {
                     if (!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     let newPlayerState = { ...prev.player };
                     let newCpuState = { ...prev.cpu };
                     const tempLogEntries: LogEntry[] = [];
@@ -3592,7 +3671,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                       player: newPlayerState,
                       cpu: newCpuState,
                       phase: 'COMBAT_CALCULATE_INITIAL_POINTS',
-                      gameLog: [...prev.gameLog, ...tempLogEntries],
+                      gameLog: appendLogEntries(prev.gameLog, tempLogEntries),
                       isPlayerTurnInteractive: false,
                     };
                 });
@@ -3600,6 +3679,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             case 'COMBAT_CALCULATE_INITIAL_POINTS':
                 setGameState(prev => {
                     if (!prev) return prev;
+                    if (prev.phase !== currentPhase) return prev;
                     let playerCombatPoints = 0;
                     let cpuCombatPoints = 0;
                     let tempLogEntries: LogEntry[] = [];
@@ -3643,20 +3723,31 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         currentCounterSupportActorIndex: 0, 
                         phase: firstActor === 'PLAYER' ? 'COUNTER_SUPPORT_PLAYER_DRAW' : 'COUNTER_SUPPORT_CPU_DRAW', 
                         isPlayerTurnInteractive: firstActor === 'PLAYER', 
-                        gameLog: [...prev.gameLog, ...tempLogEntries] 
+                        gameLog: appendLogEntries(prev.gameLog, tempLogEntries)
                     };
                 });
                 break;
             case 'COUNTER_SUPPORT_CPU_DRAW':
                  setGameState(prev => {
                     if(!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     const {newDeck, drawnCards} = drawCards(prev.cpu.deck, 1);
                     if (drawnCards.length === 0) {
-                        addLogEntry('CPUのデッキが尽きた！プレイヤーの勝利！', 'SYSTEM');
-                        return {...prev, phase: 'GAME_OVER', winner: 'PLAYER', isPlayerTurnInteractive: false};
+                        return {
+                          ...prev,
+                          phase: 'GAME_OVER',
+                          winner: 'PLAYER',
+                          isPlayerTurnInteractive: false,
+                          gameLog: appendLogEntries(prev.gameLog, [createLogEntry('CPUのデッキが尽きた！プレイヤーの勝利！', 'SYSTEM')]),
+                        };
                     }
-                    addLogEntry('CPUがカウンター／支援フェイズでカードを1枚引きました。', 'CPU');
-                    return {...prev, cpu: {...prev.cpu, deck: newDeck, hand: [...prev.cpu.hand, ...drawnCards]}, phase: 'COUNTER_SUPPORT_CPU_PLAY_C', isPlayerTurnInteractive: false};
+                    return {
+                      ...prev,
+                      cpu: {...prev.cpu, deck: newDeck, hand: [...prev.cpu.hand, ...drawnCards]},
+                      phase: 'COUNTER_SUPPORT_CPU_PLAY_C',
+                      isPlayerTurnInteractive: false,
+                      gameLog: appendLogEntries(prev.gameLog, [createLogEntry('CPUがカウンター／支援フェイズでカードを1枚引きました。', 'CPU')]),
+                    };
                  });
                 break;
             case 'COUNTER_SUPPORT_CPU_PLAY_C':
@@ -3680,6 +3771,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             case 'END_TURN_CLEANUP':
                  setGameState(prev => {
                     if (!prev) return prev;
+                    if (prev.phase !== currentPhase) return prev;
 
                     let newPlayerState = { ...prev.player };
                     let newCpuState = { ...prev.cpu };
@@ -3731,7 +3823,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         counterSupportTurnOrder: null,
                         currentCounterSupportActorIndex: 0,
                         playedCCards: [],
-                        gameLog: [...prev.gameLog, ...tempLogEntries] as LogEntry[]
+                        gameLog: appendLogEntries(prev.gameLog, tempLogEntries) as LogEntry[]
                     };
                  });
                 break;
@@ -3741,39 +3833,55 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             case 'FORMATION_PLAYER_DRAW':
                 setGameState(prev => {
                     if (!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     if (prev.player.squad.length >= 3) {
                       const cpuDone = prev.cpu.squad.length >= 3;
-                      const skipLog: LogEntry = {
-                        message: 'プレイヤーの小隊はすでに3枚のため、編成順をスキップします。',
-                        source: 'PLAYER',
-                        timestamp: Date.now(),
-                      };
+                      const skipLog = createLogEntry('プレイヤーの小隊はすでに3枚のため、編成順をスキップします。', 'PLAYER');
                       return {
                         ...prev,
                         phase: cpuDone ? 'FORMATION_CHECK_FULL' : 'FORMATION_CPU_DRAW',
                         isPlayerTurnInteractive: false,
-                        gameLog: [...prev.gameLog, skipLog],
+                        gameLog: appendLogEntries(prev.gameLog, [skipLog]),
                       };
                     }
                     const {newDeck, drawnCards} = drawCards(prev.player.deck, 1);
                     if (drawnCards.length === 0) {
-                        addLogEntry('プレイヤーのデッキが尽きた！CPUの勝利！', 'SYSTEM');
-                        return {...prev, phase: 'GAME_OVER', winner: 'CPU', isPlayerTurnInteractive: false};
+                        return {
+                          ...prev,
+                          phase: 'GAME_OVER',
+                          winner: 'CPU',
+                          isPlayerTurnInteractive: false,
+                          gameLog: appendLogEntries(prev.gameLog, [createLogEntry('プレイヤーのデッキが尽きた！CPUの勝利！', 'SYSTEM')]),
+                        };
                     }
-                    addLogEntry('プレイヤーが編成フェイズでカードを1枚引きました。', 'PLAYER');
-                    return {...prev, player: {...prev.player, deck: newDeck, hand: [...prev.player.hand, ...drawnCards]}, phase: 'FORMATION_PLAYER_PLACE'};
+                    return {
+                      ...prev,
+                      player: {...prev.player, deck: newDeck, hand: [...prev.player.hand, ...drawnCards]},
+                      phase: 'FORMATION_PLAYER_PLACE',
+                      gameLog: appendLogEntries(prev.gameLog, [createLogEntry('プレイヤーが編成フェイズでカードを1枚引きました。', 'PLAYER')]),
+                    };
                 });
                 break;
             case 'COUNTER_SUPPORT_PLAYER_DRAW':
                 setGameState(prev => {
                     if (!prev) return null;
+                    if (prev.phase !== currentPhase) return prev;
                     const {newDeck, drawnCards} = drawCards(prev.player.deck, 1);
                      if (drawnCards.length === 0) {
-                        addLogEntry('プレイヤーのデッキが尽きた！CPUの勝利！', 'SYSTEM');
-                        return {...prev, phase: 'GAME_OVER', winner: 'CPU', isPlayerTurnInteractive: false};
+                        return {
+                          ...prev,
+                          phase: 'GAME_OVER',
+                          winner: 'CPU',
+                          isPlayerTurnInteractive: false,
+                          gameLog: appendLogEntries(prev.gameLog, [createLogEntry('プレイヤーのデッキが尽きた！CPUの勝利！', 'SYSTEM')]),
+                        };
                     }
-                    addLogEntry('プレイヤーがカウンター／支援フェイズでカードを1枚引きました。', 'PLAYER');
-                    return {...prev, player: {...prev.player, deck: newDeck, hand: [...prev.player.hand, ...drawnCards]}, phase: 'COUNTER_SUPPORT_PLAYER_PLAY_C'};
+                    return {
+                      ...prev,
+                      player: {...prev.player, deck: newDeck, hand: [...prev.player.hand, ...drawnCards]},
+                      phase: 'COUNTER_SUPPORT_PLAYER_PLAY_C',
+                      gameLog: appendLogEntries(prev.gameLog, [createLogEntry('プレイヤーがカウンター／支援フェイズでカードを1枚引きました。', 'PLAYER')]),
+                    };
                 });
                 break;
         }
