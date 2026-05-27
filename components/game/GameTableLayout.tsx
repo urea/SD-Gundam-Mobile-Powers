@@ -41,8 +41,10 @@ interface GameTableLayoutProps {
 
 interface FieldLaneProps {
   activeCCard?: PlayedCCardSummary;
+  battleVisualResult?: PlayerType | 'DRAW' | null;
   canDropToSquad?: boolean;
   draggedCard?: Card | null;
+  isBattleVisualActive?: boolean;
   isCPU?: boolean;
   isCardDisabled: boolean;
   laneAttentionKey?: string;
@@ -82,23 +84,6 @@ const HiddenHand: React.FC<{ count: number }> = ({ count }) => (
     <span className="game-hand-count">x{count}</span>
   </div>
 );
-
-type PhaseStepKey = 'formation' | 'deployment' | 'combat' | 'counter';
-
-const PHASE_STEPS: Array<{ key: PhaseStepKey; label: string }> = [
-  { key: 'formation', label: '編成フェイズ' },
-  { key: 'deployment', label: '出陣フェイズ' },
-  { key: 'combat', label: '戦闘フェイズ' },
-  { key: 'counter', label: 'カウンターフェイズ' },
-];
-
-const getActivePhaseStep = (phase: GamePhase): PhaseStepKey | null => {
-  if (phase.startsWith('FORMATION')) return 'formation';
-  if (phase.startsWith('DEPLOYMENT')) return 'deployment';
-  if (phase.startsWith('COMBAT')) return 'combat';
-  if (phase.startsWith('COUNTER_SUPPORT')) return 'counter';
-  return null;
-};
 
 const terrainLayerDefs = [
   { key: '宇', label: '宇', className: 'game-battle-layer-space' },
@@ -317,6 +302,53 @@ const BattleCalculationSummary: React.FC<{
   );
 };
 
+const CenterBattleSummary: React.FC<{
+  battleSummary: BattleSummary | null | undefined;
+  combatResultVisual: PlayerType | 'DRAW' | null;
+  cpuPoints: number;
+  onConfirm?: () => void;
+  playerPoints: number;
+}> = ({ battleSummary, combatResultVisual, cpuPoints, onConfirm, playerPoints }) => {
+  if (!battleSummary || !combatResultVisual) return null;
+
+  const resultLabel =
+    combatResultVisual === 'PLAYER'
+      ? 'PLAYER勝利'
+      : combatResultVisual === 'CPU'
+        ? 'CPU勝利'
+        : '引き分け';
+  const resultTone =
+    combatResultVisual === 'PLAYER'
+      ? 'player'
+      : combatResultVisual === 'CPU'
+        ? 'cpu'
+        : 'draw';
+
+  return (
+    <section className={`game-center-battle-summary game-center-battle-summary-${resultTone}`} aria-label="戦闘計算">
+      <div className="game-center-battle-head">
+        <strong>{resultLabel}</strong>
+        <span>PLAYER {playerPoints} / CPU {cpuPoints}</span>
+        {onConfirm && (
+          <button className="game-center-confirm-button" type="button" onClick={onConfirm}>
+            戦闘を確定
+          </button>
+        )}
+      </div>
+      <div className="game-center-battle-formulas">
+        <span>
+          <strong>PLAYER</strong>
+          {getFormulaParts(battleSummary.player).join(' ')}
+        </span>
+        <span>
+          <strong>CPU</strong>
+          {getFormulaParts(battleSummary.cpu).join(' ')}
+        </span>
+      </div>
+    </section>
+  );
+};
+
 const BattleCounterCards: React.FC<{
   battleSummary: BattleSummary | null | undefined;
   onPreviewEnd: () => void;
@@ -524,8 +556,10 @@ const getTouchDropTarget = (event: React.PointerEvent<HTMLElement>): 'squad' | '
 
 const FieldLane: React.FC<FieldLaneProps> = ({
   activeCCard,
+  battleVisualResult,
   canDropToSquad,
   draggedCard,
+  isBattleVisualActive = false,
   isCPU = false,
   isCardDisabled,
   laneAttentionKey,
@@ -542,6 +576,9 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   const frontLabel = isCPU ? 'CPU 最前線' : '自軍 最前線';
   const squadLabel = isCPU ? 'CPU 小隊' : '自軍 小隊';
   const toneClass = isCPU ? 'game-lane-cpu' : 'game-lane-player';
+  const battleVisualClass = isBattleVisualActive
+    ? `game-lane-battle-active game-lane-battle-${battleVisualResult === 'DRAW' ? 'draw' : battleVisualResult?.toLowerCase() || 'neutral'}`
+    : '';
   const squadDropClass = canDropToSquad && !isCPU ? 'game-drop-ready' : '';
   const orderedFieldCards = [
     ...playerState.squad.map((card, idx) => ({
@@ -627,7 +664,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   };
 
   return (
-    <section className={`game-field-lane ${toneClass}`} aria-label={`${owner} field lane`}>
+    <section className={`game-field-lane ${toneClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
       <div
         className={`game-lane-surface game-lane-attention ${squadDropClass}`}
         data-game-drop={!isCPU ? 'squad' : undefined}
@@ -721,17 +758,37 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     phase === 'FORMATION_CPU_PLACE' ||
     phase === 'COUNTER_SUPPORT_CPU_PLAY_C' ||
     phase === 'DEPLOYMENT_CPU_TERRAIN';
-  const activePhaseStep = getActivePhaseStep(phase);
-  const phaseBadgeText = cCardTargetInstruction
-    ? '対象'
-    : isCPUMoving && isCpuPhase
-      ? 'CPU'
-      : (isVisualizingCombat || isVisualizingUnilateralDeployment)
-        ? '演出'
-        : null;
-  const phaseBannerLabel = cCardTargetInstruction
-    ? `${phaseInstructionText} ${cCardTargetInstruction}`
-    : phaseInstructionText;
+  const centerStatusText = winner
+    ? 'ゲーム終了'
+    : isVisualizingCombat
+      ? '結果確認'
+      : isVisualizingUnilateralDeployment
+        ? '一方的戦闘'
+        : cCardTargetInstruction
+          ? '対象選択'
+          : isCPUMoving && isCpuPhase
+            ? 'CPU処理中'
+            : phase.startsWith('FORMATION')
+              ? '編成中'
+              : phase.startsWith('COUNTER_SUPPORT')
+                ? 'C/S選択中'
+                : phase.startsWith('DEPLOYMENT')
+                  ? '出陣処理'
+                  : phase.startsWith('COMBAT')
+                    ? '戦闘計算'
+                    : '進行中';
+  const centerStatusTone = winner
+    ? 'neutral'
+    : isVisualizingCombat || isVisualizingUnilateralDeployment || phase.startsWith('COMBAT')
+      ? 'battle'
+      : cCardTargetInstruction || phase.startsWith('COUNTER_SUPPORT')
+        ? 'counter'
+        : isCPUMoving && isCpuPhase
+          ? 'cpu'
+          : isPlayerTurnInteractive
+            ? 'player'
+            : 'neutral';
+  const centerStatusDetail = cCardTargetInstruction || phaseInstructionText;
   const isSelectingCCardTarget = !!pendingTargetCCard && !!cCardTargetInstruction;
   const playerLaneAttentionKey = [
     player.squad.map(getCardInstanceId).join(','),
@@ -844,6 +901,8 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
 
       <FieldLane
         activeCCard={cpuActiveCCard}
+        battleVisualResult={combatResultVisual}
+        isBattleVisualActive={isVisualizingCombat}
         isCPU
         isCardDisabled={cpuFieldDisabled}
         laneAttentionKey={cpuLaneAttentionKey}
@@ -857,28 +916,26 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       />
 
       <section className={`game-center-strip ${hasRecentCombo ? 'game-combo-pulse' : ''}`} aria-label="中央戦場">
-        <div
-          aria-label={phaseBannerLabel}
-          className="game-phase-banner game-attention-flash"
-          key={`phase-${phase}-${phaseInstructionText}-${phaseBadgeText || 'none'}`}
-          title={phaseBannerLabel}
-        >
-          {PHASE_STEPS.map((step) => {
-            const isActive = step.key === activePhaseStep;
-            return (
-              <div
-                aria-current={isActive ? 'step' : undefined}
-                className={`game-phase-step ${isActive ? `game-phase-step-active game-phase-step-${step.key}` : ''}`}
-                key={step.key}
-              >
-                <span className="game-phase-marker" aria-hidden="true" />
-                <span className="game-phase-label">{step.label}</span>
-                {isActive && phaseBadgeText && (
-                  <span className="game-phase-mini-status">{phaseBadgeText}</span>
-                )}
-              </div>
-            );
-          })}
+        <div className={`game-center-info-node ${battleSummary ? 'game-center-info-node-with-battle' : ''}`}>
+          <div className={`game-center-status-row game-center-status-${centerStatusTone}`} title={centerStatusDetail}>
+            <strong>{centerStatusText}</strong>
+            <span>{centerStatusDetail}</span>
+          </div>
+          <CenterBattleSummary
+            battleSummary={battleSummary}
+            combatResultVisual={isVisualizingCombat ? combatResultVisual : unilateralDeploymentWinner}
+            cpuPoints={isVisualizingCombat ? cpu.combatPoints : getBattlefieldBaseTotal(cpu.battlefield)}
+            onConfirm={isVisualizingCombat ? onConfirmCombatResolution : undefined}
+            playerPoints={isVisualizingCombat ? player.combatPoints : getBattlefieldBaseTotal(player.battlefield)}
+          />
+          <div className="game-log-node custom-scrollbar-xs" role="log" aria-live="polite">
+            {gameLog.slice(battleSummary ? -3 : -5).map((logEntry, index) => (
+              <p key={`${logEntry.timestamp}-${index}`}>
+                {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
+                {logEntry.message}
+              </p>
+            ))}
+          </div>
         </div>
 
         <div className={`game-score-node game-attention-flash ${playerScoreClass}`} key={`player-score-${player.combatPoints}`}>
@@ -930,22 +987,13 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           <span className="game-score-value">{cpu.combatPoints}</span>
         </div>
 
-        <div className="game-center-info-node game-center-info-node-log-only">
-          <div className="game-log-node" role="log" aria-live="polite">
-            {gameLog.slice(-2).map((logEntry, index) => (
-              <p key={`${logEntry.timestamp}-${index}`}>
-                {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
-                {logEntry.message}
-              </p>
-            ))}
-          </div>
-        </div>
-
         <div className="game-selected-node game-selected-node-empty" aria-hidden="true" />
       </section>
 
       <FieldLane
         activeCCard={playerActiveCCard}
+        battleVisualResult={combatResultVisual}
+        isBattleVisualActive={isVisualizingCombat}
         isCardDisabled={playerFieldDisabled}
         canDropToSquad={canDropDraggedToSquad}
         draggedCard={draggedCard}
@@ -1103,18 +1151,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
             </span>
           </div>
         </aside>
-      )}
-      {isVisualizingCombat && (
-        <BattleAnimation
-          battleSummary={battleSummary}
-          combatResultVisual={combatResultVisual}
-          cpuPoints={cpu.combatPoints}
-          onConfirm={onConfirmCombatResolution}
-          onPreviewEnd={() => setPreviewCard(null)}
-          onPreviewStart={setPreviewCard}
-          playerPoints={player.combatPoints}
-          terrainAttribute={battlefieldTerrainAttribute}
-        />
       )}
       {isVisualizingUnilateralDeployment && (
         <BattleAnimation

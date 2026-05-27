@@ -321,6 +321,42 @@ const customScrollbarAndAnimationStyles = `
   .game-lane-cpu .game-lane-surface {
     background: rgba(254, 242, 242, 0.84);
   }
+  .game-lane-battle-active .game-lane-surface::before,
+  .game-lane-battle-active .game-lane-surface::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .game-lane-battle-active .game-lane-surface::before {
+    opacity: 0.72;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(248, 250, 252, 0.48), transparent 10rem),
+      linear-gradient(90deg, rgba(14, 165, 233, 0.16), transparent 42%, rgba(248, 113, 113, 0.16));
+    animation: battle-lane-glow 1.2s ease-in-out infinite alternate;
+  }
+  .game-lane-battle-active .game-lane-surface::after {
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    bottom: auto;
+    height: 0.18rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.88), rgba(248, 113, 113, 0.88), transparent);
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.5), 0 0 24px rgba(248, 113, 113, 0.4);
+    transform: translateY(-50%) skewX(-14deg);
+    animation: battle-lane-beam 0.68s ease-in-out infinite alternate;
+  }
+  .game-lane-battle-player .game-lane-surface {
+    border-color: rgba(14, 165, 233, 0.64);
+  }
+  .game-lane-battle-cpu .game-lane-surface {
+    border-color: rgba(248, 113, 113, 0.64);
+  }
+  .game-lane-battle-draw .game-lane-surface {
+    border-color: rgba(250, 204, 21, 0.64);
+  }
   .game-field-card {
     position: relative;
     flex: 0 0 auto;
@@ -345,6 +381,7 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-lane-badge {
     position: absolute;
+    z-index: 3;
     left: 0.25rem;
     top: 0.2rem;
     border-radius: 999px;
@@ -648,100 +685,76 @@ const customScrollbarAndAnimationStyles = `
   .game-center-strip {
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(9rem, 1fr) minmax(4rem, auto) minmax(10rem, 1.1fr) minmax(4rem, auto) minmax(18rem, 1.25fr);
+    grid-template-columns: minmax(24rem, 2.4fr) minmax(4rem, auto) minmax(7.5rem, 0.62fr) minmax(4rem, auto) minmax(10rem, 0.72fr);
     grid-template-rows: auto auto;
     align-items: stretch;
     gap: 0.35rem;
     padding: 0.35rem;
   }
-  .game-phase-banner {
+  .game-center-info-node {
     grid-column: 1 / 2;
     grid-row: 1 / 3;
     min-width: 0;
     display: grid;
-    grid-template-rows: repeat(4, minmax(0, 1fr));
-    align-content: center;
-    gap: 0.12rem;
-    border-radius: 7px;
-    border: 1px solid rgba(148, 163, 184, 0.42);
-    background: rgba(248, 250, 252, 0.86);
-    padding: 0.25rem 0.45rem;
-    color: #64748b;
-    font-size: 0.58rem;
-    font-weight: 800;
-    text-align: left;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.25rem;
+    padding: 0.3rem 0.45rem;
     overflow: hidden;
   }
-  .game-phase-step {
+  .game-center-info-node-with-battle {
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  .game-center-status-row {
     min-width: 0;
     display: grid;
-    grid-template-columns: 0.42rem minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 0.22rem;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    padding: 0.1rem 0.28rem;
-    background: rgba(255, 255, 255, 0.42);
-    line-height: 1.05;
+    gap: 0.45rem;
+    border-radius: 5px;
+    padding: 0.12rem 0.34rem;
+    background: rgba(241, 245, 249, 0.92);
+    color: #475569;
+    font-size: 0.62rem;
+    line-height: 1.15;
   }
-  .game-phase-marker {
-    width: 0.34rem;
-    height: 0.34rem;
-    border-radius: 999px;
-    background: rgba(100, 116, 139, 0.38);
+  .game-center-status-row strong {
+    font-size: 0.64rem;
+    font-weight: 900;
+    white-space: nowrap;
   }
-  .game-phase-label {
+  .game-center-status-row span {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .game-phase-step-active {
-    font-weight: 900;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.58), 0 1px 4px rgba(15, 23, 42, 0.08);
-  }
-  .game-phase-step-active .game-phase-marker {
-    background: currentColor;
-  }
-  .game-phase-step-formation {
-    border-color: rgba(14, 165, 233, 0.32);
+  .game-center-status-player {
     background: rgba(224, 242, 254, 0.92);
     color: #0369a1;
   }
-  .game-phase-step-deployment {
-    border-color: rgba(34, 197, 94, 0.32);
-    background: rgba(220, 252, 231, 0.92);
-    color: #166534;
-  }
-  .game-phase-step-combat {
-    border-color: rgba(244, 63, 94, 0.3);
-    background: rgba(255, 228, 230, 0.9);
-    color: #be123c;
-  }
-  .game-phase-step-counter {
-    border-color: rgba(168, 85, 247, 0.3);
+  .game-center-status-counter {
     background: rgba(243, 232, 255, 0.9);
     color: #7e22ce;
   }
-  .game-phase-mini-status {
-    padding: 0.02rem 0.16rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.72);
-    color: currentColor;
-    font-size: 0.46rem;
-    font-weight: 900;
-    line-height: 1.15;
+  .game-center-status-cpu {
+    background: rgba(254, 226, 226, 0.9);
+    color: #b91c1c;
+  }
+  .game-center-status-battle {
+    background: rgba(255, 237, 213, 0.92);
+    color: #c2410c;
   }
   .game-score-node,
   .game-terrain-node,
   .game-counter-side,
-  .game-log-node,
+  .game-center-info-node,
   .game-selected-node {
     border-radius: 7px;
     border: 1px solid rgba(148, 163, 184, 0.42);
     background: rgba(248, 250, 252, 0.86);
   }
   .game-score-node {
+    grid-row: 1 / 3;
     display: grid;
     place-items: center;
     min-width: 3.8rem;
@@ -758,10 +771,11 @@ const customScrollbarAndAnimationStyles = `
     line-height: 0.95;
   }
   .game-terrain-node {
+    grid-row: 1 / 3;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.25rem 0.45rem;
+    padding: 0.2rem 0.32rem;
     text-align: center;
   }
   .game-terrain-content {
@@ -773,9 +787,9 @@ const customScrollbarAndAnimationStyles = `
     gap: 0.35rem;
   }
   .game-terrain-card-thumb {
-    width: 1.42rem;
-    height: 1.92rem;
-    flex: 0 0 1.42rem;
+    width: 1.25rem;
+    height: 1.68rem;
+    flex: 0 0 1.25rem;
     display: grid;
     place-items: center;
     overflow: hidden;
@@ -826,16 +840,6 @@ const customScrollbarAndAnimationStyles = `
     font-size: 0.72rem;
     font-weight: 800;
     white-space: nowrap;
-  }
-  .game-center-info-node {
-    grid-column: 2 / 5;
-    min-width: 0;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 0.25rem;
-  }
-  .game-center-info-node-log-only {
-    grid-template-rows: minmax(0, 1fr);
   }
   .game-counter-node {
     min-width: 0;
@@ -926,18 +930,98 @@ const customScrollbarAndAnimationStyles = `
     font-weight: 800;
   }
   .game-log-node {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
-    padding: 0.25rem 0.45rem;
-    font-size: 0.68rem;
+    min-height: 0;
+    display: grid;
+    align-content: start;
+    gap: 0.08rem;
+    overflow: auto;
+    padding: 0.05rem 0.16rem 0.1rem;
+    font-size: 0.62rem;
     color: #0369a1;
   }
   .game-log-node p {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .game-center-battle-summary {
+    min-width: 0;
+    display: grid;
+    gap: 0.22rem;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    background: rgba(15, 23, 42, 0.05);
+    padding: 0.22rem 0.34rem;
+  }
+  .game-center-battle-summary-player {
+    border-color: rgba(14, 165, 233, 0.36);
+    background: rgba(224, 242, 254, 0.5);
+  }
+  .game-center-battle-summary-cpu {
+    border-color: rgba(248, 113, 113, 0.36);
+    background: rgba(254, 226, 226, 0.48);
+  }
+  .game-center-battle-summary-draw {
+    border-color: rgba(250, 204, 21, 0.42);
+    background: rgba(254, 249, 195, 0.48);
+  }
+  .game-center-battle-head {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.4rem;
+    color: #334155;
+    font-size: 0.62rem;
+  }
+  .game-center-battle-head strong {
+    color: #0f172a;
+    font-size: 0.7rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .game-center-battle-head span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 800;
+  }
+  .game-center-confirm-button {
+    border: 1px solid rgba(14, 165, 233, 0.46);
+    border-radius: 5px;
+    background: #0284c7;
+    color: white;
+    padding: 0.12rem 0.42rem;
+    font-size: 0.58rem;
+    font-weight: 900;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .game-center-confirm-button:hover,
+  .game-center-confirm-button:focus-visible {
+    background: #0369a1;
+    outline: none;
+  }
+  .game-center-battle-formulas {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.28rem;
+    color: #475569;
+    font-size: 0.56rem;
+    font-weight: 800;
+    line-height: 1.18;
+  }
+  .game-center-battle-formulas span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .game-center-battle-formulas strong {
+    margin-right: 0.25rem;
+    color: #0f172a;
   }
   .game-selected-node {
     grid-column: 5 / 6;
@@ -1916,27 +2000,10 @@ const customScrollbarAndAnimationStyles = `
       max-height: none;
     }
     .game-center-strip {
-      grid-template-columns: minmax(7.5rem, 1fr) minmax(3.2rem, auto) minmax(7.5rem, 1fr) minmax(3.2rem, auto);
+      grid-template-columns: minmax(14rem, 1.7fr) minmax(3.05rem, auto) minmax(5.8rem, 0.45fr) minmax(3.05rem, auto);
       grid-template-rows: auto auto;
       padding: 0.25rem;
       gap: 0.25rem;
-    }
-    .game-phase-banner {
-      gap: 0.08rem;
-      padding: 0.12rem 0.22rem;
-      font-size: 0.55rem;
-    }
-    .game-phase-step {
-      gap: 0.16rem;
-      padding: 0.08rem 0.18rem;
-    }
-    .game-phase-marker {
-      width: 0.3rem;
-      height: 0.3rem;
-    }
-    .game-phase-mini-status {
-      padding: 0 0.12rem;
-      font-size: 0.42rem;
     }
     .game-score-node {
       min-width: 3.05rem;
@@ -1953,8 +2020,37 @@ const customScrollbarAndAnimationStyles = `
       flex-basis: 1.25rem;
     }
     .game-center-info-node {
-      grid-column: 2 / 5;
       gap: 0.16rem;
+      padding: 0.16rem 0.25rem;
+    }
+    .game-center-status-row {
+      gap: 0.24rem;
+      padding: 0.08rem 0.22rem;
+      font-size: 0.52rem;
+    }
+    .game-center-status-row strong,
+    .game-center-battle-head strong {
+      font-size: 0.58rem;
+    }
+    .game-center-battle-summary {
+      gap: 0.12rem;
+      padding: 0.14rem 0.22rem;
+    }
+    .game-center-battle-head {
+      gap: 0.24rem;
+      font-size: 0.54rem;
+    }
+    .game-center-confirm-button {
+      padding: 0.08rem 0.25rem;
+      font-size: 0.5rem;
+    }
+    .game-center-battle-formulas {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.08rem;
+      font-size: 0.5rem;
+    }
+    .game-log-node {
+      font-size: 0.54rem;
     }
     .game-counter-node {
       gap: 0.16rem;
@@ -2198,6 +2294,14 @@ const customScrollbarAndAnimationStyles = `
     0% { border-color: rgba(148, 163, 184, 0.55); box-shadow: none; }
     24% { border-color: rgba(14, 165, 233, 0.9); box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18), inset 0 0 28px rgba(14, 165, 233, 0.14); }
     100% { border-color: rgba(148, 163, 184, 0.55); box-shadow: none; }
+  }
+  @keyframes battle-lane-glow {
+    from { opacity: 0.42; filter: saturate(1); }
+    to { opacity: 0.82; filter: saturate(1.35); }
+  }
+  @keyframes battle-lane-beam {
+    from { opacity: 0.38; transform: translateY(-50%) skewX(-14deg) scaleX(0.76); }
+    to { opacity: 0.9; transform: translateY(-50%) skewX(-14deg) scaleX(1.04); }
   }
   @keyframes combo-pulse {
     0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
