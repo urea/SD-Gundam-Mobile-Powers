@@ -45,6 +45,7 @@ interface GameTableLayoutProps {
 }
 
 interface FieldLaneProps {
+  activeCCard?: PlayedCCardSummary;
   canDropToSquad?: boolean;
   draggedCard?: Card | null;
   isCPU?: boolean;
@@ -510,6 +511,7 @@ const getTouchDropTarget = (event: React.PointerEvent<HTMLElement>): 'squad' | '
 };
 
 const FieldLane: React.FC<FieldLaneProps> = ({
+  activeCCard,
   canDropToSquad,
   draggedCard,
   isCPU = false,
@@ -543,6 +545,58 @@ const FieldLane: React.FC<FieldLaneProps> = ({
       order: card.fieldOrder ?? playerState.squad.length + idx,
     })),
   ].sort((a, b) => a.order - b.order);
+  const primaryFieldCards = orderedFieldCards.slice(0, 3);
+  const extraFieldCard = orderedFieldCards[3];
+  const hiddenExtraCount = Math.max(0, orderedFieldCards.length - 4);
+
+  const renderFieldCard = (
+    slotCard: typeof orderedFieldCards[number],
+    slotIndex: number,
+    isStacked = false,
+  ) => {
+    const { card, idx, location } = slotCard;
+    const isTargetable = targetableCardNumbers?.has(getCardInstanceId(card)) ?? false;
+    const isFaceDown = isCPU && location === 'squad';
+    const isDestroyed = !!card.isDestroyed;
+
+    return (
+      <div
+        className={`game-field-card game-field-card-${location} ${isStacked ? 'game-field-card-stacked' : ''} ${isTargetable && !isFaceDown && !isDestroyed ? 'game-field-card-targetable' : ''}`}
+        key={`${owner.toLowerCase()}-${location}-${getCardInstanceId(card)}-${idx}-${slotIndex}`}
+      >
+        <GameCard
+          card={card}
+          isPlayerCard={!isCPU}
+          isDisabled={isCardDisabled}
+          isFaceDown={isFaceDown}
+          isSelected={!isFaceDown && !isDestroyed && isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
+          isTargetable={!isFaceDown && !isDestroyed && isTargetable}
+          location={location}
+          onClick={isFaceDown || isDestroyed ? undefined : isTargetable ? onTargetCard : onSelectCard}
+          onPreviewEnd={onPreviewEnd}
+          onPreviewStart={onPreviewStart}
+          uniqueKey={`${owner.toLowerCase()}-${location}-${getCardInstanceId(card)}-${idx}-${slotIndex}`}
+        />
+      </div>
+    );
+  };
+
+  const renderCCard = (cardSummary: PlayedCCardSummary, compact = false) => (
+    <div className={`game-field-card game-field-card-counter ${compact ? 'game-field-card-counter-compact' : ''}`}>
+      <GameCard
+        card={cardSummary.sourceCard}
+        isPlayerCard={!isCPU}
+        isDisabled={isCardDisabled}
+        isSelected={isSameCardInstance(selectedCard, cardSummary.sourceCard)}
+        location="battlefield"
+        onClick={onSelectCard}
+        onPreviewEnd={onPreviewEnd}
+        onPreviewStart={onPreviewStart}
+        uniqueKey={`${owner.toLowerCase()}-counter-${getCardInstanceId(cardSummary.sourceCard)}`}
+      />
+      <span className="game-cs-slot-label" aria-hidden="true">C/S</span>
+    </div>
+  );
 
   const handleDragOverToSquad = (event: React.DragEvent<HTMLElement>) => {
     if (!canDropToSquad || !draggedCard) {
@@ -572,31 +626,23 @@ const FieldLane: React.FC<FieldLaneProps> = ({
         <span className="game-lane-badge game-lane-badge-squad">{squadLabel}</span>
         <span className="game-lane-badge game-lane-badge-front">{frontLabel}</span>
         <div className="game-lane-cards" aria-label={`${owner} cards`}>
-          {orderedFieldCards.map(({ card, idx, location }) => {
-            const isTargetable = targetableCardNumbers?.has(getCardInstanceId(card)) ?? false;
-            const isFaceDown = isCPU && location === 'squad';
-            const isDestroyed = !!card.isDestroyed;
-            return (
-              <div
-                className={`game-field-card game-field-card-${location} ${isTargetable && !isFaceDown && !isDestroyed ? 'game-field-card-targetable' : ''}`}
-                key={`${owner.toLowerCase()}-${location}-${getCardInstanceId(card)}-${idx}`}
-              >
-                <GameCard
-                  card={card}
-                  isPlayerCard={!isCPU}
-                  isDisabled={isCardDisabled}
-                  isFaceDown={isFaceDown}
-                  isSelected={!isFaceDown && !isDestroyed && isSameCardInstance(selectedCard, card) && selectedCard?.type === card.type}
-                  isTargetable={!isFaceDown && !isDestroyed && isTargetable}
-                  location={location}
-                  onClick={isFaceDown || isDestroyed ? undefined : isTargetable ? onTargetCard : onSelectCard}
-                  onPreviewEnd={onPreviewEnd}
-                  onPreviewStart={onPreviewStart}
-                  uniqueKey={`${owner.toLowerCase()}-${location}-${getCardInstanceId(card)}-${idx}`}
-                />
-              </div>
-            );
-          })}
+          {[0, 1, 2].map(slotIndex => (
+            <div
+              className={`game-field-slot ${primaryFieldCards[slotIndex] ? 'game-field-slot-filled' : 'game-field-slot-empty'}`}
+              key={`${owner.toLowerCase()}-field-slot-${slotIndex}`}
+            >
+              {primaryFieldCards[slotIndex] && renderFieldCard(primaryFieldCards[slotIndex], slotIndex)}
+            </div>
+          ))}
+          <div
+            className={`game-field-slot game-field-slot-cs ${extraFieldCard || activeCCard ? 'game-field-slot-filled' : 'game-field-slot-empty'}`}
+            key={`${owner.toLowerCase()}-field-slot-cs`}
+          >
+            {extraFieldCard && renderFieldCard(extraFieldCard, 3, !!activeCCard)}
+            {activeCCard && renderCCard(activeCCard, !!extraFieldCard)}
+            {!activeCCard && !extraFieldCard && <span className="game-field-slot-empty-label">C/S</span>}
+            {hiddenExtraCount > 0 && <span className="game-field-overflow-count">+{hiddenExtraCount}</span>}
+          </div>
         </div>
       </div>
     </section>
@@ -688,6 +734,10 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   const fieldPlayedCCards = shouldShowFieldCounterCards
     ? playedCCards
     : [];
+  const getActiveCCard = (owner: PlayerType) =>
+    [...fieldPlayedCCards].reverse().find(card => card.owner === owner);
+  const playerActiveCCard = getActiveCCard('PLAYER');
+  const cpuActiveCCard = getActiveCCard('CPU');
   const gameStageClass = phase.startsWith('FORMATION')
     ? 'game-stage-formation'
     : phase.startsWith('DEPLOYMENT')
@@ -777,6 +827,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       </section>
 
       <FieldLane
+        activeCCard={cpuActiveCCard}
         isCPU
         isCardDisabled={cpuFieldDisabled}
         laneAttentionKey={cpuLaneAttentionKey}
@@ -855,12 +906,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           <span className="game-score-value">{cpu.combatPoints}</span>
         </div>
 
-        <div className="game-center-info-node">
-          <FieldCounterCards
-            playedCCards={fieldPlayedCCards}
-            onPreviewEnd={() => setPreviewCard(null)}
-            onPreviewStart={setPreviewCard}
-          />
+        <div className="game-center-info-node game-center-info-node-log-only">
           <div className="game-log-node" role="log" aria-live="polite">
             {gameLog.slice(-2).map((logEntry, index) => (
               <p key={`${logEntry.timestamp}-${index}`}>
@@ -906,6 +952,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       </section>
 
       <FieldLane
+        activeCCard={playerActiveCCard}
         isCardDisabled={playerFieldDisabled}
         canDropToSquad={canDropDraggedToSquad}
         draggedCard={draggedCard}

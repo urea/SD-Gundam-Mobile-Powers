@@ -341,7 +341,7 @@ const customScrollbarAndAnimationStyles = `
   .game-stage-deployment .game-field-card-squad,
   .game-stage-battle .game-field-card-squad {
     opacity: 0.68;
-    transform: none;
+    transform: scale(0.82);
   }
   .game-lane-badge {
     position: absolute;
@@ -500,21 +500,98 @@ const customScrollbarAndAnimationStyles = `
     position: absolute;
     inset: 0.25rem 0.4rem;
     z-index: 1;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    justify-items: center;
     align-items: center;
-    gap: 0.55rem;
-    overflow-x: auto;
-    overflow-y: hidden;
+    gap: 0.45rem;
+    overflow: hidden;
     padding: 0.1rem 0.2rem;
   }
-  .game-lane-cards .game-field-card {
-    width: clamp(4.25rem, 7vw, 8.5rem);
-    height: auto;
-    max-height: 12rem;
+  .game-field-slot {
+    position: relative;
+    min-width: 0;
+    height: min(100%, 12rem);
+    max-width: 100%;
     aspect-ratio: 5 / 7;
-    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    overflow: visible;
+    isolation: isolate;
+  }
+  .game-field-slot-empty {
+    border: 1px dashed rgba(100, 116, 139, 0.28);
+    background: rgba(255, 255, 255, 0.34);
+  }
+  .game-field-slot-empty-label {
+    color: rgba(71, 85, 105, 0.42);
+    font-size: 0.58rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .game-lane-cards .game-field-card {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    aspect-ratio: 5 / 7;
+    flex: none;
+  }
+  .game-field-card-counter {
+    z-index: 4;
+  }
+  .game-field-card-counter .game-card-size {
+    box-shadow: 0 7px 18px rgba(161, 98, 7, 0.28);
+  }
+  .game-cs-slot-label,
+  .game-field-overflow-count {
+    position: absolute;
+    z-index: 7;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: #fff7ed;
+    font-size: 0.52rem;
+    font-weight: 900;
+    line-height: 1;
+    pointer-events: none;
+    box-shadow: 0 2px 7px rgba(15, 23, 42, 0.24);
+  }
+  .game-cs-slot-label {
+    left: 0.2rem;
+    top: 0.2rem;
+    padding: 0.14rem 0.28rem;
+    background: rgba(180, 83, 9, 0.94);
+  }
+  .game-field-overflow-count {
+    right: 0.2rem;
+    top: 0.2rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    background: rgba(15, 23, 42, 0.8);
+  }
+  .game-field-card-stacked {
+    justify-self: start;
+    align-self: start;
+    width: 82%;
+    height: 82%;
+  }
+  .game-field-card-counter-compact {
+    position: absolute;
+    right: -0.05rem;
+    bottom: -0.05rem;
+    width: 48%;
+    height: 48%;
+    z-index: 6;
+  }
+  .game-field-card-counter-compact .game-card-size {
+    border-radius: 5px;
+  }
+  .game-field-card-counter-compact .game-cs-slot-label {
+    left: -0.1rem;
+    top: -0.1rem;
+    padding: 0.1rem 0.2rem;
+    font-size: 0.42rem;
   }
   .game-table-layout .game-card-size:hover,
   .game-table-layout .game-card-size:focus-visible {
@@ -698,6 +775,9 @@ const customScrollbarAndAnimationStyles = `
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     gap: 0.25rem;
+  }
+  .game-center-info-node-log-only {
+    grid-template-rows: minmax(0, 1fr);
   }
   .game-counter-node {
     min-width: 0;
@@ -1585,17 +1665,16 @@ const customScrollbarAndAnimationStyles = `
     max-width: none;
   }
   .game-stage-formation .game-lane-cards .game-field-card-squad {
-    max-height: 12.5rem;
+    max-height: none;
   }
   .game-stage-deployment .game-lane-cards .game-field-card-squad,
   .game-stage-battle .game-lane-cards .game-field-card-squad {
-    width: clamp(3.75rem, 6vw, 7.25rem);
-    height: auto;
-    max-height: 9.5rem;
+    width: 100%;
+    height: 100%;
+    max-height: none;
   }
   .game-field-slot {
-    height: clamp(5.25rem, 17vh, 8.125rem);
-    overflow-y: auto;
+    overflow: visible;
   }
   .game-hand-zone {
     min-height: clamp(7.25rem, 28vh, 15.125rem);
@@ -1744,7 +1823,7 @@ const customScrollbarAndAnimationStyles = `
     }
     .game-stage-deployment .game-field-card-squad,
     .game-stage-battle .game-field-card-squad {
-      transform: none;
+      transform: scale(0.82);
     }
     .game-lane-badge {
       font-size: 0.5rem;
@@ -1758,10 +1837,13 @@ const customScrollbarAndAnimationStyles = `
       inset: 0.18rem 0.25rem;
       padding: 0.05rem 0.15rem;
     }
+    .game-field-slot {
+      height: min(100%, 6.4rem);
+    }
     .game-lane-cards .game-field-card {
-      width: clamp(3rem, 6vw, 4.25rem);
-      height: auto;
-      max-height: 6.4rem;
+      width: 100%;
+      height: 100%;
+      max-height: none;
     }
     .game-center-strip {
       grid-template-columns: minmax(7.5rem, 1fr) minmax(3.2rem, auto) minmax(7.5rem, 1fr) minmax(3.2rem, auto);
@@ -1851,13 +1933,13 @@ const customScrollbarAndAnimationStyles = `
       height: 100%;
     }
     .game-stage-formation .game-lane-cards .game-field-card-squad {
-      max-height: 6.7rem;
+      max-height: none;
     }
     .game-stage-deployment .game-lane-cards .game-field-card-squad,
     .game-stage-battle .game-lane-cards .game-field-card-squad {
-      width: clamp(2.7rem, 5.2vw, 3.75rem);
-      height: auto;
-      max-height: 5.5rem;
+      width: 100%;
+      height: 100%;
+      max-height: none;
     }
     .game-card-hover-preview {
       width: min(11rem, 26vw);
