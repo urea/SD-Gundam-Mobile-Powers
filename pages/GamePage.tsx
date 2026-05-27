@@ -887,11 +887,12 @@ const customScrollbarAndAnimationStyles = `
     grid-row: 1 / 3;
     min-width: 0;
     display: grid;
-    grid-template-columns: 4rem minmax(0, 1fr);
-    align-items: center;
-    gap: 0.4rem;
+    grid-template-columns: minmax(0, 1fr);
     padding: 0.25rem 0.45rem;
     font-size: 0.68rem;
+  }
+  .game-selected-node-empty {
+    pointer-events: none;
   }
   .game-combo-pulse {
     animation: combo-pulse 1.1s ease-out;
@@ -1546,32 +1547,6 @@ const customScrollbarAndAnimationStyles = `
     transform: translate(-50%, -50%) scale(0.2);
     filter: drop-shadow(0 0 22px rgba(250, 204, 21, 0.85));
     animation: battle-clash 0.95s ease-in-out infinite;
-  }
-  .game-selected-thumb {
-    width: 3.65rem;
-    aspect-ratio: 5 / 7;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 5px;
-    background: #e2e8f0;
-    border: 1px solid rgba(148, 163, 184, 0.55);
-  }
-  .game-selected-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .game-selected-copy {
-    min-width: 0;
-    display: grid;
-    gap: 0.1rem;
-  }
-  .game-selected-copy strong,
-  .game-selected-copy span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .game-player-dock {
     position: relative;
@@ -3620,7 +3595,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
           cpuCCardTargetableNumbers={cpuCCardTargetableNumbers}
           currentTerrainCard={currentTerrainCard}
           gameLog={gameLog}
-          imageLoadErrors={imageLoadErrors}
           isCPUMoving={isCPUMoving}
           isCpuWinnerVisualizing={
             ((combatResultVisual === 'CPU' || combatResultVisual === 'DRAW') && isVisualizingCombat) ||
@@ -3633,7 +3607,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
           }
           isVisualizingCombat={isVisualizingCombat}
           isVisualizingUnilateralDeployment={isVisualizingUnilateralDeployment}
-          onImageError={handleImageError}
           onConfirmCombatResolution={confirmCombatResolution}
           onOpenDiscardPile={openDiscardPileModal}
           onOpenLargeCard={openLargeCardModal}

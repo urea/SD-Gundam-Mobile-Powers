@@ -14,14 +14,12 @@ interface GameTableLayoutProps {
   cpuCCardTargetableNumbers?: Set<string>;
   currentTerrainCard: Card | null;
   gameLog: LogEntry[];
-  imageLoadErrors: Record<string, boolean>;
   isCPUMoving: boolean;
   isCpuWinnerVisualizing: boolean;
   isPlayerTurnInteractive: boolean;
   isPlayerWinnerVisualizing: boolean;
   isVisualizingCombat: boolean;
   isVisualizingUnilateralDeployment: boolean;
-  onImageError: (key: string) => void;
   onConfirmCombatResolution: () => void;
   onOpenDiscardPile: (owner: PlayerType) => void;
   onOpenLargeCard: (card: Card) => void;
@@ -659,14 +657,12 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   cpuCCardTargetableNumbers,
   currentTerrainCard,
   gameLog,
-  imageLoadErrors,
   isCPUMoving,
   isCpuWinnerVisualizing,
   isPlayerTurnInteractive,
   isPlayerWinnerVisualizing,
   isVisualizingCombat,
   isVisualizingUnilateralDeployment,
-  onImageError,
   onConfirmCombatResolution,
   onOpenDiscardPile,
   onOpenLargeCard,
@@ -714,8 +710,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     phase === 'FORMATION_CPU_PLACE' ||
     phase === 'COUNTER_SUPPORT_CPU_PLAY_C' ||
     phase === 'DEPLOYMENT_CPU_TERRAIN';
-  const selectedImageKey = selectedCard ? `table-selected-${getCardInstanceId(selectedCard)}` : '';
-  const canOpenSelectedImage = !!selectedCard?.imageUrl && !imageLoadErrors[selectedImageKey];
   const isSelectingCCardTarget = !!pendingTargetCCard && !!cCardTargetInstruction;
   const playerLaneAttentionKey = [
     player.squad.map(getCardInstanceId).join(','),
@@ -917,38 +911,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           </div>
         </div>
 
-        <div className="game-selected-node">
-          {selectedCard ? (
-            <>
-              <button
-                className="game-selected-thumb"
-                disabled={!canOpenSelectedImage}
-                onClick={() => selectedCard && canOpenSelectedImage && onOpenLargeCard(selectedCard)}
-                aria-label={`${selectedCard.cardName} の画像を拡大表示する`}
-              >
-                {selectedCard.imageUrl && !imageLoadErrors[selectedImageKey] ? (
-                  <img
-                    alt={selectedCard.cardName}
-                    src={selectedCard.imageUrl}
-                    onError={() => onImageError(selectedImageKey)}
-                  />
-                ) : (
-                  <span>{selectedCard.type}</span>
-                )}
-              </button>
-              <div className="game-selected-copy">
-                <strong>{selectedCard.cardNameOmm || selectedCard.cardName}</strong>
-                <span>
-                  {selectedCard.type === 'M'
-                    ? `P ${selectedCard.points} / ${selectedCard.terrainTypeMCards || '-'}`
-                    : selectedCard.effect || selectedCard.textAbility || '-'}
-                </span>
-              </div>
-            </>
-          ) : (
-            <span>未選択</span>
-          )}
-        </div>
+        <div className="game-selected-node game-selected-node-empty" aria-hidden="true" />
       </section>
 
       <FieldLane
