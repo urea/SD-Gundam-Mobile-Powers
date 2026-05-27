@@ -83,7 +83,7 @@ const customScrollbarAndAnimationStyles = `
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-rows: auto minmax(4.75rem, 1fr) auto minmax(4.75rem, 1fr) minmax(7rem, auto);
+    grid-template-rows: auto minmax(9.75rem, 2fr) minmax(7rem, auto);
     gap: 0.375rem;
     touch-action: none;
   }
@@ -180,7 +180,6 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-opponent-strip,
   .game-player-dock,
-  .game-center-strip,
   .game-field-lane {
     background: rgba(255, 255, 255, 0.94);
     border: 1px solid rgba(148, 163, 184, 0.42);
@@ -207,6 +206,65 @@ const customScrollbarAndAnimationStyles = `
   .game-strip-title {
     font-weight: 700;
     color: #0369a1;
+  }
+  .game-battlefield-area {
+    position: relative;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.375rem;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .game-battlefield-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: block;
+    pointer-events: none;
+  }
+  .game-battlefield-log-panel {
+    position: absolute;
+    left: clamp(0.5rem, 1.8vw, 1.5rem);
+    top: 50%;
+    width: min(46rem, calc(100% - 10.5rem));
+    max-height: min(6.1rem, 46%);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.2rem;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.48);
+    background: rgba(248, 250, 252, 0.9);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.13);
+    padding: 0.28rem 0.42rem;
+    transform: translateY(-50%);
+  }
+  .game-battlefield-log-panel-battle {
+    width: min(54rem, calc(100% - 9rem));
+    max-height: min(8.4rem, 62%);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  .game-battlefield-terrain-node {
+    position: absolute;
+    right: clamp(0.55rem, 2vw, 1.6rem);
+    top: 50%;
+    max-width: min(19rem, 28vw);
+    min-width: min(12rem, 24vw);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.42);
+    background: rgba(248, 250, 252, 0.86);
+    padding: 0.22rem 0.42rem;
+    text-align: center;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    transform: translateY(-50%);
+  }
+  .game-battlefield-terrain-node button,
+  .game-center-confirm-button {
+    pointer-events: auto;
   }
   .game-defeat-points {
     display: inline-flex;
@@ -439,6 +497,33 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-lane-cpu .game-lane-badge-squad {
     top: 0.2rem;
+  }
+  .game-lane-score {
+    position: absolute;
+    right: 0.5rem;
+    z-index: 6;
+    min-width: 3.8rem;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    border: 1px solid currentColor;
+    padding: 0.16rem 0.34rem;
+    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.14);
+    line-height: 1;
+  }
+  .game-lane-score span {
+    font-size: 0.5rem;
+    font-weight: 900;
+  }
+  .game-lane-score strong {
+    font-size: clamp(1.4rem, 2.7vw, 2.25rem);
+    font-weight: 900;
+  }
+  .game-lane-score-cpu {
+    top: 0.45rem;
+  }
+  .game-lane-score-player {
+    bottom: 0.45rem;
   }
   .game-drop-ready {
     outline: 2px solid rgba(34, 197, 94, 0.75);
@@ -1976,7 +2061,7 @@ const customScrollbarAndAnimationStyles = `
       aspect-ratio: 5 / 7;
     }
     .game-table-layout {
-      grid-template-rows: auto minmax(4.6rem, 1.25fr) auto minmax(4.6rem, 1.25fr) minmax(4.65rem, auto);
+      grid-template-rows: auto minmax(9.4rem, 1fr) minmax(4.65rem, auto);
       gap: 0.2rem;
     }
     .game-opponent-strip {
@@ -2001,6 +2086,23 @@ const customScrollbarAndAnimationStyles = `
       font-size: 0.5rem;
       padding: 0.13rem 0.25rem;
     }
+    .game-lane-score {
+      right: 0.35rem;
+      min-width: 2.9rem;
+      padding: 0.1rem 0.24rem;
+    }
+    .game-lane-score span {
+      display: none;
+    }
+    .game-lane-score strong {
+      font-size: clamp(1.12rem, 2.9vw, 1.7rem);
+    }
+    .game-lane-score-cpu {
+      top: 0.32rem;
+    }
+    .game-lane-score-player {
+      bottom: 0.32rem;
+    }
     .game-lane-cards,
     .game-hand-scroll {
       gap: 0.25rem;
@@ -2023,11 +2125,28 @@ const customScrollbarAndAnimationStyles = `
       height: 100%;
       max-height: none;
     }
-    .game-center-strip {
-      grid-template-columns: minmax(11.5rem, 48%) minmax(3.05rem, auto) minmax(5.75rem, 22%) minmax(3.05rem, auto);
-      grid-template-rows: auto auto;
-      padding: 0.25rem;
-      gap: 0.25rem;
+    .game-battlefield-area {
+      gap: 0.22rem;
+    }
+    .game-battlefield-log-panel {
+      left: 0.42rem;
+      width: min(31rem, calc(100% - 7.2rem));
+      max-height: min(4.7rem, 46%);
+      gap: 0.12rem;
+      padding: 0.16rem 0.26rem;
+    }
+    .game-battlefield-log-panel-battle {
+      width: min(33rem, calc(100% - 6.4rem));
+      max-height: min(6.2rem, 62%);
+    }
+    .game-battlefield-terrain-node {
+      right: 0.42rem;
+      min-width: 5.8rem;
+      max-width: 6.6rem;
+      padding: 0.14rem 0.22rem;
+    }
+    .game-battlefield-terrain-node .game-terrain-copy {
+      display: none;
     }
     .game-score-node {
       min-width: 3.05rem;

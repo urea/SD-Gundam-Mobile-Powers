@@ -55,6 +55,7 @@ interface FieldLaneProps {
   onSelectCard: (card: Card) => void;
   onTargetCard?: (card: Card) => void;
   playerState: PlayerState;
+  scoreClass: string;
   selectedCard: Card | null;
   targetableCardNumbers?: Set<string>;
 }
@@ -580,6 +581,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   onSelectCard,
   onTargetCard,
   playerState,
+  scoreClass,
   selectedCard,
   targetableCardNumbers,
 }) => {
@@ -687,6 +689,10 @@ const FieldLane: React.FC<FieldLaneProps> = ({
       >
         <span className="game-lane-badge game-lane-badge-squad">{squadLabel}</span>
         <span className="game-lane-badge game-lane-badge-front">{frontLabel}</span>
+        <div className={`game-lane-score game-lane-score-${owner.toLowerCase()} ${scoreClass}`} aria-label={`${owner} 戦闘ポイント ${playerState.combatPoints}`}>
+          <span>{owner}</span>
+          <strong>{playerState.combatPoints}</strong>
+        </div>
         <div className="game-lane-cards" aria-label={`${owner} cards`}>
           {[0, 1, 2].map(slotIndex => (
             <div
@@ -912,116 +918,108 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
         </div>
       </section>
 
-      <FieldLane
-        activeCCard={cpuActiveCCard}
-        battleVisualResult={combatResultVisual}
-        battlefieldTerrainAttribute={battlefieldTerrainAttribute}
-        isBattleVisualActive={isVisualizingCombat}
-        isCPU
-        isCardDisabled={cpuFieldDisabled}
-        laneAttentionKey={cpuLaneAttentionKey}
-        onPreviewEnd={() => setPreviewCard(null)}
-        onPreviewStart={setPreviewCard}
-        onSelectCard={onSelectCard}
-        onTargetCard={onTargetCard}
-        playerState={cpu}
-        selectedCard={selectedCard}
-        targetableCardNumbers={isSelectingCCardTarget ? cpuCCardTargetableNumbers : undefined}
-      />
+      <section className={`game-battlefield-area ${hasRecentCombo ? 'game-combo-pulse' : ''}`} aria-label="戦場">
+        <FieldLane
+          activeCCard={cpuActiveCCard}
+          battleVisualResult={combatResultVisual}
+          battlefieldTerrainAttribute={battlefieldTerrainAttribute}
+          isBattleVisualActive={isVisualizingCombat}
+          isCPU
+          isCardDisabled={cpuFieldDisabled}
+          laneAttentionKey={cpuLaneAttentionKey}
+          onPreviewEnd={() => setPreviewCard(null)}
+          onPreviewStart={setPreviewCard}
+          onSelectCard={onSelectCard}
+          onTargetCard={onTargetCard}
+          playerState={cpu}
+          scoreClass={cpuScoreClass}
+          selectedCard={selectedCard}
+          targetableCardNumbers={isSelectingCCardTarget ? cpuCCardTargetableNumbers : undefined}
+        />
 
-      <section className={`game-center-strip ${hasRecentCombo ? 'game-combo-pulse' : ''}`} aria-label="中央戦場">
-        <div className={`game-center-info-node ${battleSummary ? 'game-center-info-node-with-battle' : ''}`}>
-          <div className={`game-center-status-row game-center-status-${centerStatusTone}`} title={centerStatusDetail}>
-            <strong>{centerStatusText}</strong>
-            <span>{centerStatusDetail}</span>
-          </div>
-          <CenterBattleSummary
-            battleSummary={battleSummary}
-            combatResultVisual={isVisualizingCombat ? combatResultVisual : unilateralDeploymentWinner}
-            cpuPoints={isVisualizingCombat ? cpu.combatPoints : getBattlefieldBaseTotal(cpu.battlefield)}
-            onConfirm={isVisualizingCombat ? onConfirmCombatResolution : undefined}
-            playerPoints={isVisualizingCombat ? player.combatPoints : getBattlefieldBaseTotal(player.battlefield)}
-          />
-          <div className="game-log-node custom-scrollbar-xs" role="log" aria-live="polite">
-            {gameLog.slice(battleSummary ? -3 : -5).map((logEntry, index) => (
-              <p key={`${logEntry.timestamp}-${index}`}>
-                {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
-                {logEntry.message}
-              </p>
-            ))}
-          </div>
-        </div>
-
-        <div className={`game-score-node game-attention-flash ${playerScoreClass}`} key={`player-score-${player.combatPoints}`}>
-          <span className="game-score-label">PLAYER</span>
-          <span className="game-score-value">{player.combatPoints}</span>
-        </div>
-
-        <div
-          className="game-terrain-node game-attention-flash"
-          key={`terrain-${currentTerrainCard ? getCardInstanceId(currentTerrainCard) : 'none'}-${battlefieldTerrainAttribute || 'none'}`}
-        >
-          {isVisualizingUnilateralDeployment && unilateralDeploymentWinner ? (
-            <span className={`game-unilateral-text ${unilateralDeploymentWinner === 'PLAYER' ? 'text-sky-500' : 'text-red-500'}`}>
-              一方的な戦闘
-            </span>
-          ) : currentTerrainCard ? (
-            <div className="game-terrain-content">
-              <button
-                aria-label={`${currentTerrainCard.cardName} の画像を確認する`}
-                className="game-terrain-card-thumb"
-                disabled={!currentTerrainCard.imageUrl}
-                onBlur={() => setPreviewCard(null)}
-                onClick={() => currentTerrainCard.imageUrl && onOpenLargeCard(currentTerrainCard)}
-                onFocus={() => setPreviewCard(currentTerrainCard)}
-                onMouseEnter={() => setPreviewCard(currentTerrainCard)}
-                onMouseLeave={() => setPreviewCard(null)}
-                type="button"
-              >
-                {currentTerrainCard.imageUrl ? (
-                  <img alt="" src={currentTerrainCard.imageUrl} />
-                ) : (
-                  <span>{currentTerrainCard.type}</span>
-                )}
-              </button>
-              <span className="game-terrain-copy">
-                <span className="game-terrain-name" title={currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}>
-                  {currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}
-                </span>
-                <span className="game-terrain-attr">属性 {battlefieldTerrainAttribute || 'なし'}</span>
-              </span>
+        <div className={`game-battlefield-overlay ${battleSummary ? 'game-battlefield-overlay-with-battle' : ''}`}>
+          <div className={`game-battlefield-log-panel ${battleSummary ? 'game-battlefield-log-panel-battle' : ''}`}>
+            <div className={`game-center-status-row game-center-status-${centerStatusTone}`} title={centerStatusDetail}>
+              <strong>{centerStatusText}</strong>
+              <span>{centerStatusDetail}</span>
             </div>
-          ) : (
-            <span className="game-terrain-empty">地形未定</span>
-          )}
+            <CenterBattleSummary
+              battleSummary={battleSummary}
+              combatResultVisual={isVisualizingCombat ? combatResultVisual : unilateralDeploymentWinner}
+              cpuPoints={isVisualizingCombat ? cpu.combatPoints : getBattlefieldBaseTotal(cpu.battlefield)}
+              onConfirm={isVisualizingCombat ? onConfirmCombatResolution : undefined}
+              playerPoints={isVisualizingCombat ? player.combatPoints : getBattlefieldBaseTotal(player.battlefield)}
+            />
+            <div className="game-log-node custom-scrollbar-xs" role="log" aria-live="polite">
+              {gameLog.slice(battleSummary ? -3 : -4).map((logEntry, index) => (
+                <p key={`${logEntry.timestamp}-${index}`}>
+                  {logEntry.source !== 'SYSTEM' ? `[${logEntry.source === 'PLAYER' ? 'プレイヤー' : 'CPU'}] ` : ''}
+                  {logEntry.message}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className="game-battlefield-terrain-node game-attention-flash"
+            key={`terrain-${currentTerrainCard ? getCardInstanceId(currentTerrainCard) : 'none'}-${battlefieldTerrainAttribute || 'none'}`}
+          >
+            {isVisualizingUnilateralDeployment && unilateralDeploymentWinner ? (
+              <span className={`game-unilateral-text ${unilateralDeploymentWinner === 'PLAYER' ? 'text-sky-500' : 'text-red-500'}`}>
+                一方的な戦闘
+              </span>
+            ) : currentTerrainCard ? (
+              <div className="game-terrain-content">
+                <button
+                  aria-label={`${currentTerrainCard.cardName} の画像を確認する`}
+                  className="game-terrain-card-thumb"
+                  disabled={!currentTerrainCard.imageUrl}
+                  onBlur={() => setPreviewCard(null)}
+                  onClick={() => currentTerrainCard.imageUrl && onOpenLargeCard(currentTerrainCard)}
+                  onFocus={() => setPreviewCard(currentTerrainCard)}
+                  onMouseEnter={() => setPreviewCard(currentTerrainCard)}
+                  onMouseLeave={() => setPreviewCard(null)}
+                  type="button"
+                >
+                  {currentTerrainCard.imageUrl ? (
+                    <img alt="" src={currentTerrainCard.imageUrl} />
+                  ) : (
+                    <span>{currentTerrainCard.type}</span>
+                  )}
+                </button>
+                <span className="game-terrain-copy">
+                  <span className="game-terrain-name" title={currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}>
+                    {currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}
+                  </span>
+                  <span className="game-terrain-attr">属性 {battlefieldTerrainAttribute || 'なし'}</span>
+                </span>
+              </div>
+            ) : (
+              <span className="game-terrain-empty">地形未定</span>
+            )}
+          </div>
         </div>
 
-        <div className={`game-score-node game-attention-flash ${cpuScoreClass}`} key={`cpu-score-${cpu.combatPoints}`}>
-          <span className="game-score-label">CPU</span>
-          <span className="game-score-value">{cpu.combatPoints}</span>
-        </div>
-
-        <div className="game-selected-node game-selected-node-empty" aria-hidden="true" />
+        <FieldLane
+          activeCCard={playerActiveCCard}
+          battleVisualResult={combatResultVisual}
+          battlefieldTerrainAttribute={battlefieldTerrainAttribute}
+          isBattleVisualActive={isVisualizingCombat}
+          isCardDisabled={playerFieldDisabled}
+          canDropToSquad={canDropDraggedToSquad}
+          draggedCard={draggedCard}
+          onDropToSquad={dropDraggedToSquad}
+          laneAttentionKey={playerLaneAttentionKey}
+          onPreviewEnd={() => setPreviewCard(null)}
+          onPreviewStart={setPreviewCard}
+          onSelectCard={onSelectCard}
+          onTargetCard={onTargetCard}
+          playerState={player}
+          scoreClass={playerScoreClass}
+          selectedCard={selectedCard}
+          targetableCardNumbers={isSelectingCCardTarget ? playerCCardTargetableNumbers : undefined}
+        />
       </section>
-
-      <FieldLane
-        activeCCard={playerActiveCCard}
-        battleVisualResult={combatResultVisual}
-        battlefieldTerrainAttribute={battlefieldTerrainAttribute}
-        isBattleVisualActive={isVisualizingCombat}
-        isCardDisabled={playerFieldDisabled}
-        canDropToSquad={canDropDraggedToSquad}
-        draggedCard={draggedCard}
-        onDropToSquad={dropDraggedToSquad}
-        laneAttentionKey={playerLaneAttentionKey}
-        onPreviewEnd={() => setPreviewCard(null)}
-        onPreviewStart={setPreviewCard}
-        onSelectCard={onSelectCard}
-        onTargetCard={onTargetCard}
-        playerState={player}
-        selectedCard={selectedCard}
-        targetableCardNumbers={isSelectingCCardTarget ? playerCCardTargetableNumbers : undefined}
-      />
 
       <section className="game-player-dock" aria-label="プレイヤー手札と操作">
         <div className="game-player-command-panel">
