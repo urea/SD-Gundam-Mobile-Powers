@@ -1,5 +1,5 @@
 import type { Card } from '../types';
-import { STARTER_VER_1_SOURCE_SET, starterVer1Cards } from './starterVer1Cards';
+import { STARTER_VER_1_SOURCE_SET, carddas20Cards } from './carddas20Cards';
 
 const SOURCE_SET_BY_GAME_VAR: Record<string, string> = {
   St1: STARTER_VER_1_SOURCE_SET,
@@ -26,16 +26,15 @@ export const toCatalogCard = (card: Card): CatalogCard => ({
 });
 
 export const getStarterVer1CatalogCards = (): CatalogCard[] => {
-  return starterVer1Cards.map(toCatalogCard);
+  return carddas20Cards
+    .filter(card => getCardSourceSet(card) === STARTER_VER_1_SOURCE_SET)
+    .map(toCatalogCard);
 };
 
 export const loadCarddas20CatalogCards = async (): Promise<CatalogCard[]> => {
-  const module = await import('./carddas20ViewerCards');
-  return module.carddas20ViewerCards.map(toCatalogCard);
+  return carddas20Cards.map(toCatalogCard);
 };
 
 export const loadFullCardCatalog = async (): Promise<CatalogCard[]> => {
-  const starterCards = getStarterVer1CatalogCards();
-  const carddas20Cards = await loadCarddas20CatalogCards();
-  return [...starterCards, ...carddas20Cards];
+  return loadCarddas20CatalogCards();
 };

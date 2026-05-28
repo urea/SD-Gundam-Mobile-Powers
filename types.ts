@@ -8,7 +8,7 @@ export interface RuleSectionContent {
 }
 
 export interface Card {
-  uniqueKey?: string; // Stable base-card identity for duplicated card numbers.
+  uniqueKey?: string; // Stable base-card identity used by deck codes; do not change once released.
   instanceId?: string; // Per-deck copy identity, e.g. M-046-2#1.
   cardNumber: string;
   cardName: string;

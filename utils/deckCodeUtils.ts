@@ -2,6 +2,13 @@
 import { Card } from '../types';
 import { getCardBaseId, getCardInstanceId } from './cardIdentity';
 
+const DECK_CODE_V2_PREFIX = 'v2|';
+const DECK_CODE_PART_SEPARATOR = '_';
+const DECK_CODE_COUNT_SEPARATOR = ':';
+const MIN_DECK_SIZE = 55;
+const MAX_DECK_SIZE = 100;
+const MAX_CARD_COPIES = 3;
+
 /**
  * Creates a pool of card instances. For Mobile Powers, each unique base card
  * (e.g., M-001 or M-046-2) is typically considered to have 3 copies available for deck building.
@@ -27,14 +34,13 @@ export const createFullCardInstancePool = (baseCards: Card[]): Card[] => {
 };
 
 /**
- * Generates a compressed deck code string from an array of cards.
- * Uses short numeric IDs for base-card identities and counts for multiples.
- * Format: shortId1:count1_shortId2_shortId3:count3 (count of 1 is omitted)
+ * Generates a stable deck code string from an array of cards.
+ * Uses Card.uniqueKey/cardNumber directly so new cards do not shift old deck codes.
+ * Format: v2|baseId1:count1_baseId2_baseId3:count3 (count of 1 is omitted)
  * @param deck - An array of Card objects with instanceId values.
- * @param baseCardToShortIdMap - Map from base card identity (e.g., "M-001") to short ID (e.g., 0).
  * @returns A compressed deck code string.
  */
-export const generateCompressedDeckCode = (deck: Card[], baseCardToShortIdMap: Map<string, number>): string => {
+export const generateCompressedDeckCode = (deck: Card[]): string => {
   if (deck.length === 0) return '';
 
   const baseCardCounts: Map<string, number> = new Map();
@@ -43,29 +49,106 @@ export const generateCompressedDeckCode = (deck: Card[], baseCardToShortIdMap: M
     baseCardCounts.set(baseNum, (baseCardCounts.get(baseNum) || 0) + 1);
   });
 
-  // Sort by short ID for consistent code generation
-  const sortedBaseCardNumbers = Array.from(baseCardCounts.keys()).sort((a, b) => {
-    const shortIdA = baseCardToShortIdMap.get(a);
-    const shortIdB = baseCardToShortIdMap.get(b);
-    if (shortIdA === undefined || shortIdB === undefined) return 0; // Should not happen
-    return shortIdA - shortIdB;
+  const sortedBaseCardNumbers = Array.from(baseCardCounts.keys()).sort((a, b) => a.localeCompare(b));
+
+  const body = sortedBaseCardNumbers.map(baseNum => {
+    const count = baseCardCounts.get(baseNum) || 0;
+    return count > 1 ? `${baseNum}${DECK_CODE_COUNT_SEPARATOR}${count}` : baseNum;
+  }).filter(Boolean).join(DECK_CODE_PART_SEPARATOR);
+
+  return `${DECK_CODE_V2_PREFIX}${body}`;
+};
+
+const reconstructDeckFromBaseCounts = (
+  baseCounts: Array<{ baseCardNumber: string; count: number }>,
+  fullCardInstancePool: Card[]
+): Card[] | null => {
+  const deck: Card[] = [];
+  const usedInstancesCount: Map<string, number> = new Map();
+
+  for (const { baseCardNumber, count } of baseCounts) {
+    for (let i = 0; i < count; i++) {
+      const currentInstanceSuffix = (usedInstancesCount.get(baseCardNumber) || 0) + 1;
+      if (currentInstanceSuffix > MAX_CARD_COPIES) {
+        console.error(`Deck code parsing error: Attempting to add more than ${MAX_CARD_COPIES} copies of ${baseCardNumber}. Requested count ${count}.`);
+        return null;
+      }
+
+      const instanceCardNumber = `${baseCardNumber}#${currentInstanceSuffix}`;
+      const cardInstance = fullCardInstancePool.find(c => getCardInstanceId(c) === instanceCardNumber);
+
+      if (!cardInstance) {
+        console.error(`Deck code parsing error: Instance "${instanceCardNumber}" for base card ${baseCardNumber} not found in pool.`);
+        return null;
+      }
+      deck.push(cardInstance);
+      usedInstancesCount.set(baseCardNumber, currentInstanceSuffix);
+    }
+  }
+
+  if (deck.length < MIN_DECK_SIZE || deck.length > MAX_DECK_SIZE) {
+    console.error(`Deck code validation error: Reconstructed deck has ${deck.length} cards, expected between ${MIN_DECK_SIZE} and ${MAX_DECK_SIZE}.`);
+    return null;
+  }
+
+  return deck;
+};
+
+const parseV2DeckCode = (code: string, fullCardInstancePool: Card[]): Card[] | null => {
+  const body = code.slice(DECK_CODE_V2_PREFIX.length);
+  if (!body.trim()) {
+    console.error("Deck code parsing error: Code body is empty.");
+    return null;
+  }
+
+  const baseCounts = body.split(DECK_CODE_PART_SEPARATOR).map(part => {
+    const [baseCardNumber, countStr] = part.split(DECK_CODE_COUNT_SEPARATOR);
+    const count = countStr ? parseInt(countStr, 10) : 1;
+    return { baseCardNumber, count, part };
   });
 
-  return sortedBaseCardNumbers.map(baseNum => {
-    const shortId = baseCardToShortIdMap.get(baseNum);
-    if (shortId === undefined) {
-      console.error(`Error generating deck code: No short ID for base card ${baseNum}`);
-      return ''; // Should not happen with a complete map
+  if (baseCounts.some(({ baseCardNumber, count }) => !baseCardNumber || isNaN(count) || count <= 0)) {
+    console.error(`Deck code parsing error: Invalid v2 code "${code}".`);
+    return null;
+  }
+
+  return reconstructDeckFromBaseCounts(baseCounts, fullCardInstancePool);
+};
+
+const parseLegacyNumericDeckCode = (
+  code: string,
+  shortIdToBaseCardMap: Map<number, string>,
+  fullCardInstancePool: Card[]
+): Card[] | null => {
+  const baseCounts = code.split(DECK_CODE_PART_SEPARATOR).map(part => {
+    const [shortIdStr, countStr] = part.split(DECK_CODE_COUNT_SEPARATOR);
+    const shortId = parseInt(shortIdStr, 10);
+    const count = countStr ? parseInt(countStr, 10) : 1;
+    const baseCardNumber = shortIdToBaseCardMap.get(shortId);
+
+    if (isNaN(shortId) || isNaN(count) || count <= 0 || !baseCardNumber) {
+      console.error(`Deck code parsing error: Invalid legacy part "${part}" in code "${code}".`);
+      return null;
     }
-    const count = baseCardCounts.get(baseNum) || 0;
-    return count > 1 ? `${shortId}:${count}` : `${shortId}`;
-  }).filter(Boolean).join('_');
+
+    return { baseCardNumber, count };
+  });
+
+  if (baseCounts.some(part => part === null)) {
+    return null;
+  }
+
+  return reconstructDeckFromBaseCounts(
+    baseCounts as Array<{ baseCardNumber: string; count: number }>,
+    fullCardInstancePool
+  );
 };
 
 /**
- * Parses a compressed deck code string and reconstructs the deck.
- * @param code - The compressed deck code string (e.g., "0:2_1_57:3").
- * @param shortIdToBaseCardMap - Map from short ID (e.g., 0) to base card identity (e.g., "M-001").
+ * Parses a deck code string and reconstructs the deck.
+ * v2 codes use stable card identities, while legacy codes use the old short numeric ID map.
+ * @param code - The deck code string (e.g., "v2|M-001:2_C-001" or legacy "0:2_1_57:3").
+ * @param shortIdToBaseCardMap - Legacy map from short ID (e.g., 0) to base card identity (e.g., "M-001").
  * @param fullCardInstancePool - Array of all possible card instances (e.g., instanceId "M-001#1", "M-001#2", ...).
  * @returns An array of Card objects for the deck, or null if parsing fails.
  */
@@ -74,54 +157,15 @@ export const parseCompressedDeckCode = (
   shortIdToBaseCardMap: Map<number, string>,
   fullCardInstancePool: Card[]
 ): Card[] | null => {
-  if (!code.trim()) {
+  const trimmedCode = code.trim();
+  if (!trimmedCode) {
     console.error("Deck code parsing error: Code is empty.");
     return null;
   }
 
-  const parts = code.split('_');
-  const deck: Card[] = [];
-  const usedInstancesCount: Map<string, number> = new Map(); // Tracks how many instances of a base card are used
-
-  for (const part of parts) {
-    const [shortIdStr, countStr] = part.split(':');
-    const shortId = parseInt(shortIdStr, 10);
-    const count = countStr ? parseInt(countStr, 10) : 1;
-
-    if (isNaN(shortId) || isNaN(count) || count <= 0) {
-      console.error(`Deck code parsing error: Invalid part "${part}" in code "${code}".`);
-      return null;
-    }
-
-    const baseCardNumber = shortIdToBaseCardMap.get(shortId);
-    if (!baseCardNumber) {
-      console.error(`Deck code parsing error: No base card found for short ID ${shortId}.`);
-      return null;
-    }
-
-    for (let i = 0; i < count; i++) {
-      const currentInstanceSuffix = (usedInstancesCount.get(baseCardNumber) || 0) + 1;
-      if (currentInstanceSuffix > 3) { // Assuming max 3 copies of any card
-          console.error(`Deck code parsing error: Attempting to add more than 3 copies of ${baseCardNumber}. Short ID ${shortId}, requested count ${count}.`);
-          return null;
-      }
-      
-      const instanceCardNumber = `${baseCardNumber}#${currentInstanceSuffix}`;
-      const cardInstance = fullCardInstancePool.find(c => getCardInstanceId(c) === instanceCardNumber);
-
-      if (!cardInstance) {
-        console.error(`Deck code parsing error: Instance "${instanceCardNumber}" for base card ${baseCardNumber} (short ID ${shortId}) not found in pool.`);
-        return null;
-      }
-      deck.push(cardInstance);
-      usedInstancesCount.set(baseCardNumber, currentInstanceSuffix);
-    }
+  if (trimmedCode.startsWith(DECK_CODE_V2_PREFIX)) {
+    return parseV2DeckCode(trimmedCode, fullCardInstancePool);
   }
 
-  if (deck.length < 55 || deck.length > 100) {
-    console.error(`Deck code validation error: Reconstructed deck has ${deck.length} cards, expected between 55 and 100.`);
-    return null;
-  }
-
-  return deck;
+  return parseLegacyNumericDeckCode(trimmedCode, shortIdToBaseCardMap, fullCardInstancePool);
 };

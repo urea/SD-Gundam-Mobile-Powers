@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { Card, SavedDeck } from '../types';
-import { STARTER_VER_1_SOURCE_SET, starterVer1Cards } from '../data/starterVer1Cards';
+import { STARTER_VER_1_SOURCE_SET, gamePlayableStarterVer1Cards } from '../data/carddas20Cards';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
@@ -33,7 +33,6 @@ const isKiraCard = (card: Card): boolean => {
 export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
   const [fullCardInstancePool, setFullCardInstancePool] = useState<Card[]>([]);
-  const [baseCardToShortIdMap, setBaseCardToShortIdMap] = useState<Map<string, number>>(new Map());
   const [shortIdToBaseCardMap, setShortIdToBaseCardMap] = useState<Map<number, string>>(new Map());
   
   const [currentDeck, setCurrentDeck] = useState<Card[]>([]);
@@ -73,9 +72,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
 
   useEffect(() => {
-    const gamePlayableBaseCards = starterVer1Cards
-      .filter(c => c.type === 'M' || c.type === 'C')
-      .map(card => ({ ...card }));
+    const gamePlayableBaseCards = gamePlayableStarterVer1Cards.map(card => ({ ...card }));
     setAllBaseCards(gamePlayableBaseCards);
 
     if (gamePlayableBaseCards.length > 0) {
@@ -83,13 +80,10 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       setFullCardInstancePool(instancePool);
 
       const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
-      const bToS = new Map<string, number>();
       const sToB = new Map<number, string>();
       sortedBaseCardNumbers.forEach((num, idx) => {
-        bToS.set(num, idx);
         sToB.set(idx, num);
       });
-      setBaseCardToShortIdMap(bToS);
       setShortIdToBaseCardMap(sToB);
 
       const factions = new Set<string>();
@@ -277,7 +271,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       setGeneratedDeckCodeOutput('');
       return;
     }
-    const code = generateCompressedDeckCode(currentDeck, baseCardToShortIdMap);
+    const code = generateCompressedDeckCode(currentDeck);
     setGeneratedDeckCodeOutput(code);
     setDeckCodeMessage({ type: 'success', text: 'デッキコードを生成しました！' });
     setIsDeckCodeCopied(false);
@@ -333,7 +327,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       setDeckCodeMessage({ type: 'error', text: `デッキは${MIN_DECK_SIZE}枚から${MAX_DECK_SIZE}枚の範囲でなければ保存できません。` });
       return;
     }
-    const code = generateCompressedDeckCode(currentDeck, baseCardToShortIdMap);
+    const code = generateCompressedDeckCode(currentDeck);
     const deckToSave = {
       name: currentDeckName.trim(),
       code: code,

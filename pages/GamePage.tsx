@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BattleSummary, Card, GameState, PlayerType, CPUAction, LogEntry, PlayedCCardSummary } from '../types';
-import { starterVer1Cards } from '../data/starterVer1Cards';
+import { gamePlayableStarterVer1Cards } from '../data/carddas20Cards';
 import { CardCollectionModal, GameOverModal, LargeCardModal } from '../components/game/GameModals';
 import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';
 import * as cpuLogicService from '../services/cpuLogicService';
-import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
+import { createFullCardInstancePool, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { cpuDeckPresets } from '../data/cpuDecks'; // Import CPU presets to find by code if needed, though MainMenu should resolve ID to code.
 import {
@@ -2057,7 +2057,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   const gameScreenRef = useRef<HTMLDivElement | null>(null);
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
   const [fullInstancePool, setFullInstancePool] = useState<Card[]>([]);
-  const [baseCardToShortIdMap, setBaseCardToShortIdMap] = useState<Map<string, number>>(new Map());
   const [shortIdToBaseCardMap, setShortIdToBaseCardMap] = useState<Map<number, string>>(new Map());
 
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -2138,7 +2137,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
 
   useEffect(() => {
-    const parsedBase = starterVer1Cards.map(card => ({ ...card }));
+    const parsedBase = gamePlayableStarterVer1Cards.map(card => ({ ...card }));
     setAllBaseCards(parsedBase);
 
     if (parsedBase.length > 0) {
@@ -2148,19 +2147,16 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         const gamePlayableBaseCards = parsedBase.filter(c => c.type === 'M' || c.type === 'C');
         const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
         
-        const bToS = new Map<string, number>();
         const sToB = new Map<number, string>();
         sortedBaseCardNumbers.forEach((num, idx) => {
-            bToS.set(num, idx);
             sToB.set(idx, num);
         });
-        setBaseCardToShortIdMap(bToS);
         setShortIdToBaseCardMap(sToB);
     }
   }, []);
 
   const initializeGame = useCallback((playerDeckCodeToUse?: string, cpuDeckCodeToUse?: string) => {
-    if (allBaseCards.length === 0 || fullInstancePool.length === 0 || baseCardToShortIdMap.size === 0) {
+    if (allBaseCards.length === 0 || fullInstancePool.length === 0 || shortIdToBaseCardMap.size === 0) {
         console.warn("Base cards, instance pool, or ID maps not loaded yet. Cannot initialize game.");
         addLogEntry("エラー: ゲーム初期化に必要なデータが不足しています。", "SYSTEM");
         return;
@@ -2227,13 +2223,13 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
     setCombatResultVisual(null);
     setIsVisualizingCombat(false);
     setImageLoadErrors({});
-  }, [allBaseCards, fullInstancePool, baseCardToShortIdMap, shortIdToBaseCardMap, addLogEntry]);
+  }, [allBaseCards, fullInstancePool, shortIdToBaseCardMap, addLogEntry]);
 
   useEffect(() => {
-    if (allBaseCards.length > 0 && fullInstancePool.length > 0 && baseCardToShortIdMap.size > 0 && !gameState) {
+    if (allBaseCards.length > 0 && fullInstancePool.length > 0 && shortIdToBaseCardMap.size > 0 && !gameState) {
         initializeGame(initialDeckCode, initialCpuDeckCode);
     }
-  }, [allBaseCards, fullInstancePool, baseCardToShortIdMap, initialDeckCode, initialCpuDeckCode, initializeGame, gameState]);
+  }, [allBaseCards, fullInstancePool, shortIdToBaseCardMap, initialDeckCode, initialCpuDeckCode, initializeGame, gameState]);
 
   useEffect(() => {
     if (pendingTargetCCard && gameState?.phase !== 'COUNTER_SUPPORT_PLAYER_PLAY_C') {
