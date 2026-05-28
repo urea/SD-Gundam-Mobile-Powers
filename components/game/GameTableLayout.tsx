@@ -40,13 +40,13 @@ interface FieldLaneProps {
   activeCCard?: PlayedCCardSummary;
   battleVisualResult?: PlayerType | 'DRAW' | null;
   battlefieldTerrainAttribute?: string | null;
+  canAllowSquadDrop?: boolean;
   canDropToSquad?: boolean;
-  draggedCard?: Card | null;
   isBattleVisualActive?: boolean;
   isCPU?: boolean;
   isCardDisabled: boolean;
   laneAttentionKey?: string;
-  onDropToSquad?: () => void;
+  onDropToSquad?: (event: React.DragEvent<HTMLElement>) => void;
   onPreviewEnd: () => void;
   onPreviewStart: (card: Card) => void;
   laneCardsRef?: React.Ref<HTMLDivElement>;
@@ -207,12 +207,14 @@ const getTouchDropTarget = (event: React.PointerEvent<HTMLElement>): 'squad' | '
   return dropTarget === 'squad' || dropTarget === 'discard' ? dropTarget : null;
 };
 
+const HAND_CARD_DRAG_MIME = 'application/x-mobile-powers-card-id';
+
 const FieldLane: React.FC<FieldLaneProps> = ({
   activeCCard,
   battleVisualResult,
   battlefieldTerrainAttribute,
+  canAllowSquadDrop,
   canDropToSquad,
-  draggedCard,
   isBattleVisualActive = false,
   isCPU = false,
   isCardDisabled,
@@ -243,6 +245,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
     ? ({ '--lane-terrain-image': `url('/assets/terrain/terrain-${terrainKey}.jpg')` } as React.CSSProperties)
     : undefined;
   const squadDropClass = canDropToSquad && !isCPU ? 'game-drop-ready' : '';
+  const canAcceptSquadDrop = !isCPU && (!!canDropToSquad || !!canAllowSquadDrop);
   const orderedFieldCards = [
     ...playerState.squad.map((card, idx) => ({
       card,
@@ -311,7 +314,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   );
 
   const handleDragOverToSquad = (event: React.DragEvent<HTMLElement>) => {
-    if (!canDropToSquad || !draggedCard) {
+    if (!canAcceptSquadDrop) {
       return;
     }
     event.preventDefault();
@@ -319,11 +322,11 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   };
 
   const handleDropToSquad = (event: React.DragEvent<HTMLElement>) => {
-    if (!canDropToSquad || !draggedCard) {
+    if (!canAcceptSquadDrop) {
       return;
     }
     event.preventDefault();
-    onDropToSquad?.();
+    onDropToSquad?.(event);
   };
 
   return (
@@ -501,44 +504,82 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     isPlayerTurnInteractive &&
     !isVisualizingCombat &&
     !winner;
-  const canDropDraggedToSquad =
-    !!draggedCard &&
-    draggedCard.type === 'M' &&
+  const canAcceptHandDropToSquad =
+    canDragHandCard &&
     phase === 'FORMATION_PLAYER_PLACE' &&
-    player.squad.length < 3 &&
-    isPlayerTurnInteractive;
-  const canDropDraggedToDiscard =
-    !!draggedCard &&
-    isPlayerTurnInteractive &&
+    player.squad.length < 3;
+  const canAcceptHandDropToDiscard =
+    canDragHandCard &&
+    (phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' || phase === 'FORMATION_PLAYER_PLACE');
+  const findDraggedHandCard = (event?: React.DragEvent<HTMLElement>): Card | null => {
+    const draggedCardId = event
+      ? event.dataTransfer.getData(HAND_CARD_DRAG_MIME) || event.dataTransfer.getData('text/plain')
+      : '';
+    if (draggedCardId) {
+      return player.hand.find(card => getCardInstanceId(card) === draggedCardId) ?? null;
+    }
+    return draggedCard;
+  };
+  const canDropCardToSquad = (card: Card | null): card is Card => (
+    !!card &&
+    card.type === 'M' &&
+    canAcceptHandDropToSquad
+  );
+  const canDropCardToDiscard = (card: Card | null): card is Card => (
+    !!card &&
+    canDragHandCard &&
     (
       phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' ||
-      (phase === 'FORMATION_PLAYER_PLACE' && !(player.squad.length < 3 && player.hand.some((card) => card.type === 'M')))
-    );
-  const dropDraggedToSquad = () => {
-    if (!draggedCard || !canDropDraggedToSquad) {
+      (phase === 'FORMATION_PLAYER_PLACE' && !(player.squad.length < 3 && player.hand.some((handCard) => handCard.type === 'M')))
+    )
+  );
+  const canDropDraggedToSquad = canDropCardToSquad(draggedCard);
+  const canDropDraggedToDiscard = canDropCardToDiscard(draggedCard);
+  const dropDraggedToSquad = (cardToDrop: Card | null = draggedCard) => {
+    if (!canDropCardToSquad(cardToDrop)) {
       return;
     }
-    onPlayerAction('PLAY_M_CARD_TO_SQUAD', draggedCard);
+    onPlayerAction('PLAY_M_CARD_TO_SQUAD', cardToDrop);
     setDraggedCard(null);
   };
-  const dropDraggedToDiscard = () => {
-    if (!draggedCard || !canDropDraggedToDiscard) {
+  const dropDraggedToDiscard = (cardToDrop: Card | null = draggedCard) => {
+    if (!canDropCardToDiscard(cardToDrop)) {
       return;
     }
-    onPlayerAction(phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' ? 'DISCARD_FROM_HAND_CS' : 'DISCARD_TO_DEFEAT_PILE', draggedCard);
+    onPlayerAction(phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' ? 'DISCARD_FROM_HAND_CS' : 'DISCARD_TO_DEFEAT_PILE', cardToDrop);
     setDraggedCard(null);
+  };
+  const handleSquadDrop = (event: React.DragEvent<HTMLElement>) => {
+    dropDraggedToSquad(findDraggedHandCard(event));
+  };
+  const handleDiscardDrop = (event: React.DragEvent<HTMLElement>) => {
+    dropDraggedToDiscard(findDraggedHandCard(event));
+  };
+  const canPlayHandCardByDoubleAction = (card: Card): boolean => (
+    canDragHandCard &&
+    (
+      (phase === 'FORMATION_PLAYER_PLACE' && card.type === 'M' && player.squad.length < 3) ||
+      (phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' && card.type === 'C')
+    )
+  );
+  const handleHandCardDoubleAction = (card: Card) => {
+    if (!canPlayHandCardByDoubleAction(card)) {
+      return;
+    }
+    setDraggedCard(null);
+    onPlayerAction(phase === 'FORMATION_PLAYER_PLACE' ? 'PLAY_M_CARD_TO_SQUAD' : 'PLAY_C_CARD', card);
   };
   const handleTouchDragEnd = (event: React.PointerEvent<HTMLElement>) => {
     if (!draggedCard || event.pointerType === 'mouse') {
       return;
     }
     const dropTarget = getTouchDropTarget(event);
-    if (dropTarget === 'squad' && canDropDraggedToSquad) {
+    if (dropTarget === 'squad' && canDropCardToSquad(draggedCard)) {
       event.preventDefault();
       dropDraggedToSquad();
       return;
     }
-    if (dropTarget === 'discard' && canDropDraggedToDiscard) {
+    if (dropTarget === 'discard' && canDropCardToDiscard(draggedCard)) {
       event.preventDefault();
       dropDraggedToDiscard();
       return;
@@ -728,9 +769,9 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           battlefieldTerrainAttribute={battlefieldTerrainAttribute}
           isBattleVisualActive={isVisualizingCombat}
           isCardDisabled={playerFieldDisabled}
+          canAllowSquadDrop={canAcceptHandDropToSquad}
           canDropToSquad={canDropDraggedToSquad}
-          draggedCard={draggedCard}
-          onDropToSquad={dropDraggedToSquad}
+          onDropToSquad={handleSquadDrop}
           laneAttentionKey={playerLaneAttentionKey}
           onPreviewEnd={() => setPreviewCard(null)}
           onPreviewStart={setPreviewCard}
@@ -763,16 +804,17 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
                 aria-label="プレイヤーの捨て札を見る"
                 className={`game-zone-button game-zone-button-player ${canDropDraggedToDiscard ? 'game-drop-ready' : ''}`}
                 data-game-drop="discard"
-                disabled={(!canDropDraggedToDiscard && player.discardPile.length === 0) || !!winner}
+                disabled={(!canAcceptHandDropToDiscard && player.discardPile.length === 0) || !!winner}
                 onDragOver={(event) => {
-                  if (canDropDraggedToDiscard) {
+                  if (canAcceptHandDropToDiscard) {
                     event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
                   }
                 }}
                 onDrop={(event) => {
-                  if (canDropDraggedToDiscard) {
+                  if (canAcceptHandDropToDiscard) {
                     event.preventDefault();
-                    dropDraggedToDiscard();
+                    handleDiscardDrop(event);
                   }
                 }}
                 onClick={() => onOpenDiscardPile('PLAYER')}
@@ -856,6 +898,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
                     isDraggable={canDragHandCard}
                     location="hand"
                     onClick={onSelectCard}
+                    onDoubleAction={canPlayHandCardByDoubleAction(card) ? handleHandCardDoubleAction : undefined}
                     onDragEnd={() => setDraggedCard(null)}
                     onDragStart={setDraggedCard}
                     onPointerDragStart={setDraggedCard}

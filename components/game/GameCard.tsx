@@ -11,6 +11,7 @@ interface GameCardProps {
   onClick?: (card: Card) => void;
   onDragEnd?: () => void;
   onDragStart?: (card: Card, event: React.DragEvent<HTMLButtonElement>) => void;
+  onDoubleAction?: (card: Card) => void;
   onPreviewEnd?: () => void;
   onPreviewStart?: (card: Card) => void;
   onPointerDragStart?: (card: Card, event: React.PointerEvent<HTMLButtonElement>) => void;
@@ -29,6 +30,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   onClick,
   onDragEnd,
   onDragStart,
+  onDoubleAction,
   onPreviewEnd,
   onPreviewStart,
   onPointerDragStart,
@@ -40,6 +42,8 @@ export const GameCard: React.FC<GameCardProps> = ({
   uniqueKey,
 }) => {
   const { handleImageError, imageLoadErrors, setSelectedCard: contextSetSelectedCard } = useGamePageContext();
+  const lastTapAtRef = React.useRef(0);
+  const suppressNextClickRef = React.useRef(false);
   const isMCard = card.type === 'M';
   const hasError = imageLoadErrors[uniqueKey];
   const showImage = !isFaceDown && card.imageUrl && !hasError;
@@ -83,24 +87,66 @@ Flavor: ${card.textAbility}
 ${card.type === 'C' && card.effect ? `Effect: ${card.effect}\n` : ''}Tags: ${card.tags || '-'}
 Var: ${card.gameVar || '-'}`;
 
-  const effectiveOnClick = isFaceDown || isDestroyed || hasPendingExit ? undefined : onClick ? () => onClick(card) : () => contextSetSelectedCard(card);
+  const canUseCardAction = !isFaceDown && !isDestroyed && !hasPendingExit;
+  const canUseDoubleAction = canUseCardAction && !isDisabled && !!onDoubleAction;
+  const effectiveOnClick = canUseCardAction
+    ? () => {
+        if (suppressNextClickRef.current) {
+          suppressNextClickRef.current = false;
+          return;
+        }
+        if (onClick) {
+          onClick(card);
+          return;
+        }
+        contextSetSelectedCard(card);
+      }
+    : undefined;
   const canDrag = !!isDraggable && !isDisabled && !isFaceDown && !isDestroyed && !hasPendingExit;
   const isEffectivelyDisabled = !!isDisabled || !!isFaceDown;
+
+  const handleDoubleAction = (
+    event: React.MouseEvent<HTMLButtonElement> | React.PointerEvent<HTMLButtonElement>,
+    suppressFollowingClick = false,
+  ) => {
+    if (!canUseDoubleAction) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    suppressNextClickRef.current = suppressFollowingClick;
+    onDoubleAction(card);
+  };
 
   return (
     <button
       onClick={effectiveOnClick}
       disabled={isEffectivelyDisabled}
       draggable={canDrag}
+      onDoubleClick={canUseDoubleAction ? (event) => handleDoubleAction(event) : undefined}
       onDragEnd={canDrag ? onDragEnd : undefined}
       onDragStart={canDrag ? (event) => {
+        const cardId = getCardInstanceId(card);
         event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', getCardInstanceId(card));
+        event.dataTransfer.setData('application/x-mobile-powers-card-id', cardId);
+        event.dataTransfer.setData('text/plain', cardId);
         onDragStart?.(card, event);
       } : undefined}
       onPointerDown={canDrag ? (event) => {
         if (event.pointerType !== 'mouse') {
           onPointerDragStart?.(card, event);
+        }
+      } : undefined}
+      onPointerUp={canUseDoubleAction ? (event) => {
+        if (event.pointerType === 'mouse') {
+          return;
+        }
+        const now = Date.now();
+        const elapsed = now - lastTapAtRef.current;
+        lastTapAtRef.current = now;
+        if (elapsed > 0 && elapsed < 340) {
+          lastTapAtRef.current = 0;
+          handleDoubleAction(event, true);
         }
       } : undefined}
       onBlur={isFaceDown ? undefined : onPreviewEnd}
@@ -126,6 +172,7 @@ Var: ${card.gameVar || '-'}`;
         <img
           src="/assets/card-back.png"
           alt=""
+          draggable={false}
           className="w-full h-full object-cover bg-blue-900"
           loading="lazy"
         />
@@ -133,6 +180,7 @@ Var: ${card.gameVar || '-'}`;
         <img
           src={card.imageUrl}
           alt={card.cardName}
+          draggable={false}
           className="w-full h-full object-contain bg-slate-100"
           onError={() => handleImageError(uniqueKey)}
           loading="lazy"
