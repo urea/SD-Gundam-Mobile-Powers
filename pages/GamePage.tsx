@@ -2528,7 +2528,85 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   const confirmCombatResolution = useCallback(() => {
     setCombatResultVisual(null);
     setGameState(currentGs => {
-      if (!currentGs || currentGs.phase !== 'COMBAT_RESOLUTION') return currentGs;
+      if (!currentGs) return currentGs;
+
+      if (currentGs.phase === 'DEPLOYMENT_CONFIRM_UNILATERAL') {
+        let newPlayerState = { ...currentGs.player };
+        let newCpuState = { ...currentGs.cpu };
+        const tempLogEntries: LogEntry[] = [];
+        let gameShouldEnd = false;
+        let winnerOnEnd: PlayerType | null = null;
+        const playerOnlyDeployed = newPlayerState.battlefield.length > 0 && newCpuState.battlefield.length === 0;
+        const cpuOnlyDeployed = newCpuState.battlefield.length > 0 && newPlayerState.battlefield.length === 0;
+
+        if (!playerOnlyDeployed && !cpuOnlyDeployed) {
+          return currentGs;
+        }
+
+        if (playerOnlyDeployed) {
+          const cpuSquadMCards = newCpuState.squad.filter(c => c.type === 'M');
+          tempLogEntries.push({message: '一方的出撃確定: プレイヤーのみ出撃。', source: 'SYSTEM', timestamp: Date.now()});
+          if (cpuSquadMCards.length > 0) {
+            const pendingDefeatIds = new Set(cpuSquadMCards.map(getCardInstanceId));
+            newCpuState.defeatPile = [...newCpuState.defeatPile, ...cpuSquadMCards.map(clearTemporaryCardState)];
+            newCpuState.defeatPoints += cpuSquadMCards.length;
+            newCpuState.squad = newCpuState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
+            tempLogEntries.push({message: `CPUは敗北ポイント ${cpuSquadMCards.length}点 を獲得。合計: ${newCpuState.defeatPoints}点。`, source: 'CPU', timestamp: Date.now()});
+            if (newCpuState.defeatPoints >= 10) {
+              tempLogEntries.push({message: 'CPUの敗北ポイントが10に達しました！プレイヤーの勝利！', source: 'SYSTEM', timestamp: Date.now()});
+              gameShouldEnd = true;
+              winnerOnEnd = 'PLAYER';
+            }
+          } else {
+            tempLogEntries.push({message: 'CPUに敗北ポイント対象の残存Mカードはありません。', source: 'CPU', timestamp: Date.now()});
+          }
+        } else {
+          const playerSquadMCards = newPlayerState.squad.filter(c => c.type === 'M');
+          tempLogEntries.push({message: '一方的出撃確定: CPUのみ出撃。', source: 'SYSTEM', timestamp: Date.now()});
+          if (playerSquadMCards.length > 0) {
+            const pendingDefeatIds = new Set(playerSquadMCards.map(getCardInstanceId));
+            newPlayerState.defeatPile = [...newPlayerState.defeatPile, ...playerSquadMCards.map(clearTemporaryCardState)];
+            newPlayerState.defeatPoints += playerSquadMCards.length;
+            newPlayerState.squad = newPlayerState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
+            tempLogEntries.push({message: `プレイヤーは敗北ポイント ${playerSquadMCards.length}点 を獲得。合計: ${newPlayerState.defeatPoints}点。`, source: 'PLAYER', timestamp: Date.now()});
+            if (newPlayerState.defeatPoints >= 10) {
+              tempLogEntries.push({message: 'プレイヤーの敗北ポイントが10に達しました！CPUの勝利！', source: 'SYSTEM', timestamp: Date.now()});
+              gameShouldEnd = true;
+              winnerOnEnd = 'CPU';
+            }
+          } else {
+            tempLogEntries.push({message: 'プレイヤーに敗北ポイント対象の残存Mカードはありません。', source: 'PLAYER', timestamp: Date.now()});
+          }
+        }
+
+        if (gameShouldEnd) {
+          return {
+            ...currentGs,
+            player: newPlayerState,
+            cpu: newCpuState,
+            phase: 'GAME_OVER',
+            winner: winnerOnEnd,
+            playedCCards: [],
+            gameLog: appendLogEntries(currentGs.gameLog, tempLogEntries),
+            isPlayerTurnInteractive: false,
+            isCPUMoving: false,
+          };
+        }
+
+        tempLogEntries.push({message: '一方的出撃処理完了。ターン終了処理へ。', source: 'SYSTEM', timestamp: Date.now()});
+        return {
+          ...currentGs,
+          player: newPlayerState,
+          cpu: newCpuState,
+          phase: 'END_TURN_CLEANUP',
+          playedCCards: [],
+          gameLog: appendLogEntries(currentGs.gameLog, tempLogEntries),
+          isPlayerTurnInteractive: false,
+          isCPUMoving: false,
+        };
+      }
+
+      if (currentGs.phase !== 'COMBAT_RESOLUTION') return currentGs;
 
       let newPlayerState = { ...currentGs.player };
       let newCpuState = { ...currentGs.cpu };
@@ -2849,46 +2927,52 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                 });
                 break;
             case 'DEPLOYMENT_CHECK_UNILATERAL':
+              {
+                const currentPlayerCanDeploy = gameState.player.battlefield.length > 0;
+                const currentCpuCanDeploy = gameState.cpu.battlefield.length > 0;
+                if (currentPlayerCanDeploy !== currentCpuCanDeploy) {
+                  setCombatResultVisual(currentPlayerCanDeploy ? 'PLAYER' : 'CPU');
+                  setIsVisualizingCombat(true);
+                }
+
                 setGameState(prev => {
                     if (!prev) return null;
                     if (prev.phase !== currentPhase) return prev;
                     let newPlayerState = { ...prev.player };
                     let newCpuState = { ...prev.cpu };
                     let tempLogEntries: LogEntry[] = [];
-                    let gameShouldEnd = false;
-                    let winnerOnEnd: PlayerType | null = null;
 
                     const playerCanDeploy = newPlayerState.battlefield.length > 0;
                     const cpuCanDeploy = newCpuState.battlefield.length > 0;
 
                     if (playerCanDeploy && !cpuCanDeploy) {
-                        tempLogEntries.push({message: "一方的出撃！プレイヤーのみ出撃。CPUは小隊の残存Mカード分の敗北ポイントを受けます。", source: 'SYSTEM', timestamp: Date.now()});
+                        tempLogEntries.push({message: "一方的出撃！プレイヤーのみ出撃。戦闘結果を確認してください。", source: 'SYSTEM', timestamp: Date.now()});
                         const cpuSquadMCards = newCpuState.squad.filter(c => c.type === 'M');
                         if (cpuSquadMCards.length > 0) {
                             const pendingDefeatIds = new Set(cpuSquadMCards.map(getCardInstanceId));
-                            newCpuState.defeatPile = [...newCpuState.defeatPile, ...cpuSquadMCards.map(clearTemporaryCardState)];
-                            const defeatPointsReceived = cpuSquadMCards.length;
-                            newCpuState.defeatPoints += defeatPointsReceived;
-                            newCpuState.squad = newCpuState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
-                            tempLogEntries.push({message: `CPUは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newCpuState.defeatPoints}点。`, source: 'CPU', timestamp: Date.now()});
-                            if (newCpuState.defeatPoints >= 10) {
-                                gameShouldEnd = true; winnerOnEnd = 'PLAYER';
-                            }
+                            newCpuState.squad = newCpuState.squad.map(card =>
+                                pendingDefeatIds.has(getCardInstanceId(card))
+                                    ? { ...card, isTapped: false, isPendingDiscard: false, isPendingDefeat: true }
+                                    : card,
+                            );
+                            tempLogEntries.push({message: `CPUの残存Mカード ${cpuSquadMCards.length}枚 が敗北予定です。`, source: 'CPU', timestamp: Date.now()});
                         }
+                        newPlayerState.combatPoints = getBattlefieldBaseTotal(newPlayerState.battlefield);
+                        newCpuState.combatPoints = 0;
                     } else if (!playerCanDeploy && cpuCanDeploy) {
-                        tempLogEntries.push({message: "一方的出撃！CPUのみ出撃。プレイヤーは小隊の残存Mカード分の敗北ポイントを受けます。", source: 'SYSTEM', timestamp: Date.now()});
+                        tempLogEntries.push({message: "一方的出撃！CPUのみ出撃。戦闘結果を確認してください。", source: 'SYSTEM', timestamp: Date.now()});
                         const playerSquadMCards = newPlayerState.squad.filter(c => c.type === 'M');
                          if (playerSquadMCards.length > 0) {
                             const pendingDefeatIds = new Set(playerSquadMCards.map(getCardInstanceId));
-                            newPlayerState.defeatPile = [...newPlayerState.defeatPile, ...playerSquadMCards.map(clearTemporaryCardState)];
-                            const defeatPointsReceived = playerSquadMCards.length;
-                            newPlayerState.defeatPoints += defeatPointsReceived;
-                            newPlayerState.squad = newPlayerState.squad.filter(c => !pendingDefeatIds.has(getCardInstanceId(c)));
-                            tempLogEntries.push({message: `プレイヤーは敗北ポイント ${defeatPointsReceived}点 を獲得。合計: ${newPlayerState.defeatPoints}点。`, source: 'PLAYER', timestamp: Date.now()});
-                            if (newPlayerState.defeatPoints >= 10) {
-                                gameShouldEnd = true; winnerOnEnd = 'CPU';
-                            }
+                            newPlayerState.squad = newPlayerState.squad.map(card =>
+                                pendingDefeatIds.has(getCardInstanceId(card))
+                                    ? { ...card, isTapped: false, isPendingDiscard: false, isPendingDefeat: true }
+                                    : card,
+                            );
+                            tempLogEntries.push({message: `プレイヤーの残存Mカード ${playerSquadMCards.length}枚 が敗北予定です。`, source: 'PLAYER', timestamp: Date.now()});
                         }
+                        newPlayerState.combatPoints = 0;
+                        newCpuState.combatPoints = getBattlefieldBaseTotal(newCpuState.battlefield);
                     } else if (!playerCanDeploy && !cpuCanDeploy) {
                         const nextTerrainSelector = prev.activePlayer === 'PLAYER' ? 'CPU' : 'PLAYER';
                         return {
@@ -2910,35 +2994,17 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
                         };
                     }
 
-                    if (gameShouldEnd) {
-                        tempLogEntries.push({
-                          message: winnerOnEnd === 'PLAYER' ? "CPUの敗北ポイントが10に達しました！プレイヤーの勝利！" : "プレイヤーの敗北ポイントが10に達しました！CPUの勝利！",
-                          source: 'SYSTEM',
-                          timestamp: Date.now(),
-                        });
-                        return {
-                          ...prev,
-                          player: newPlayerState,
-                          cpu: newCpuState,
-                          phase: 'GAME_OVER',
-                          winner: winnerOnEnd,
-                          gameLog: appendLogEntries(prev.gameLog, tempLogEntries),
-                          isPlayerTurnInteractive: false,
-                          isCPUMoving: false,
-                        };
-                    }
-
-                    tempLogEntries.push({message: "一方的出撃処理完了。ターン終了処理へ。", source: 'SYSTEM', timestamp: Date.now()});
                     return {
                       ...prev,
                       player: newPlayerState,
                       cpu: newCpuState,
-                      phase: 'END_TURN_CLEANUP',
+                      phase: 'DEPLOYMENT_CONFIRM_UNILATERAL',
                       gameLog: appendLogEntries(prev.gameLog, tempLogEntries),
                       isPlayerTurnInteractive: false,
                       isCPUMoving: false,
                     };
                 });
+              }
                 break;
             case 'DEPLOYMENT_HANDLE_TAPPED':
                 setGameState(prev => {

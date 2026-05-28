@@ -429,6 +429,8 @@ export const getPhaseInstruction = (
       return '出陣: ユニットを戦場へ移動中...';
     case 'DEPLOYMENT_CHECK_UNILATERAL':
       return '出陣: 一方的戦闘確認中...';
+    case 'DEPLOYMENT_CONFIRM_UNILATERAL':
+      return '出陣: 一方的戦闘結果を確認中...';
     case 'DEPLOYMENT_HANDLE_TAPPED':
       return '出陣: 待機MS処理中...';
     case 'COMBAT_CALCULATE_INITIAL_POINTS':
