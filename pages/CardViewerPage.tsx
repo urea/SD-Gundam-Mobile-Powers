@@ -16,6 +16,8 @@ interface DisplayCard extends Card {
   sourceSet: string;
 }
 
+const VIEWER_DISPLAY_LIMIT = 100;
+
 const isKiraCard = (card: Card): boolean => {
   return card.tags.includes("キラ");
 };
@@ -182,6 +184,12 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
     return filtered;
   }, [allCards, filterName, filterType, filterFaction, filterTerrain, filterSourceSet, filterPoints, filterTags, sortConfig]);
 
+  const visibleCards = React.useMemo(() => {
+    return filteredAndSortedCards.slice(0, VIEWER_DISPLAY_LIMIT);
+  }, [filteredAndSortedCards]);
+
+  const isDisplayLimited = filteredAndSortedCards.length > VIEWER_DISPLAY_LIMIT;
+
   const requestSort = (key: SortableCardKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -331,8 +339,22 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
             </button>
           </div>
         </div>
+        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm text-slate-600">
+          <div>
+            表示件数: <span className="font-semibold tabular-nums text-slate-800">{visibleCards.length}</span>
+            {' / '}
+            絞り込み結果: <span className="font-semibold tabular-nums text-slate-800">{filteredAndSortedCards.length}</span>
+            {' / '}
+            全件: <span className="font-semibold tabular-nums text-slate-800">{allCards.length}</span>
+          </div>
+          {isDisplayLimited && (
+            <div className="font-medium text-amber-700">
+              100件まで表示しています。絞り込み条件を追加してください。
+            </div>
+          )}
+        </div>
         <CardDisplayTable 
-          cards={filteredAndSortedCards} 
+          cards={visibleCards}
           onSortRequest={requestSort} 
           sortConfig={sortConfig}
           onCardImageClick={openLargeCardModal} 
