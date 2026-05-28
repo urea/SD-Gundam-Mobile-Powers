@@ -63,18 +63,22 @@ export const GameCard: React.FC<GameCardProps> = ({
   if (showImage) {
     bgColor = 'bg-transparent';
   } else if (isMCard) {
-    bgColor =
-      card.factionAffiliation === '地球連邦'
-        ? 'bg-sky-200'
-        : card.factionAffiliation === 'ジオン'
-          ? 'bg-red-200'
-          : 'bg-slate-300';
-    textColor =
-      card.factionAffiliation === '地球連邦'
-        ? 'text-sky-800'
-        : card.factionAffiliation === 'ジオン'
-          ? 'text-red-800'
-          : 'text-slate-800';
+    if (card.factionAffiliation === '地球連邦') {
+      bgColor = 'bg-sky-200';
+      textColor = 'text-sky-800';
+    } else if (card.factionAffiliation === '赤ジオン') {
+      bgColor = 'bg-red-200';
+      textColor = 'text-red-800';
+    } else if (card.factionAffiliation === '緑ジオン') {
+      bgColor = 'bg-emerald-200';
+      textColor = 'text-emerald-800';
+    } else if (card.factionAffiliation === '青ジオン') {
+      bgColor = 'bg-blue-200';
+      textColor = 'text-blue-800';
+    } else {
+      bgColor = 'bg-slate-300';
+      textColor = 'text-slate-800';
+    }
   } else {
     bgColor = 'bg-yellow-200';
     textColor = 'text-yellow-800';

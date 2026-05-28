@@ -66,6 +66,8 @@ const getDisplayName = (card: Card): string => card.cardNameOmm || card.cardName
 
 const isActiveMCard = (card: Card): boolean => card.type === 'M' && !card.isDestroyed;
 
+const hasFactionMark = (card: Card, factionMark: string): boolean => card.factionAffiliation === factionMark;
+
 const clearBattlefieldEntryState = (card: Card): Card => {
   const nextCard = { ...card };
   delete nextCard.isDestroyed;
@@ -322,8 +324,8 @@ export const applyCCardEffect = (
     const count = ownM.filter(card => card.factionAffiliation === '地球連邦').length;
     addActorPoints(count >= 2 ? 5 : 0, count >= 2 ? '自軍地球連邦が2枚以上のため合計' : '自軍地球連邦が2枚未満のため効果なし');
   } else if (playedCard.cardNumber.startsWith('C-005')) {
-    const count = ownM.filter(card => card.factionAffiliation === 'ジオン').length;
-    addActorPoints(count * 2, `自軍ジオン ${count}枚に各+2`);
+    const count = ownM.filter(card => hasFactionMark(card, '赤ジオン')).length;
+    addActorPoints(count * 2, `自軍赤ジオン ${count}枚に各+2`);
   } else if (playedCard.cardNumber.startsWith('C-006')) {
     const revealed = revealActorDeckTop();
     if (revealed && revealed.type === 'M' && canDeploy(revealed, currentGameState.battlefieldTerrainAttribute)) {
@@ -340,11 +342,11 @@ export const applyCCardEffect = (
     addActorPoints(hasLand ? 5 : 0, hasLand ? '戦場に陸があるため合計' : '戦場に陸がないため効果なし');
   } else if (playedCard.cardNumber.startsWith('C-009')) {
     const revealed = revealActorDeckTop();
-    if (revealed?.factionAffiliation === 'ジオン') {
-      const count = ownM.filter(card => card.factionAffiliation === 'ジオン').length;
-      addActorPoints(count * 2, `${getDisplayName(revealed)} はジオンマーク。自軍ジオン ${count}枚に各+2`);
+    if (revealed && hasFactionMark(revealed, '緑ジオン')) {
+      const count = ownM.filter(card => hasFactionMark(card, '緑ジオン')).length;
+      addActorPoints(count * 2, `${getDisplayName(revealed)} は緑ジオンマーク。自軍緑ジオン ${count}枚に各+2`);
     } else if (revealed) {
-      logMessages.push({ message: `${getDisplayName(revealed)} はジオンマークではないため効果なし。`, source: byPlayerType, timestamp: Date.now() });
+      logMessages.push({ message: `${getDisplayName(revealed)} は緑ジオンマークではないため効果なし。`, source: byPlayerType, timestamp: Date.now() });
     }
     discardRevealedActorCard(revealed);
   } else if (playedCard.cardNumber.startsWith('C-010')) {
