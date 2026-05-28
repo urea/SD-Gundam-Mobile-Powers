@@ -8,6 +8,7 @@ import { GameTableLayout } from '../components/game/GameTableLayout';
 import * as cpuLogicService from '../services/cpuLogicService';
 import { createFullCardInstancePool, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
+import { preloadGameImagesForDecks, preloadGameStaticImages } from '../utils/imagePreload';
 import { cpuDeckPresets } from '../data/cpuDecks'; // Import CPU presets to find by code if needed, though MainMenu should resolve ID to code.
 import {
   applyCCardEffect,
@@ -2101,6 +2102,10 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
     setIsLargeCardModalOpen(false);
   };
 
+  useEffect(() => {
+    void preloadGameStaticImages();
+  }, []);
+
   const openDiscardPileModal = (owner: PlayerType) => {
     if (!gameState) return;
     if (owner === 'PLAYER') {
@@ -2198,6 +2203,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         gameLogMessages.push({ message: "ランダムデッキでCPUのデッキを構築しました。", source: 'SYSTEM', timestamp: Date.now() });
         cpuDeckBase = shuffleDeck([...fullInstancePool]).slice(0, 55);
     }
+    void preloadGameImagesForDecks([playerDeckBase, cpuDeckBase]);
     cpuDeckBase = shuffleDeck(cpuDeckBase);
     const { newDeck: cpuDeckAfterDraw, drawnCards: cpuInitialHand } = drawCards(cpuDeckBase, 7);
 
