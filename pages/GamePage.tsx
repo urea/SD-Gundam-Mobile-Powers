@@ -1358,29 +1358,6 @@ const customScrollbarAndAnimationStyles = `
     color: #334155;
     border-color: #cbd5e1;
   }
-  .game-counter-drop-zone {
-    min-width: 4.25rem;
-    min-height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    border: 1px dashed rgba(2, 132, 199, 0.55);
-    background: rgba(224, 242, 254, 0.75);
-    color: #0369a1;
-    font-size: 0.72rem;
-    font-weight: 900;
-    line-height: 1;
-    padding: 0.26rem 0.42rem;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-  }
-  .game-counter-drop-zone.game-drop-ready {
-    border-style: solid;
-    background: rgba(186, 230, 253, 0.95);
-    box-shadow:
-      0 0 0 3px rgba(14, 165, 233, 0.18),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
-  }
   .game-hand-scroll {
     grid-column: 1 / -1;
     min-width: 0;
@@ -1762,8 +1739,7 @@ const customScrollbarAndAnimationStyles = `
       gap: 0.25rem;
     }
     .game-zone-button,
-    .game-action-button,
-    .game-counter-drop-zone {
+    .game-action-button {
       padding: 0.16rem 0.3rem;
     }
     .game-table-layout .game-card-size {

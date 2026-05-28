@@ -199,13 +199,13 @@ const CenterBattleSummary: React.FC<{
   );
 };
 
-type TouchDropTarget = 'squad' | 'discard' | 'counter';
+type TouchDropTarget = 'squad' | 'discard';
 
 const getTouchDropTarget = (event: React.PointerEvent<HTMLElement>): TouchDropTarget | null => {
   const target = document.elementFromPoint(event.clientX, event.clientY);
   const dropNode = target?.closest<HTMLElement>('[data-game-drop]');
   const dropTarget = dropNode?.dataset.gameDrop as TouchDropTarget | undefined;
-  return dropTarget === 'squad' || dropTarget === 'discard' || dropTarget === 'counter' ? dropTarget : null;
+  return dropTarget === 'squad' || dropTarget === 'discard' ? dropTarget : null;
 };
 
 const HAND_CARD_DRAG_MIME = 'application/x-mobile-powers-card-id';
@@ -507,14 +507,13 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     !pendingTargetCCard;
   const canAcceptHandDropToSquad =
     canDragHandCard &&
-    phase === 'FORMATION_PLAYER_PLACE' &&
-    player.squad.length < 3;
+    (
+      (phase === 'FORMATION_PLAYER_PLACE' && player.squad.length < 3) ||
+      phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C'
+    );
   const canAcceptHandDropToDiscard =
     canDragHandCard &&
     (phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' || phase === 'FORMATION_PLAYER_PLACE');
-  const canAcceptHandDropToCounter =
-    canDragHandCard &&
-    phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C';
   const findDraggedHandCard = (event?: React.DragEvent<HTMLElement>): Card | null => {
     const draggedCardId = event
       ? event.dataTransfer.getData(HAND_CARD_DRAG_MIME) || event.dataTransfer.getData('text/plain')
@@ -526,8 +525,11 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   };
   const canDropCardToSquad = (card: Card | null): card is Card => (
     !!card &&
-    card.type === 'M' &&
-    canAcceptHandDropToSquad
+    canAcceptHandDropToSquad &&
+    (
+      (phase === 'FORMATION_PLAYER_PLACE' && card.type === 'M' && player.squad.length < 3) ||
+      (phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' && card.type === 'C')
+    )
   );
   const canDropCardToDiscard = (card: Card | null): card is Card => (
     !!card &&
@@ -537,19 +539,13 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       (phase === 'FORMATION_PLAYER_PLACE' && !(player.squad.length < 3 && player.hand.some((handCard) => handCard.type === 'M')))
     )
   );
-  const canDropCardToCounter = (card: Card | null): card is Card => (
-    !!card &&
-    card.type === 'C' &&
-    canAcceptHandDropToCounter
-  );
   const canDropDraggedToSquad = canDropCardToSquad(draggedCard);
   const canDropDraggedToDiscard = canDropCardToDiscard(draggedCard);
-  const canDropDraggedToCounter = canDropCardToCounter(draggedCard);
   const dropDraggedToSquad = (cardToDrop: Card | null = draggedCard) => {
     if (!canDropCardToSquad(cardToDrop)) {
       return;
     }
-    onPlayerAction('PLAY_M_CARD_TO_SQUAD', cardToDrop);
+    onPlayerAction(cardToDrop.type === 'C' ? 'PLAY_C_CARD' : 'PLAY_M_CARD_TO_SQUAD', cardToDrop);
     setDraggedCard(null);
   };
   const dropDraggedToDiscard = (cardToDrop: Card | null = draggedCard) => {
@@ -559,21 +555,11 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     onPlayerAction(phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' ? 'DISCARD_FROM_HAND_CS' : 'DISCARD_TO_DEFEAT_PILE', cardToDrop);
     setDraggedCard(null);
   };
-  const dropDraggedToCounter = (cardToDrop: Card | null = draggedCard) => {
-    if (!canDropCardToCounter(cardToDrop)) {
-      return;
-    }
-    onPlayerAction('PLAY_C_CARD', cardToDrop);
-    setDraggedCard(null);
-  };
   const handleSquadDrop = (event: React.DragEvent<HTMLElement>) => {
     dropDraggedToSquad(findDraggedHandCard(event));
   };
   const handleDiscardDrop = (event: React.DragEvent<HTMLElement>) => {
     dropDraggedToDiscard(findDraggedHandCard(event));
-  };
-  const handleCounterDrop = (event: React.DragEvent<HTMLElement>) => {
-    dropDraggedToCounter(findDraggedHandCard(event));
   };
   const canPlayHandCardByDoubleAction = (card: Card): boolean => (
     canDragHandCard &&
@@ -602,11 +588,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     if (dropTarget === 'discard' && canDropCardToDiscard(draggedCard)) {
       event.preventDefault();
       dropDraggedToDiscard();
-      return;
-    }
-    if (dropTarget === 'counter' && canDropCardToCounter(draggedCard)) {
-      event.preventDefault();
-      dropDraggedToCounter();
       return;
     }
     setDraggedCard(null);
@@ -844,41 +825,14 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           </div>
 
           <div className="game-hand-actions">
-            {phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' && (
-              <>
-                {!pendingTargetCCard && (
-                  <div
-                    aria-label="C/Sカード使用ドロップ領域"
-                    className={`game-counter-drop-zone ${canDropDraggedToCounter ? 'game-drop-ready' : ''}`}
-                    data-game-drop="counter"
-                    onDragOver={(event) => {
-                      if (canAcceptHandDropToCounter) {
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = 'move';
-                      }
-                    }}
-                    onDrop={(event) => {
-                      if (canAcceptHandDropToCounter) {
-                        event.preventDefault();
-                        handleCounterDrop(event);
-                      }
-                    }}
-                    role="button"
-                    tabIndex={-1}
-                  >
-                    <strong>C/S</strong>
-                  </div>
-                )}
-                {pendingTargetCCard && (
-                  <button
-                    aria-label="Cカードの対象選択をキャンセル"
-                    className="game-action-button game-action-cancel"
-                    onClick={onCancelCCardTargeting}
-                  >
-                    取消
-                  </button>
-                )}
-              </>
+            {phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' && pendingTargetCCard && (
+              <button
+                aria-label="Cカードの対象選択をキャンセル"
+                className="game-action-button game-action-cancel"
+                onClick={onCancelCCardTargeting}
+              >
+                取消
+              </button>
             )}
           </div>
         </div>
