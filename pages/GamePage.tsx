@@ -340,8 +340,7 @@ const customScrollbarAndAnimationStyles = `
       2px 0 0 rgba(30, 41, 59, 0.22),
       4px 0 0 rgba(30, 41, 59, 0.12);
   }
-  .game-zone-button,
-  .game-action-button {
+  .game-zone-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -353,13 +352,11 @@ const customScrollbarAndAnimationStyles = `
     line-height: 1.15;
     transition: opacity 0.15s ease, transform 0.15s ease;
   }
-  .game-zone-button:disabled,
-  .game-action-button:disabled {
+  .game-zone-button:disabled {
     cursor: not-allowed;
     opacity: 0.45;
   }
-  .game-zone-button:not(:disabled):hover,
-  .game-action-button:not(:disabled):hover {
+  .game-zone-button:not(:disabled):hover {
     transform: translateY(-1px);
   }
   .game-zone-button-player {
@@ -751,7 +748,6 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-table-layout .game-card-size,
   .game-zone-button,
-  .game-action-button,
   .game-fullscreen-button,
   .game-exit-button {
     -webkit-tap-highlight-color: transparent;
@@ -1343,20 +1339,29 @@ const customScrollbarAndAnimationStyles = `
   .game-hand-actions {
     justify-content: flex-start;
   }
-  .game-action-primary {
-    background: #22c55e;
-    color: white;
-    border-color: #16a34a;
+  .game-discard-drop-zone {
+    min-width: 4.5rem;
+    min-height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    border: 1px dashed rgba(249, 115, 22, 0.58);
+    background: rgba(255, 237, 213, 0.86);
+    color: #c2410c;
+    font-size: 0.68rem;
+    font-weight: 900;
+    line-height: 1;
+    padding: 0.24rem 0.46rem;
+    text-align: center;
+    user-select: none;
   }
-  .game-action-discard {
-    background: #fb923c;
-    color: white;
-    border-color: #f97316;
-  }
-  .game-action-cancel {
-    background: #e2e8f0;
-    color: #334155;
-    border-color: #cbd5e1;
+  .game-discard-drop-zone.game-drop-ready {
+    border-style: solid;
+    background: rgba(254, 215, 170, 0.96);
+    box-shadow:
+      0 0 0 3px rgba(249, 115, 22, 0.18),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.68);
   }
   .game-hand-scroll {
     grid-column: 1 / -1;
@@ -1739,7 +1744,7 @@ const customScrollbarAndAnimationStyles = `
       gap: 0.25rem;
     }
     .game-zone-button,
-    .game-action-button {
+    .game-discard-drop-zone {
       padding: 0.16rem 0.3rem;
     }
     .game-table-layout .game-card-size {

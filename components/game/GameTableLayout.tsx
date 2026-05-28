@@ -541,6 +541,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
   );
   const canDropDraggedToSquad = canDropCardToSquad(draggedCard);
   const canDropDraggedToDiscard = canDropCardToDiscard(draggedCard);
+  const discardDropLabel = phase === 'FORMATION_PLAYER_PLACE' ? '敗戦へ' : '捨て札へ';
   const dropDraggedToSquad = (cardToDrop: Card | null = draggedCard) => {
     if (!canDropCardToSquad(cardToDrop)) {
       return;
@@ -733,6 +734,14 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
             </div>
           )}
 
+          {phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' && pendingTargetCCard && (
+            <div className="game-battlefield-confirm-node">
+              <button className="game-center-confirm-button game-battlefield-confirm-button" type="button" onClick={onCancelCCardTargeting}>
+                対象選択を取消
+              </button>
+            </div>
+          )}
+
           <div
             className="game-battlefield-terrain-node game-attention-flash"
             key={`terrain-${currentTerrainCard ? getCardInstanceId(currentTerrainCard) : 'none'}-${battlefieldTerrainAttribute || 'none'}`}
@@ -802,21 +811,8 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
               </button>
               <button
                 aria-label="プレイヤーの捨て札を見る"
-                className={`game-zone-button game-zone-button-player ${canDropDraggedToDiscard ? 'game-drop-ready' : ''}`}
-                data-game-drop="discard"
-                disabled={(!canAcceptHandDropToDiscard && player.discardPile.length === 0) || !!winner}
-                onDragOver={(event) => {
-                  if (canAcceptHandDropToDiscard) {
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = 'move';
-                  }
-                }}
-                onDrop={(event) => {
-                  if (canAcceptHandDropToDiscard) {
-                    event.preventDefault();
-                    handleDiscardDrop(event);
-                  }
-                }}
+                className="game-zone-button game-zone-button-player"
+                disabled={player.discardPile.length === 0 || !!winner}
                 onClick={() => onOpenDiscardPile('PLAYER')}
               >
                 捨{player.discardPile.length}
@@ -825,14 +821,23 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           </div>
 
           <div className="game-hand-actions">
-            {phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' && pendingTargetCCard && (
-              <button
-                aria-label="Cカードの対象選択をキャンセル"
-                className="game-action-button game-action-cancel"
-                onClick={onCancelCCardTargeting}
+            {canAcceptHandDropToDiscard && (
+              <div
+                aria-label={`カードを${discardDropLabel}ドロップする領域`}
+                className={`game-discard-drop-zone ${canDropDraggedToDiscard ? 'game-drop-ready' : ''}`}
+                data-game-drop="discard"
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = 'move';
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  handleDiscardDrop(event);
+                }}
+                tabIndex={-1}
               >
-                取消
-              </button>
+                <strong>{discardDropLabel}</strong>
+              </div>
             )}
           </div>
         </div>
