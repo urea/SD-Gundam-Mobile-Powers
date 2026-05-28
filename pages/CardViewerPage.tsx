@@ -16,6 +16,8 @@ interface DisplayCard extends Card {
   sourceSet: string;
 }
 
+type CardTypeFilter = 'ALL' | 'M' | 'C';
+
 const VIEWER_DISPLAY_LIMIT = 100;
 
 const isKiraCard = (card: Card): boolean => {
@@ -36,14 +38,19 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
   // Filter states
   const [filterName, setFilterName] = useState('');
   const [draftFilterName, setDraftFilterName] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'M' | 'C'>('ALL');
+  const [filterType, setFilterType] = useState<CardTypeFilter>('ALL');
+  const [draftFilterType, setDraftFilterType] = useState<CardTypeFilter>('ALL');
   const [uniqueFactions, setUniqueFactions] = useState<string[]>(['ALL']);
   const [filterFaction, setFilterFaction] = useState('ALL');
+  const [draftFilterFaction, setDraftFilterFaction] = useState('ALL');
   const [filterTerrain, setFilterTerrain] = useState('');
+  const [draftFilterTerrain, setDraftFilterTerrain] = useState('');
   const [filterPoints, setFilterPoints] = useState('');
   const [draftFilterPoints, setDraftFilterPoints] = useState('');
   const [filterTags, setFilterTags] = useState('');
+  const [draftFilterTags, setDraftFilterTags] = useState('');
   const [filterSourceSet, setFilterSourceSet] = useState('ALL');
+  const [draftFilterSourceSet, setDraftFilterSourceSet] = useState('ALL');
 
   // Sort state
   const [sortConfig, setSortConfig] = useState<{ key: SortableCardKey; direction: 'ascending' | 'descending' } | null>({ key: 'cardNumber', direction: 'ascending' });
@@ -202,30 +209,27 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
     setFilterName('');
     setDraftFilterName('');
     setFilterType('ALL');
+    setDraftFilterType('ALL');
     setFilterFaction('ALL');
+    setDraftFilterFaction('ALL');
     setFilterTerrain('');
+    setDraftFilterTerrain('');
     setFilterSourceSet('ALL');
+    setDraftFilterSourceSet('ALL');
     setFilterPoints('');
     setDraftFilterPoints('');
     setFilterTags('');
+    setDraftFilterTags('');
   };
 
-  const commitNameFilter = () => {
+  const applyFilters = () => {
     setFilterName(draftFilterName.trim());
-  };
-
-  const commitPointsFilter = () => {
+    setFilterType(draftFilterType);
+    setFilterFaction(draftFilterFaction);
+    setFilterTerrain(draftFilterTerrain);
+    setFilterSourceSet(draftFilterSourceSet);
     setFilterPoints(draftFilterPoints.trim());
-  };
-
-  const commitOnEnter = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-    commit: () => void,
-  ) => {
-    if (event.key === 'Enter') {
-      commit();
-      event.currentTarget.blur();
-    }
+    setFilterTags(draftFilterTags);
   };
   
   const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
@@ -250,23 +254,21 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       <main className="w-full max-w-7xl bg-white shadow-2xl rounded-lg p-6 sm:p-10"> {/* Increased max-w */}
         <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200 shadow">
           <h3 className="text-lg font-semibold text-sky-700 mb-3">絞り込み</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 items-end">
             <FilterInput label="カード名">
               <input
                 type="text"
                 placeholder="例: ガンダム"
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm"
                 value={draftFilterName}
-                onBlur={commitNameFilter}
                 onChange={e => setDraftFilterName(e.target.value)}
-                onKeyDown={e => commitOnEnter(e, commitNameFilter)}
               />
             </FilterInput>
             <FilterInput label="種別">
               <select
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
-                value={filterType}
-                onChange={e => setFilterType(e.target.value as 'ALL' | 'M' | 'C')}
+                value={draftFilterType}
+                onChange={e => setDraftFilterType(e.target.value as CardTypeFilter)}
               >
                 <option value="ALL">すべて</option>
                 <option value="M">M (メカニック)</option>
@@ -276,8 +278,8 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
             <FilterInput label="所属">
               <select
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
-                value={filterFaction}
-                onChange={e => setFilterFaction(e.target.value)}
+                value={draftFilterFaction}
+                onChange={e => setDraftFilterFaction(e.target.value)}
               >
                 {uniqueFactions.map(faction => (
                   <option key={faction} value={faction}>{faction === 'ALL' ? 'すべての所属' : faction}</option>
@@ -287,8 +289,8 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
             <FilterInput label="地形">
               <select
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
-                value={filterTerrain}
-                onChange={e => setFilterTerrain(e.target.value)}
+                value={draftFilterTerrain}
+                onChange={e => setDraftFilterTerrain(e.target.value)}
               >
                 <option value="">すべての地形</option>
                 {terrainOptions.map(terrain => (
@@ -299,8 +301,8 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
             <FilterInput label="収録">
               <select
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
-                value={filterSourceSet}
-                onChange={e => setFilterSourceSet(e.target.value)}
+                value={draftFilterSourceSet}
+                onChange={e => setDraftFilterSourceSet(e.target.value)}
               >
                 {sourceSetOptions.map(sourceSet => (
                   <option key={sourceSet} value={sourceSet}>{sourceSet === 'ALL' ? 'すべての収録' : sourceSet}</option>
@@ -313,16 +315,14 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
                 placeholder="例: 8 または 7-9"
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm"
                 value={draftFilterPoints}
-                onBlur={commitPointsFilter}
                 onChange={e => setDraftFilterPoints(e.target.value)}
-                onKeyDown={e => commitOnEnter(e, commitPointsFilter)}
               />
             </FilterInput>
             <FilterInput label="タグ">
               <select
                 className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
-                value={filterTags}
-                onChange={e => setFilterTags(e.target.value)}
+                value={draftFilterTags}
+                onChange={e => setDraftFilterTags(e.target.value)}
               >
                 <option value="">すべてのタグ</option>
                 {tagOptions.map(tag => (
@@ -331,6 +331,15 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
               </select>
             </FilterInput>
             <button
+              type="button"
+              onClick={applyFilters}
+              className="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition-colors text-sm h-10"
+              aria-label="絞り込み条件で検索"
+            >
+              検索
+            </button>
+            <button
+              type="button"
               onClick={clearFilters}
               className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition-colors text-sm h-10"
               aria-label="絞り込みをクリア"
