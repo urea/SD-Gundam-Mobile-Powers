@@ -133,7 +133,7 @@ export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSor
                    <button
                     onClick={() => onCardImageClick && card.imageUrl && !hasError && onCardImageClick(card)}
                     disabled={!card.imageUrl || hasError || !onCardImageClick}
-                    className={`w-24 h-auto p-0.5 rounded-md shadow-md relative transition-all duration-150 ease-in-out transform hover:scale-105 group focus:outline-none focus:ring-2 focus:ring-sky-400 
+                    className={`w-24 h-auto p-0.5 rounded-md shadow-md relative transition-all duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-400
                                 ${card.imageUrl && !hasError ? 'bg-slate-50 cursor-pointer' : 'bg-slate-200 cursor-default'}
                                 ${isKira ? 'kira-preview-border' : ''}`}
                     aria-label={`カード ${card.cardName} の画像を拡大表示 ${isKira ? '(キラカード)' : ''}`}
@@ -142,23 +142,15 @@ export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSor
                       <img
                         src={imgSrc}
                         alt={card.cardName}
-                        className="w-full h-auto object-contain rounded-t"
+                        className="w-full h-auto object-contain rounded"
                         onError={handleImageError}
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-24 flex items-center justify-center bg-slate-100 rounded-t text-xs text-slate-400 border-b border-slate-200">
+                      <div className="w-full h-24 flex items-center justify-center bg-slate-100 rounded text-xs text-slate-400">
                         画像なし
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 p-0.5 bg-black/65 group-hover:bg-black/75 backdrop-blur-sm rounded-b">
-                      <p className="text-white font-semibold truncate leading-tight" style={{ fontSize: '0.6rem' }} title={card.cardNameOmm || card.cardName}>
-                        {card.cardNameOmm || card.cardName}
-                      </p>
-                      <p className="text-yellow-300 leading-tight" style={{ fontSize: '0.55rem' }}>
-                        {card.type}{card.type === 'M' ? ` P:${card.points}` : ''} {isKira && <span className="text-xs" style={{background: 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 'bold'}}>★</span>}
-                      </p>
-                    </div>
                   </button>
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-600 tabular-nums align-top">
