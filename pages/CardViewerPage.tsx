@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CardDisplayTable, SortableCardKey } from '../components/CardDisplayTable';
 import { parseMobilePowersTsvData, tsvData } from '../components/RulePage';
+import { carddas20ViewerCards } from '../data/carddas20ViewerCards';
 import { Card } from '../types';
 
 interface CardViewerPageProps {
@@ -20,7 +21,7 @@ const isKiraCard = (card: Card): boolean => {
 
 export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
   const allCards: DisplayCard[] = React.useMemo(() => {
-    const parsedCards = parseMobilePowersTsvData(tsvData);
+    const parsedCards = [...parseMobilePowersTsvData(tsvData), ...carddas20ViewerCards];
     return parsedCards.map(card => ({
       ...card,
       displayTerrain: card.type === 'M' ? card.terrainTypeMCards : card.battlefieldTerrain,
