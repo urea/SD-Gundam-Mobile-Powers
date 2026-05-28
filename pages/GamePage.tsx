@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BattleSummary, Card, GameState, PlayerType, CPUAction, LogEntry, PlayedCCardSummary } from '../types';
-import { gamePlayableStarterVer1Cards } from '../data/carddas20Cards';
+import { getCardSourceSet, isPlayableCard, loadCardsByPredicate, STARTER_VER_1_SOURCE_SET } from '../data/cardCatalog';
 import { CardCollectionModal, GameOverModal, LargeCardModal } from '../components/game/GameModals';
 import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';
@@ -30,6 +30,8 @@ interface GamePageProps {
   initialDeckCode?: string; // For player
   initialCpuDeckCode?: string; // For CPU
 }
+
+const DEFAULT_GAME_SOURCE_SET = STARTER_VER_1_SOURCE_SET;
 
 const customScrollbarAndAnimationStyles = `
   html.game-scroll-locked,
@@ -2066,6 +2068,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
   const [fullInstancePool, setFullInstancePool] = useState<Card[]>([]);
   const [shortIdToBaseCardMap, setShortIdToBaseCardMap] = useState<Map<number, string>>(new Map());
+  const [cardCatalogLoadError, setCardCatalogLoadError] = useState<string | null>(null);
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedCardLocal, setSelectedCardLocal] = useState<Card | null>(null);
@@ -2149,10 +2152,23 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
 
   useEffect(() => {
-    const parsedBase = gamePlayableStarterVer1Cards.map(card => ({ ...card }));
-    setAllBaseCards(parsedBase);
+    let isMounted = true;
 
-    if (parsedBase.length > 0) {
+    loadCardsByPredicate(
+      card => getCardSourceSet(card) === DEFAULT_GAME_SOURCE_SET && isPlayableCard(card),
+    )
+      .then(cards => {
+        if (!isMounted) return;
+        const parsedBase = cards.map(card => ({ ...card }));
+        setAllBaseCards(parsedBase);
+        setCardCatalogLoadError(null);
+
+        if (parsedBase.length === 0) {
+          setFullInstancePool([]);
+          setShortIdToBaseCardMap(new Map());
+          return;
+        }
+
         const instancePool = createFullCardInstancePool(parsedBase);
         setFullInstancePool(instancePool);
 
@@ -2164,7 +2180,17 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
             sToB.set(idx, num);
         });
         setShortIdToBaseCardMap(sToB);
-    }
+      })
+      .catch(error => {
+        console.error('Failed to load game card catalog', error);
+        if (isMounted) {
+          setCardCatalogLoadError('ゲーム用カードカタログの読み込みに失敗しました。');
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const initializeGame = useCallback((playerDeckCodeToUse?: string, cpuDeckCodeToUse?: string) => {
@@ -3298,6 +3324,10 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
   }, [gameState, processCPUAction, isVisualizingCombat, addLogEntry]);
 
+
+  if (cardCatalogLoadError) {
+    return <div className="p-8 text-center text-red-600">{cardCatalogLoadError}</div>;
+  }
 
   if (!gameState) {
     return <div className="p-8 text-center text-slate-600">ゲームを初期化中...</div>;

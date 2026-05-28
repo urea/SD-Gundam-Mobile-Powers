@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { Card, SavedDeck } from '../types';
-import { STARTER_VER_1_SOURCE_SET, gamePlayableStarterVer1Cards } from '../data/carddas20Cards';
+import { getCardSourceSet, isPlayableCard, loadCardsByPredicate, STARTER_VER_1_SOURCE_SET } from '../data/cardCatalog';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
@@ -34,6 +34,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
   const [fullCardInstancePool, setFullCardInstancePool] = useState<Card[]>([]);
   const [shortIdToBaseCardMap, setShortIdToBaseCardMap] = useState<Map<number, string>>(new Map());
+  const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   
   const [currentDeck, setCurrentDeck] = useState<Card[]>([]);
   const [currentDeckName, setCurrentDeckName] = useState('');
@@ -72,29 +73,57 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
 
   useEffect(() => {
-    const gamePlayableBaseCards = gamePlayableStarterVer1Cards.map(card => ({ ...card }));
-    setAllBaseCards(gamePlayableBaseCards);
+    let isMounted = true;
+    setSavedDecks(getSavedDecks());
 
-    if (gamePlayableBaseCards.length > 0) {
-      const instancePool = createFullCardInstancePool(gamePlayableBaseCards);
-      setFullCardInstancePool(instancePool);
+    loadCardsByPredicate(
+      card => getCardSourceSet(card) === DEFAULT_SOURCE_SET && isPlayableCard(card),
+    )
+      .then(cards => {
+        if (!isMounted) return;
+        const gamePlayableBaseCards = cards.map(card => ({ ...card }));
+        setAllBaseCards(gamePlayableBaseCards);
 
-      const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
-      const sToB = new Map<number, string>();
-      sortedBaseCardNumbers.forEach((num, idx) => {
-        sToB.set(idx, num);
-      });
-      setShortIdToBaseCardMap(sToB);
+        if (gamePlayableBaseCards.length === 0) {
+          setFullCardInstancePool([]);
+          setShortIdToBaseCardMap(new Map());
+          setUniqueFactions(['ALL']);
+          return;
+        }
 
-      const factions = new Set<string>();
-      gamePlayableBaseCards.forEach(card => {
-        if (card.factionAffiliation) {
-          card.factionAffiliation.split(',').map(f => f.trim()).filter(Boolean).forEach(f => factions.add(f));
+        const instancePool = createFullCardInstancePool(gamePlayableBaseCards);
+        setFullCardInstancePool(instancePool);
+
+        const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
+        const sToB = new Map<number, string>();
+        sortedBaseCardNumbers.forEach((num, idx) => {
+          sToB.set(idx, num);
+        });
+        setShortIdToBaseCardMap(sToB);
+
+        const factions = new Set<string>();
+        gamePlayableBaseCards.forEach(card => {
+          if (card.factionAffiliation) {
+            card.factionAffiliation.split(',').map(f => f.trim()).filter(Boolean).forEach(f => factions.add(f));
+          }
+        });
+        setUniqueFactions(['ALL', ...Array.from(factions).sort()]);
+      })
+      .catch(error => {
+        console.error('Failed to load deck editor card catalog', error);
+        if (isMounted) {
+          setDeckCodeMessage({ type: 'error', text: 'カードカタログの読み込みに失敗しました。' });
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsCatalogLoading(false);
         }
       });
-      setUniqueFactions(['ALL', ...Array.from(factions).sort()]);
-    }
-    setSavedDecks(getSavedDecks());
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const openLargeCardModal = (card: DisplayCard) => {
@@ -278,6 +307,10 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   };
 
   const handleLoadDeckCodeInput = () => {
+    if (isCatalogLoading) {
+      setDeckCodeMessage({ type: 'error', text: 'カードカタログを読み込み中です。' });
+      return;
+    }
     if (!deckCodeInput.trim()) {
       setDeckCodeMessage({ type: 'error', text: '読み込むデッキコードを入力してください。' });
       return;
@@ -346,6 +379,10 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   };
 
   const handleLoadUserDeck = (savedDeck: SavedDeck) => {
+    if (isCatalogLoading) {
+      setDeckCodeMessage({ type: 'error', text: 'カードカタログを読み込み中です。' });
+      return;
+    }
     const parsedDeck = parseCompressedDeckCode(savedDeck.code, shortIdToBaseCardMap, fullCardInstancePool);
     if (parsedDeck) {
       setCurrentDeck(parsedDeck.sort(compareCardsByIdentity));
@@ -393,6 +430,10 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   };
   
   const handleLoadPredefinedDeck = () => {
+    if (isCatalogLoading) {
+      setDeckCodeMessage({ type: 'error', text: 'カードカタログを読み込み中です。' });
+      return;
+    }
     if (!selectedPredefinedDeckId) {
         setDeckCodeMessage({ type: 'error', text: '構築済みデッキを選択してください。'});
         return;
@@ -565,10 +606,11 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
                     placeholder="デッキコードを読込"
                     value={deckCodeInput}
                     onChange={e => setDeckCodeInput(e.target.value)}
+                    disabled={isCatalogLoading}
                     className="flex-grow p-1.5 border border-slate-300 rounded shadow-sm text-xs"
                     aria-label="読み込むデッキコード"
                   />
-                  <ActionButton onClick={handleLoadDeckCodeInput} className="bg-blue-500 hover:bg-blue-600">読込</ActionButton>
+                  <ActionButton onClick={handleLoadDeckCodeInput} disabled={isCatalogLoading} className="bg-blue-500 hover:bg-blue-600">読込</ActionButton>
                 </div>
                 <div className="flex space-x-1">
                   <textarea
@@ -607,7 +649,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-xs font-medium text-sky-700 truncate pr-1" title={deck.name}>{deck.name} ({deck.cardCount}枚)</span>
                                 <div className="flex space-x-1 flex-shrink-0">
-                                    <ActionButton onClick={() => handleLoadUserDeck(deck)} className="bg-sky-500 hover:bg-sky-600">読込</ActionButton>
+                                    <ActionButton onClick={() => handleLoadUserDeck(deck)} disabled={isCatalogLoading} className="bg-sky-500 hover:bg-sky-600">読込</ActionButton>
                                     <ActionButton onClick={() => handleRenameUserDeck(deck.id)} className="bg-yellow-500 hover:bg-yellow-600">名前変更</ActionButton>
                                     <ActionButton onClick={() => handleDeleteUserDeck(deck.id, deck.name)} className="bg-red-500 hover:bg-red-600">削除</ActionButton>
                                 </div>
@@ -632,7 +674,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
                     <option value="">選択してください...</option>
                     {cpuDeckPresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
-                <ActionButton onClick={handleLoadPredefinedDeck} disabled={!selectedPredefinedDeckId} className="bg-teal-500 hover:bg-teal-600">読込</ActionButton>
+                <ActionButton onClick={handleLoadPredefinedDeck} disabled={isCatalogLoading || !selectedPredefinedDeckId} className="bg-teal-500 hover:bg-teal-600">読込</ActionButton>
             </div>
           </div>
 
@@ -674,15 +716,19 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
               <button type="button" onClick={clearFilters} className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 rounded-md shadow-md transition-colors text-sm h-9 self-end">絞込クリア</button>
             </div>
           </div>
-          <div className="flex-grow overflow-y-auto custom-scrollbar"> 
-            <CardDisplayTable 
-                cards={availableCardsForDisplay} 
-                onSortRequest={requestSort} 
-                sortConfig={sortConfig} 
+          <div className="flex-grow overflow-y-auto custom-scrollbar">
+            {isCatalogLoading ? (
+              <p className="text-slate-500 italic text-center py-8 text-sm">カードカタログを読み込み中です。</p>
+            ) : (
+              <CardDisplayTable
+                cards={availableCardsForDisplay}
+                onSortRequest={requestSort}
+                sortConfig={sortConfig}
                 renderActions={renderDeckCardOperations}
                 onCardImageClick={openLargeCardModal}
                 showSourceSet
-            />
+              />
+            )}
           </div>
         </div>
       </main>

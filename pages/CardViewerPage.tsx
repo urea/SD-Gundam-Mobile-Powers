@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
-import { getStarterVer1CatalogCards, loadFullCardCatalog, type CatalogCard } from '../data/cardCatalog';
+import { loadFullCardCatalog, type CatalogCard } from '../data/cardCatalog';
 
 interface CardViewerPageProps {
   onExit: () => void;
@@ -23,7 +23,7 @@ const isKiraCard = (card: DisplayCard): boolean => {
 };
 
 export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
-  const [allCards, setAllCards] = useState<CatalogCard[]>(() => getStarterVer1CatalogCards());
+  const [allCards, setAllCards] = useState<CatalogCard[]>([]);
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   const [catalogLoadError, setCatalogLoadError] = useState<string | null>(null);
 

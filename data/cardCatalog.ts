@@ -1,9 +1,12 @@
 import type { Card } from '../types';
-import { STARTER_VER_1_SOURCE_SET, carddas20Cards } from './carddas20Cards';
+
+export const STARTER_VER_1_SOURCE_SET = 'スターター Ver.1';
 
 const SOURCE_SET_BY_GAME_VAR: Record<string, string> = {
   St1: STARTER_VER_1_SOURCE_SET,
 };
+
+let carddas20CardsPromise: Promise<Card[]> | null = null;
 
 export interface CatalogCard extends Card {
   displayTerrain: string;
@@ -25,13 +28,29 @@ export const toCatalogCard = (card: Card): CatalogCard => ({
   sourceSet: getCardSourceSet(card),
 });
 
-export const getStarterVer1CatalogCards = (): CatalogCard[] => {
-  return carddas20Cards
-    .filter(card => getCardSourceSet(card) === STARTER_VER_1_SOURCE_SET)
-    .map(toCatalogCard);
+export const isPlayableCard = (card: Card): boolean => card.type === 'M' || card.type === 'C';
+
+export const loadCarddas20Cards = async (): Promise<Card[]> => {
+  carddas20CardsPromise ??= import('./carddas20Cards').then(module => module.carddas20Cards);
+  return carddas20CardsPromise;
+};
+
+export const loadCardsByPredicate = async (
+  predicate: (card: Card) => boolean,
+): Promise<Card[]> => {
+  const cards = await loadCarddas20Cards();
+  return cards.filter(predicate);
+};
+
+export const loadCatalogCardsByPredicate = async (
+  predicate: (card: Card) => boolean,
+): Promise<CatalogCard[]> => {
+  const cards = await loadCardsByPredicate(predicate);
+  return cards.map(toCatalogCard);
 };
 
 export const loadCarddas20CatalogCards = async (): Promise<CatalogCard[]> => {
+  const carddas20Cards = await loadCarddas20Cards();
   return carddas20Cards.map(toCatalogCard);
 };
 

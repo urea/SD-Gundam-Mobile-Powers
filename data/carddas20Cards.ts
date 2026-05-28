@@ -1,6 +1,6 @@
 import type { Card } from '../types';
 
-export const STARTER_VER_1_SOURCE_SET = 'スターター Ver.1';
+const STARTER_VER_1_SOURCE_SET = 'スターター Ver.1';
 
 export const carddas20Cards: Card[] = [
 {
@@ -6583,11 +6583,3 @@ export const carddas20Cards: Card[] = [
     effect: "Carddas20画像切り出し。効果テキスト未整理。",
   },
 ];
-
-export const gamePlayableStarterVer1Cards: Card[] = carddas20Cards.filter(
-  card => card.sourceSet === STARTER_VER_1_SOURCE_SET && (card.type === 'M' || card.type === 'C')
-);
-
-export const gamePlayableCarddas20Cards: Card[] = carddas20Cards.filter(
-  card => card.type === 'M' || card.type === 'C'
-);
