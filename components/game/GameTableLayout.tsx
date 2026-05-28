@@ -511,9 +511,16 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       (phase === 'FORMATION_PLAYER_PLACE' && player.squad.length < 3) ||
       phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C'
     );
+  const mustPlaceMCardInFormation =
+    phase === 'FORMATION_PLAYER_PLACE' &&
+    player.squad.length < 3 &&
+    player.hand.some((handCard) => handCard.type === 'M');
   const canAcceptHandDropToDiscard =
     canDragHandCard &&
-    (phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' || phase === 'FORMATION_PLAYER_PLACE');
+    (
+      phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' ||
+      (phase === 'FORMATION_PLAYER_PLACE' && !mustPlaceMCardInFormation)
+    );
   const findDraggedHandCard = (event?: React.DragEvent<HTMLElement>): Card | null => {
     const draggedCardId = event
       ? event.dataTransfer.getData(HAND_CARD_DRAG_MIME) || event.dataTransfer.getData('text/plain')
@@ -536,7 +543,7 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
     canDragHandCard &&
     (
       phase === 'COUNTER_SUPPORT_PLAYER_PLAY_C' ||
-      (phase === 'FORMATION_PLAYER_PLACE' && !(player.squad.length < 3 && player.hand.some((handCard) => handCard.type === 'M')))
+      (phase === 'FORMATION_PLAYER_PLACE' && !mustPlaceMCardInFormation)
     )
   );
   const canDropDraggedToSquad = canDropCardToSquad(draggedCard);
@@ -794,7 +801,23 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
       </section>
 
       <section className="game-player-dock" aria-label="プレイヤー手札と操作">
-        <div className="game-player-command-panel">
+        <div
+          className={`game-player-command-panel ${canAcceptHandDropToDiscard ? 'game-player-command-panel-drop' : ''} ${canDropDraggedToDiscard ? 'game-drop-ready' : ''}`}
+          data-drop-label={canAcceptHandDropToDiscard ? discardDropLabel : undefined}
+          data-game-drop={canAcceptHandDropToDiscard ? 'discard' : undefined}
+          onDragOver={(event) => {
+            if (canAcceptHandDropToDiscard) {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+            }
+          }}
+          onDrop={(event) => {
+            if (canAcceptHandDropToDiscard) {
+              event.preventDefault();
+              handleDiscardDrop(event);
+            }
+          }}
+        >
           <div className="game-player-zones">
             <div className="game-player-zone-row game-player-zone-summary">
               <span className="game-strip-title">PLAYER</span>
@@ -820,26 +843,6 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
             </div>
           </div>
 
-          <div className="game-hand-actions">
-            {canAcceptHandDropToDiscard && (
-              <div
-                aria-label={`カードを${discardDropLabel}ドロップする領域`}
-                className={`game-discard-drop-zone ${canDropDraggedToDiscard ? 'game-drop-ready' : ''}`}
-                data-game-drop="discard"
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  event.dataTransfer.dropEffect = 'move';
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  handleDiscardDrop(event);
-                }}
-                tabIndex={-1}
-              >
-                <strong>{discardDropLabel}</strong>
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="game-hand-scroll custom-scrollbar-xs">

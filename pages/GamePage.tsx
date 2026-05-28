@@ -1309,8 +1309,37 @@ const customScrollbarAndAnimationStyles = `
     padding: 0.3rem 0.45rem;
     font-size: 0.72rem;
   }
-  .game-player-zones,
-  .game-hand-actions {
+  .game-player-command-panel::after {
+    content: attr(data-drop-label);
+    position: absolute;
+    left: 0.45rem;
+    right: 0.45rem;
+    bottom: 0.32rem;
+    min-height: 1.7rem;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    border: 1px dashed rgba(249, 115, 22, 0.58);
+    background: rgba(255, 237, 213, 0.82);
+    color: #c2410c;
+    font-size: 0.68rem;
+    font-weight: 900;
+    line-height: 1;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .game-player-command-panel-drop {
+    border-color: rgba(249, 115, 22, 0.48);
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.98), rgba(255, 237, 213, 0.92));
+  }
+  .game-player-command-panel-drop::after {
+    opacity: 1;
+  }
+  .game-player-command-panel-drop.game-drop-ready::after {
+    border-style: solid;
+    background: rgba(254, 215, 170, 0.96);
+  }
+  .game-player-zones {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -1335,33 +1364,6 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-player-zone-links {
     justify-content: flex-start;
-  }
-  .game-hand-actions {
-    justify-content: flex-start;
-  }
-  .game-discard-drop-zone {
-    min-width: 4.5rem;
-    min-height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    border: 1px dashed rgba(249, 115, 22, 0.58);
-    background: rgba(255, 237, 213, 0.86);
-    color: #c2410c;
-    font-size: 0.68rem;
-    font-weight: 900;
-    line-height: 1;
-    padding: 0.24rem 0.46rem;
-    text-align: center;
-    user-select: none;
-  }
-  .game-discard-drop-zone.game-drop-ready {
-    border-style: solid;
-    background: rgba(254, 215, 170, 0.96);
-    box-shadow:
-      0 0 0 3px rgba(249, 115, 22, 0.18),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.68);
   }
   .game-hand-scroll {
     grid-column: 1 / -1;
@@ -1736,16 +1738,21 @@ const customScrollbarAndAnimationStyles = `
       padding: 0.2rem 0.3rem;
       font-size: 0.62rem;
     }
-    .game-player-zones,
-    .game-hand-actions {
+    .game-player-zones {
       gap: 0.2rem;
     }
     .game-player-zone-row {
       gap: 0.25rem;
     }
-    .game-zone-button,
-    .game-discard-drop-zone {
+    .game-zone-button {
       padding: 0.16rem 0.3rem;
+    }
+    .game-player-command-panel::after {
+      left: 0.3rem;
+      right: 0.3rem;
+      bottom: 0.22rem;
+      min-height: 1.35rem;
+      font-size: 0.6rem;
     }
     .game-table-layout .game-card-size {
       width: clamp(2.55rem, 6vw, 3.65rem);
@@ -2299,12 +2306,19 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         let nextPhasePartial: Partial<GameState> = {};
 
         if (prev.phase === 'FORMATION_PLAYER_PLACE') {
+            const mustPlaceMCardInFormation =
+                newPlayerState.squad.length < 3 &&
+                newPlayerState.hand.some((handCard) => handCard.type === 'M');
             if (actionType === 'PLAY_M_CARD_TO_SQUAD' && card.type === 'M' && newPlayerState.squad.length < 3) {
                 const cardForSquad = { ...card, fieldOrder: newPlayerState.squad.length };
                 newPlayerState.hand = newPlayerState.hand.filter(c => !isSameCardInstance(c, card));
                 newPlayerState.squad = [...newPlayerState.squad, cardForSquad];
                 newLog.push({message: `プレイヤーが ${card.cardName} を小隊に配置。`, source: 'PLAYER', timestamp: Date.now()});
             } else if (actionType === 'DISCARD_TO_DEFEAT_PILE') {
+                if (mustPlaceMCardInFormation) {
+                    newLog.push({message: '編成中に配置可能なMカードがあるため、手札を敗戦フィールドへ送れません。', source: 'SYSTEM', timestamp: Date.now()});
+                    return prev;
+                }
                 newPlayerState.hand = newPlayerState.hand.filter(c => !isSameCardInstance(c, card));
                 newPlayerState.defeatPile = [...newPlayerState.defeatPile, card];
                 newPlayerState.defeatPoints += 1;
