@@ -423,7 +423,10 @@ const customScrollbarAndAnimationStyles = `
     mix-blend-mode: screen;
   }
   .game-lane-battle-active .game-lane-beams {
-    opacity: 0.86;
+    opacity: 0;
+  }
+  .game-lane-battle-active .game-lane-beam {
+    animation: none;
   }
   .game-lane-beam {
     position: absolute;
@@ -495,6 +498,63 @@ const customScrollbarAndAnimationStyles = `
     --beam-angle: 34deg;
     --beam-duration: 2.55s;
     --beam-delay: -1.35s;
+  }
+  .game-lane-explosion {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    overflow: hidden;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  .game-lane-explosion-core,
+  .game-lane-explosion-ring,
+  .game-lane-explosion-spark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border-radius: 999px;
+    pointer-events: none;
+  }
+  .game-lane-explosion-core {
+    width: clamp(5rem, 13vw, 10rem);
+    aspect-ratio: 1;
+    background:
+      radial-gradient(circle, rgba(255, 255, 255, 0.96) 0 9%, rgba(254, 240, 138, 0.9) 10% 24%, rgba(249, 115, 22, 0.72) 25% 42%, rgba(239, 68, 68, 0.34) 43% 58%, transparent 60%),
+      radial-gradient(circle, rgba(248, 113, 113, 0.5), transparent 70%);
+    filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.86));
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35);
+    animation: lane-explosion-core 1.15s ease-out infinite;
+  }
+  .game-lane-explosion-ring {
+    width: clamp(5.8rem, 16vw, 12rem);
+    aspect-ratio: 1;
+    border: 0.22rem solid rgba(254, 240, 138, 0.68);
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.28);
+    animation: lane-explosion-ring 1.15s ease-out infinite;
+  }
+  .game-lane-explosion-spark {
+    width: clamp(5rem, 14vw, 10rem);
+    height: 0.18rem;
+    background: linear-gradient(90deg, transparent, rgba(254, 240, 138, 0.96), rgba(248, 113, 113, 0.78), transparent);
+    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.76));
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--spark-angle, 0deg)) scaleX(0.2);
+    animation: lane-explosion-spark 1.15s ease-out infinite;
+  }
+  .game-lane-explosion-spark-1 {
+    --spark-angle: 12deg;
+  }
+  .game-lane-explosion-spark-2 {
+    --spark-angle: -31deg;
+    animation-delay: 0.08s;
+  }
+  .game-lane-explosion-spark-3 {
+    --spark-angle: 58deg;
+    animation-delay: 0.14s;
   }
   .game-lane-battle-player .game-lane-surface {
     border-color: rgba(14, 165, 233, 0.64);
@@ -1783,6 +1843,22 @@ const customScrollbarAndAnimationStyles = `
       opacity: 0;
       transform: translate(-42%, -50%) rotate(var(--beam-angle, 0deg)) scaleX(0.42);
     }
+  }
+  @keyframes lane-explosion-core {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.28); filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.2)); }
+    18% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); filter: drop-shadow(0 0 22px rgba(251, 191, 36, 0.88)); }
+    48% { opacity: 0.72; transform: translate(-50%, -50%) scale(0.82); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.26); filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0)); }
+  }
+  @keyframes lane-explosion-ring {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.22); }
+    22% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.78); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.55); }
+  }
+  @keyframes lane-explosion-spark {
+    0%, 10% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--spark-angle, 0deg)) scaleX(0.15); }
+    26% { opacity: 0.92; transform: translate(-50%, -50%) rotate(var(--spark-angle, 0deg)) scaleX(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--spark-angle, 0deg)) scaleX(1.42); }
   }
   @keyframes combo-pulse {
     0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }

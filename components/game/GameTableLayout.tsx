@@ -235,6 +235,8 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   const battleVisualClass = isBattleVisualActive
     ? `game-lane-battle-active game-lane-battle-${battleVisualResult === 'DRAW' ? 'draw' : battleVisualResult?.toLowerCase() || 'neutral'}`
     : '';
+  const isBattleLoser = isBattleVisualActive && !!battleVisualResult && battleVisualResult !== 'DRAW' && battleVisualResult !== owner;
+  const battleLoserClass = isBattleLoser ? 'game-lane-battle-loser' : '';
   const terrainKey = getLaneTerrainKey(battlefieldTerrainAttribute);
   const terrainActiveClass = terrainKey ? 'game-lane-terrain-active' : '';
   const laneSurfaceStyle = terrainKey
@@ -325,7 +327,7 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   };
 
   return (
-    <section className={`game-field-lane ${toneClass} ${terrainActiveClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
+    <section className={`game-field-lane ${toneClass} ${terrainActiveClass} ${battleVisualClass} ${battleLoserClass}`} aria-label={`${owner} field lane`}>
       <div
         className={`game-lane-surface game-lane-attention ${squadDropClass}`}
         data-game-drop={!isCPU ? 'squad' : undefined}
@@ -339,6 +341,15 @@ const FieldLane: React.FC<FieldLaneProps> = ({
             {laneBeamIndexes.map(index => (
               <span className={`game-lane-beam game-lane-beam-${index}`} key={`${owner}-beam-${index}`} />
             ))}
+          </div>
+        )}
+        {isBattleLoser && (
+          <div className="game-lane-explosion" aria-hidden="true">
+            <span className="game-lane-explosion-core" />
+            <span className="game-lane-explosion-ring" />
+            <span className="game-lane-explosion-spark game-lane-explosion-spark-1" />
+            <span className="game-lane-explosion-spark game-lane-explosion-spark-2" />
+            <span className="game-lane-explosion-spark game-lane-explosion-spark-3" />
           </div>
         )}
         <span className="game-lane-badge game-lane-badge-squad">{squadLabel}</span>
