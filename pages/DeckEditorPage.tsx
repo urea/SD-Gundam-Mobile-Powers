@@ -14,6 +14,7 @@ interface DeckEditorPageProps {
 
 const MIN_DECK_SIZE = 55;
 const MAX_DECK_SIZE = 100;
+const DEFAULT_SOURCE_SET = 'スターター Ver.1';
 
 type CardTypeFilter = 'ALL' | 'M' | 'C';
 
@@ -58,6 +59,8 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   const [draftFilterFaction, setDraftFilterFaction] = useState('ALL');
   const [filterTerrain, setFilterTerrain] = useState('');
   const [draftFilterTerrain, setDraftFilterTerrain] = useState('');
+  const [filterSourceSet, setFilterSourceSet] = useState('ALL');
+  const [draftFilterSourceSet, setDraftFilterSourceSet] = useState('ALL');
   const [filterPoints, setFilterPoints] = useState('');
   const [draftFilterPoints, setDraftFilterPoints] = useState('');
   const [filterTags, setFilterTags] = useState('');
@@ -111,11 +114,20 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     setCardForLargeModal(null);
   };
 
+  const sourceSetOptions = useMemo(() => {
+    const sourceSets = new Set<string>();
+    allBaseCards.forEach(card => {
+      sourceSets.add(card.sourceSet || DEFAULT_SOURCE_SET);
+    });
+    return ['ALL', ...Array.from(sourceSets).sort((a, b) => a.localeCompare(b, 'ja'))];
+  }, [allBaseCards]);
+
   const availableCardsForDisplay: DisplayCard[] = useMemo(() => {
     let filtered = allBaseCards.map(card => ({
       ...card,
       displayTerrain: card.type === 'M' ? card.terrainTypeMCards : card.battlefieldTerrain,
       pointsNum: card.type === 'M' && card.points ? parseInt(card.points) : -1,
+      sourceSet: card.sourceSet || DEFAULT_SOURCE_SET,
     }));
 
     if (filterName) {
@@ -129,6 +141,9 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
         if (terrainKeywords.length > 0) {
             filtered = filtered.filter(card => terrainKeywords.some(keyword => card.displayTerrain.toLowerCase().includes(keyword)));
         }
+    }
+    if (filterSourceSet !== 'ALL') {
+      filtered = filtered.filter(card => card.sourceSet === filterSourceSet);
     }
     if (filterPoints) {
         filtered = filtered.filter(card => {
@@ -167,7 +182,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       });
     }
     return filtered;
-  }, [allBaseCards, filterName, filterType, filterFaction, filterTerrain, filterPoints, filterTags, sortConfig]);
+  }, [allBaseCards, filterName, filterType, filterFaction, filterTerrain, filterSourceSet, filterPoints, filterTags, sortConfig]);
 
   const requestSort = useCallback((key: SortableCardKey) => {
     setSortConfig(prevConfig => {
@@ -188,6 +203,8 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     setDraftFilterFaction('ALL');
     setFilterTerrain('');
     setDraftFilterTerrain('');
+    setFilterSourceSet('ALL');
+    setDraftFilterSourceSet('ALL');
     setFilterPoints('');
     setDraftFilterPoints('');
     setFilterTags('');
@@ -199,6 +216,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     setFilterType(draftFilterType);
     setFilterFaction(draftFilterFaction);
     setFilterTerrain(draftFilterTerrain.trim());
+    setFilterSourceSet(draftFilterSourceSet);
     setFilterPoints(draftFilterPoints.trim());
     setFilterTags(draftFilterTags.trim());
   };
@@ -646,6 +664,11 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
               <FilterInput label="地形">
                 <input type="text" placeholder="例: 宇,陸" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={draftFilterTerrain} onChange={e => setDraftFilterTerrain(e.target.value)} />
               </FilterInput>
+              <FilterInput label="収録">
+                <select className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white" value={draftFilterSourceSet} onChange={e => setDraftFilterSourceSet(e.target.value)}>
+                  {sourceSetOptions.map(sourceSet => <option key={sourceSet} value={sourceSet}>{sourceSet === 'ALL' ? 'すべての収録' : sourceSet}</option>)}
+                </select>
+              </FilterInput>
               <FilterInput label="ポイント(P)">
                 <input type="text" placeholder="例: 8 または 7-9" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={draftFilterPoints} onChange={e => setDraftFilterPoints(e.target.value)} />
               </FilterInput>
@@ -663,6 +686,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
                 sortConfig={sortConfig} 
                 renderActions={renderDeckCardOperations}
                 onCardImageClick={openLargeCardModal}
+                showSourceSet
             />
           </div>
         </div>
