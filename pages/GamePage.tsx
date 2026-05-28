@@ -251,20 +251,23 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-battlefield-terrain-node {
     position: absolute;
-    right: clamp(0.55rem, 2vw, 1.6rem);
+    right: clamp(11rem, 22vw, 18rem);
     top: 50%;
-    max-width: min(19rem, 28vw);
-    min-width: min(12rem, 24vw);
+    z-index: 13;
+    width: clamp(4.7rem, 7vw, 6.45rem);
+    max-width: none;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    border: 1px solid rgba(148, 163, 184, 0.42);
-    background: rgba(248, 250, 252, 0.86);
-    padding: 0.22rem 0.42rem;
+    border: 1px solid rgba(14, 165, 233, 0.48);
+    background: rgba(248, 250, 252, 0.48);
+    padding: 0.24rem;
     text-align: center;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
     transform: translateY(-50%);
+    backdrop-filter: blur(3px);
   }
   .game-battlefield-terrain-node button,
   .game-center-confirm-button {
@@ -1015,46 +1018,38 @@ const customScrollbarAndAnimationStyles = `
     text-align: center;
   }
   .game-terrain-content {
-    max-width: 100%;
+    width: 100%;
+    max-width: none;
     min-width: 0;
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
+    gap: 0.16rem;
   }
-  .game-terrain-card-thumb {
-    width: 1.25rem;
-    height: 1.68rem;
-    flex: 0 0 1.25rem;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 4px;
-    border: 1px solid rgba(148, 163, 184, 0.7);
-    background: #e2e8f0;
-    color: #475569;
-    font-size: 0.62rem;
-    font-weight: 900;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
-  }
-  .game-terrain-card-thumb:not(:disabled) {
-    cursor: zoom-in;
-  }
-  .game-terrain-card-thumb:disabled {
-    cursor: default;
-    opacity: 0.8;
-  }
-  .game-terrain-card-thumb img {
+  .game-battlefield-terrain-node .game-card-size {
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #f8fafc;
+    height: auto;
+    aspect-ratio: 5 / 7;
+    max-width: none;
+  }
+  .game-terrain-label {
+    align-self: stretch;
+    border-radius: 999px;
+    background: rgba(2, 132, 199, 0.9);
+    color: #f8fafc;
+    font-size: 0.55rem;
+    font-weight: 900;
+    line-height: 1;
+    padding: 0.16rem 0.24rem;
+    white-space: nowrap;
   }
   .game-terrain-copy {
+    width: 100%;
     min-width: 0;
     display: grid;
-    justify-items: start;
-    text-align: left;
+    justify-items: center;
+    text-align: center;
     line-height: 1.15;
   }
   .game-terrain-name {
@@ -1067,7 +1062,7 @@ const customScrollbarAndAnimationStyles = `
   }
   .game-terrain-attr,
   .game-terrain-empty {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     color: #64748b;
   }
   .game-counter-node {
@@ -1634,13 +1629,18 @@ const customScrollbarAndAnimationStyles = `
       max-height: none;
     }
     .game-battlefield-terrain-node {
-      right: 0.42rem;
-      min-width: 5.8rem;
-      max-width: 6.6rem;
-      padding: 0.14rem 0.22rem;
+      right: clamp(6rem, 16vw, 10rem);
+      width: clamp(3.25rem, 6.6vw, 4.55rem);
+      min-width: 0;
+      max-width: none;
+      padding: 0.14rem;
     }
-    .game-battlefield-terrain-node .game-terrain-copy {
+    .game-battlefield-terrain-node .game-terrain-name,
+    .game-battlefield-terrain-node .game-terrain-label {
       display: none;
+    }
+    .game-battlefield-terrain-node .game-terrain-attr {
+      font-size: 0.52rem;
     }
     .game-score-node {
       min-width: 3.05rem;
@@ -1650,11 +1650,6 @@ const customScrollbarAndAnimationStyles = `
     }
     .game-terrain-node {
       padding: 0.15rem 0.3rem;
-    }
-    .game-terrain-card-thumb {
-      width: 1.25rem;
-      height: 1.68rem;
-      flex-basis: 1.25rem;
     }
     .game-center-info-node {
       gap: 0.16rem;

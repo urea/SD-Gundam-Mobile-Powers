@@ -733,23 +733,17 @@ export const GameTableLayout: React.FC<GameTableLayoutProps> = ({
           >
             {currentTerrainCard ? (
               <div className="game-terrain-content">
-                <button
-                  aria-label={`${currentTerrainCard.cardName} の画像を確認する`}
-                  className="game-terrain-card-thumb"
-                  disabled={!currentTerrainCard.imageUrl}
-                  onBlur={() => setPreviewCard(null)}
-                  onClick={() => currentTerrainCard.imageUrl && onOpenLargeCard(currentTerrainCard)}
-                  onFocus={() => setPreviewCard(currentTerrainCard)}
-                  onMouseEnter={() => setPreviewCard(currentTerrainCard)}
-                  onMouseLeave={() => setPreviewCard(null)}
-                  type="button"
-                >
-                  {currentTerrainCard.imageUrl ? (
-                    <img alt="" src={currentTerrainCard.imageUrl} />
-                  ) : (
-                    <span>{currentTerrainCard.type}</span>
-                  )}
-                </button>
+                <span className="game-terrain-label">戦場属性</span>
+                <GameCard
+                  card={currentTerrainCard}
+                  isPlayerCard
+                  isDisabled={!currentTerrainCard.imageUrl}
+                  location="battlefield"
+                  onClick={currentTerrainCard.imageUrl ? onOpenLargeCard : undefined}
+                  onPreviewEnd={() => setPreviewCard(null)}
+                  onPreviewStart={setPreviewCard}
+                  uniqueKey={`terrain-card-${getCardInstanceId(currentTerrainCard)}`}
+                />
                 <span className="game-terrain-copy">
                   <span className="game-terrain-name" title={currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}>
                     {currentTerrainCard.cardNameOmm || currentTerrainCard.cardName}
