@@ -27,7 +27,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       ...card,
       displayTerrain: card.type === 'M' ? card.terrainTypeMCards : card.battlefieldTerrain,
       pointsNum: card.type === 'M' && card.points ? parseInt(card.points) : -1, // Use -1 for non-M or no points for sorting
-      sourceSet: card.sourceSet || 'モビルパワーズスターター Ver.1',
+      sourceSet: card.sourceSet || 'スターター Ver.1',
     }));
   }, []);
 
