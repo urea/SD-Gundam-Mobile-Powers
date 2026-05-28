@@ -394,10 +394,10 @@ const customScrollbarAndAnimationStyles = `
   .game-lane-terrain-active .game-lane-surface {
     background-image:
       linear-gradient(90deg, rgba(14, 165, 233, 0.14), rgba(248, 250, 252, 0.16) 50%, rgba(248, 113, 113, 0.12)),
-      url('/assets/battle-terrain-layers.png');
+      var(--lane-terrain-image);
     background-repeat: no-repeat;
-    background-size: 100% 100%, 112% 400%;
-    background-position: center, 50% 0%;
+    background-size: 100% 100%, cover;
+    background-position: center, center;
     border-style: solid;
     border-color: rgba(226, 232, 240, 0.62);
     box-shadow: inset 0 0 38px rgba(15, 23, 42, 0.18);
@@ -412,22 +412,6 @@ const customScrollbarAndAnimationStyles = `
     background:
       linear-gradient(180deg, rgba(248, 250, 252, 0.12), rgba(15, 23, 42, 0.18)),
       radial-gradient(circle at 50% 50%, rgba(248, 250, 252, 0.16), transparent 18rem);
-  }
-  .game-lane-terrain-space .game-lane-surface {
-    background-color: #020617;
-    background-position: center, 50% 0%;
-  }
-  .game-lane-terrain-sky .game-lane-surface {
-    background-color: #dbeafe;
-    background-position: center, 50% 33.333%;
-  }
-  .game-lane-terrain-land .game-lane-surface {
-    background-color: #422006;
-    background-position: center, 50% 66.666%;
-  }
-  .game-lane-terrain-sea .game-lane-surface {
-    background-color: #083344;
-    background-position: center, 50% 100%;
   }
   .game-lane-beams {
     position: absolute;
@@ -1783,8 +1767,8 @@ const customScrollbarAndAnimationStyles = `
     100% { border-color: rgba(148, 163, 184, 0.55); box-shadow: none; }
   }
   @keyframes lane-terrain-drift {
-    from { background-position-x: center, 47%; }
-    to { background-position-x: center, 53%; }
+    from { background-position-x: center, 49%; }
+    to { background-position-x: center, 51%; }
   }
   @keyframes lane-beam-sweep {
     0%, 16%, 100% {

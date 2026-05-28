@@ -85,13 +85,19 @@ const HiddenHand: React.FC<{ count: number }> = ({ count }) => (
 
 const laneBeamIndexes = [1, 2, 3, 4, 5, 6];
 
-const getLaneTerrainTone = (terrainAttribute: string | null | undefined): 'space' | 'sky' | 'land' | 'sea' | null => {
+const terrainAttributeDefs = [
+  { char: '宇', key: 'space' },
+  { char: '空', key: 'sky' },
+  { char: '陸', key: 'land' },
+  { char: '海', key: 'sea' },
+];
+
+const getLaneTerrainKey = (terrainAttribute: string | null | undefined): string | null => {
   if (!terrainAttribute) return null;
-  if (terrainAttribute.includes('宇')) return 'space';
-  if (terrainAttribute.includes('空')) return 'sky';
-  if (terrainAttribute.includes('海')) return 'sea';
-  if (terrainAttribute.includes('陸')) return 'land';
-  return null;
+  const keys = terrainAttributeDefs
+    .filter(({ char }) => terrainAttribute.includes(char))
+    .map(({ key }) => key);
+  return keys.length > 0 ? keys.join('-') : null;
 };
 
 const formatSignedPoints = (points: number): string => {
@@ -229,9 +235,11 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   const battleVisualClass = isBattleVisualActive
     ? `game-lane-battle-active game-lane-battle-${battleVisualResult === 'DRAW' ? 'draw' : battleVisualResult?.toLowerCase() || 'neutral'}`
     : '';
-  const terrainTone = getLaneTerrainTone(battlefieldTerrainAttribute);
-  const terrainClass = terrainTone ? `game-lane-terrain-${terrainTone}` : '';
-  const terrainActiveClass = terrainTone ? 'game-lane-terrain-active' : '';
+  const terrainKey = getLaneTerrainKey(battlefieldTerrainAttribute);
+  const terrainActiveClass = terrainKey ? 'game-lane-terrain-active' : '';
+  const laneSurfaceStyle = terrainKey
+    ? ({ '--lane-terrain-image': `url('/assets/terrain/terrain-${terrainKey}.jpg')` } as React.CSSProperties)
+    : undefined;
   const squadDropClass = canDropToSquad && !isCPU ? 'game-drop-ready' : '';
   const orderedFieldCards = [
     ...playerState.squad.map((card, idx) => ({
@@ -317,15 +325,16 @@ const FieldLane: React.FC<FieldLaneProps> = ({
   };
 
   return (
-    <section className={`game-field-lane ${toneClass} ${terrainClass} ${terrainActiveClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
+    <section className={`game-field-lane ${toneClass} ${terrainActiveClass} ${battleVisualClass}`} aria-label={`${owner} field lane`}>
       <div
         className={`game-lane-surface game-lane-attention ${squadDropClass}`}
         data-game-drop={!isCPU ? 'squad' : undefined}
         key={laneAttentionKey}
         onDragOver={handleDragOverToSquad}
         onDrop={handleDropToSquad}
+        style={laneSurfaceStyle}
       >
-        {terrainTone && (
+        {terrainKey && (
           <div className={`game-lane-beams game-lane-beams-${owner.toLowerCase()}`} aria-hidden="true">
             {laneBeamIndexes.map(index => (
               <span className={`game-lane-beam game-lane-beam-${index}`} key={`${owner}-beam-${index}`} />
