@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { CardDisplayTable, SortableCardKey } from '../components/CardDisplayTable';
+import { CardDisplayTable, type SortableCardKey } from '../components/CardDisplayTable';
 import { parseMobilePowersTsvData, tsvData } from '../components/RulePage';
-import { carddas20ViewerCards } from '../data/carddas20ViewerCards';
-import { Card } from '../types';
+import type { Card } from '../types';
 
 interface CardViewerPageProps {
   onExit: () => void;
@@ -32,15 +31,45 @@ const isKiraCard = (card: Card): boolean => {
 };
 
 export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
+  const [carddasCards, setCarddasCards] = useState<Card[]>([]);
+  const [isCarddasLoading, setIsCarddasLoading] = useState(true);
+  const [carddasLoadError, setCarddasLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    import('../data/carddas20ViewerCards')
+      .then(module => {
+        if (isMounted) {
+          setCarddasCards(module.carddas20ViewerCards);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load Carddas20 viewer cards', error);
+        if (isMounted) {
+          setCarddasLoadError('Carddas20データの読み込みに失敗しました。');
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsCarddasLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const allCards: DisplayCard[] = React.useMemo(() => {
-    const parsedCards = [...parseMobilePowersTsvData(tsvData), ...carddas20ViewerCards];
+    const parsedCards = [...parseMobilePowersTsvData(tsvData), ...carddasCards];
     return parsedCards.map(card => ({
       ...card,
       displayTerrain: card.type === 'M' ? card.terrainTypeMCards : card.battlefieldTerrain,
       pointsNum: card.type === 'M' && card.points ? parseInt(card.points) : -1, // Use -1 for non-M or no points for sorting
       sourceSet: card.sourceSet || 'スターター Ver.1',
     }));
-  }, []);
+  }, [carddasCards]);
 
   // Filter states
   const [filterName, setFilterName] = useState('');
@@ -358,6 +387,16 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
           {isDisplayLimited && (
             <div className="font-medium text-amber-700">
               100件まで表示しています。絞り込み条件を追加してください。
+            </div>
+          )}
+          {isCarddasLoading && (
+            <div className="font-medium text-sky-700">
+              Carddas20データを読み込み中です。
+            </div>
+          )}
+          {carddasLoadError && (
+            <div className="font-medium text-red-700">
+              {carddasLoadError}
             </div>
           )}
         </div>
