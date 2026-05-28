@@ -20,6 +20,13 @@ type CardTypeFilter = 'ALL' | 'M' | 'C';
 
 const VIEWER_DISPLAY_LIMIT = 100;
 
+const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
+  <div className="flex flex-col">
+    <label className="text-sm font-medium text-slate-600 mb-1">{label}</label>
+    {children}
+  </div>
+);
+
 const isKiraCard = (card: Card): boolean => {
   return card.tags.includes("キラ");
 };
@@ -231,14 +238,6 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
     setFilterPoints(draftFilterPoints.trim());
     setFilterTags(draftFilterTags);
   };
-  
-  const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
-    <div className="flex flex-col">
-      <label className="text-sm font-medium text-slate-600 mb-1">{label}</label>
-      {children}
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col items-center p-4 sm:p-8">
       <header className="w-full max-w-7xl mb-8 text-center"> {/* Increased max-w for card viewer */}
