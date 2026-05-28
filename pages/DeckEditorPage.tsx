@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Card, SavedDeck } from '../types';
+import type { Card, SavedDeck } from '../types';
 import { parseMobilePowersTsvData, tsvData as allCardsTsvData } from '../components/RulePage';
-import { CardDisplayTable, DisplayCard, SortableCardKey } from '../components/CardDisplayTable';
+import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { getSavedDecks, saveDeck, deleteDeck } from '../utils/localStorageUtils';
@@ -14,6 +14,15 @@ interface DeckEditorPageProps {
 
 const MIN_DECK_SIZE = 55;
 const MAX_DECK_SIZE = 100;
+
+type CardTypeFilter = 'ALL' | 'M' | 'C';
+
+const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
+  <div className="flex flex-col">
+    <label className="text-sm font-medium text-slate-600 mb-1">{label}</label>
+    {children}
+  </div>
+);
 
 const isKiraCard = (card: Card): boolean => {
   return card.tags.includes("キラ");
@@ -41,12 +50,18 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
 
   const [filterName, setFilterName] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'M' | 'C'>('ALL');
+  const [draftFilterName, setDraftFilterName] = useState('');
+  const [filterType, setFilterType] = useState<CardTypeFilter>('ALL');
+  const [draftFilterType, setDraftFilterType] = useState<CardTypeFilter>('ALL');
   const [uniqueFactions, setUniqueFactions] = useState<string[]>(['ALL']);
   const [filterFaction, setFilterFaction] = useState('ALL');
+  const [draftFilterFaction, setDraftFilterFaction] = useState('ALL');
   const [filterTerrain, setFilterTerrain] = useState('');
+  const [draftFilterTerrain, setDraftFilterTerrain] = useState('');
   const [filterPoints, setFilterPoints] = useState('');
+  const [draftFilterPoints, setDraftFilterPoints] = useState('');
   const [filterTags, setFilterTags] = useState('');
+  const [draftFilterTags, setDraftFilterTags] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortableCardKey; direction: 'ascending' | 'descending' } | null>({ key: 'cardNumber', direction: 'ascending' });
 
   // Modal state for large card view
@@ -165,7 +180,27 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   }, []);
   
   const clearFilters = () => {
-    setFilterName(''); setFilterType('ALL'); setFilterFaction('ALL'); setFilterTerrain(''); setFilterPoints(''); setFilterTags('');
+    setFilterName('');
+    setDraftFilterName('');
+    setFilterType('ALL');
+    setDraftFilterType('ALL');
+    setFilterFaction('ALL');
+    setDraftFilterFaction('ALL');
+    setFilterTerrain('');
+    setDraftFilterTerrain('');
+    setFilterPoints('');
+    setDraftFilterPoints('');
+    setFilterTags('');
+    setDraftFilterTags('');
+  };
+
+  const applyFilters = () => {
+    setFilterName(draftFilterName.trim());
+    setFilterType(draftFilterType);
+    setFilterFaction(draftFilterFaction);
+    setFilterTerrain(draftFilterTerrain.trim());
+    setFilterPoints(draftFilterPoints.trim());
+    setFilterTags(draftFilterTags.trim());
   };
 
   const handleAddToDeck = (baseCardToAdd: Card) => {
@@ -417,13 +452,6 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     );
   };
 
-  const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
-    <div className="flex flex-col">
-      <label className="text-sm font-medium text-slate-600 mb-1">{label}</label>
-      {children}
-    </div>
-  );
-
   const SectionTitle: React.FC<{children: React.ReactNode}> = ({children}) => (
     <h2 className="text-xl font-semibold text-sky-700 mb-2 border-b pb-1.5">{children}</h2>
   );
@@ -603,28 +631,29 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
           <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200 shadow-sm">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 items-end">
               <FilterInput label="カード名">
-                <input type="text" placeholder="例: ガンダム" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={filterName} onChange={e => setFilterName(e.target.value)} />
+                <input type="text" placeholder="例: ガンダム" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={draftFilterName} onChange={e => setDraftFilterName(e.target.value)} />
               </FilterInput>
               <FilterInput label="種別">
-                <select className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white" value={filterType} onChange={e => setFilterType(e.target.value as 'ALL' | 'M' | 'C')}>
+                <select className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white" value={draftFilterType} onChange={e => setDraftFilterType(e.target.value as CardTypeFilter)}>
                   <option value="ALL">すべて</option> <option value="M">M</option> <option value="C">C</option>
                 </select>
               </FilterInput>
               <FilterInput label="所属">
-                <select className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white" value={filterFaction} onChange={e => setFilterFaction(e.target.value)}>
+                <select className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white" value={draftFilterFaction} onChange={e => setDraftFilterFaction(e.target.value)}>
                   {uniqueFactions.map(f => <option key={f} value={f}>{f === 'ALL' ? 'すべて' : f}</option>)}
                 </select>
               </FilterInput>
               <FilterInput label="地形">
-                <input type="text" placeholder="例: 宇,陸" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={filterTerrain} onChange={e => setFilterTerrain(e.target.value)} />
+                <input type="text" placeholder="例: 宇,陸" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={draftFilterTerrain} onChange={e => setDraftFilterTerrain(e.target.value)} />
               </FilterInput>
               <FilterInput label="ポイント(P)">
-                <input type="text" placeholder="例: 8 または 7-9" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={filterPoints} onChange={e => setFilterPoints(e.target.value)} />
+                <input type="text" placeholder="例: 8 または 7-9" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={draftFilterPoints} onChange={e => setDraftFilterPoints(e.target.value)} />
               </FilterInput>
               <FilterInput label="タグ">
-                <input type="text" placeholder="例: ガンダム系" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={filterTags} onChange={e => setFilterTags(e.target.value)} />
+                <input type="text" placeholder="例: ガンダム系" className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm" value={draftFilterTags} onChange={e => setDraftFilterTags(e.target.value)} />
               </FilterInput>
-              <button onClick={clearFilters} className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 rounded-md shadow-md transition-colors text-sm h-9 self-end">絞込クリア</button>
+              <button type="button" onClick={applyFilters} className="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-3 rounded-md shadow-md transition-colors text-sm h-9 self-end">検索</button>
+              <button type="button" onClick={clearFilters} className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 rounded-md shadow-md transition-colors text-sm h-9 self-end">絞込クリア</button>
             </div>
           </div>
           <div className="flex-grow overflow-y-auto custom-scrollbar"> 
