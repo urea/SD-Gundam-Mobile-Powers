@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { Card, SavedDeck } from '../types';
-import { parseMobilePowersTsvData } from '../data/cardTsvParser';
-import { starterVer1TsvData as allCardsTsvData } from '../data/starterVer1Cards';
+import { STARTER_VER_1_SOURCE_SET, starterVer1Cards } from '../data/starterVer1Cards';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
@@ -15,7 +14,7 @@ interface DeckEditorPageProps {
 
 const MIN_DECK_SIZE = 55;
 const MAX_DECK_SIZE = 100;
-const DEFAULT_SOURCE_SET = 'スターター Ver.1';
+const DEFAULT_SOURCE_SET = STARTER_VER_1_SOURCE_SET;
 
 type CardTypeFilter = 'ALL' | 'M' | 'C';
 
@@ -74,8 +73,9 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
 
   useEffect(() => {
-    const parsedRawCards = parseMobilePowersTsvData(allCardsTsvData);
-    const gamePlayableBaseCards = parsedRawCards.filter(c => c.type === 'M' || c.type === 'C');
+    const gamePlayableBaseCards = starterVer1Cards
+      .filter(c => c.type === 'M' || c.type === 'C')
+      .map(card => ({ ...card }));
     setAllBaseCards(gamePlayableBaseCards);
 
     if (gamePlayableBaseCards.length > 0) {

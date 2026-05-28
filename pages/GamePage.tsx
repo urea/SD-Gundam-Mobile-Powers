@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BattleSummary, Card, GameState, PlayerType, CPUAction, LogEntry, PlayedCCardSummary } from '../types';
-import { parseMobilePowersTsvData } from '../data/cardTsvParser';
-import { starterVer1TsvData as allCardsTsvData } from '../data/starterVer1Cards';
+import { starterVer1Cards } from '../data/starterVer1Cards';
 import { CardCollectionModal, GameOverModal, LargeCardModal } from '../components/game/GameModals';
 import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';
@@ -2139,7 +2138,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
 
   useEffect(() => {
-    const parsedBase = parseMobilePowersTsvData(allCardsTsvData);
+    const parsedBase = starterVer1Cards.map(card => ({ ...card }));
     setAllBaseCards(parsedBase);
 
     if (parsedBase.length > 0) {

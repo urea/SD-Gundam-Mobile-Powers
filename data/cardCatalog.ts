@@ -1,8 +1,5 @@
 import type { Card } from '../types';
-import { parseMobilePowersTsvData } from './cardTsvParser';
-import { starterVer1TsvData } from './starterVer1Cards';
-
-export const STARTER_VER_1_SOURCE_SET = 'スターター Ver.1';
+import { STARTER_VER_1_SOURCE_SET, starterVer1Cards } from './starterVer1Cards';
 
 const SOURCE_SET_BY_GAME_VAR: Record<string, string> = {
   St1: STARTER_VER_1_SOURCE_SET,
@@ -29,7 +26,7 @@ export const toCatalogCard = (card: Card): CatalogCard => ({
 });
 
 export const getStarterVer1CatalogCards = (): CatalogCard[] => {
-  return parseMobilePowersTsvData(starterVer1TsvData).map(toCatalogCard);
+  return starterVer1Cards.map(toCatalogCard);
 };
 
 export const loadCarddas20CatalogCards = async (): Promise<CatalogCard[]> => {
