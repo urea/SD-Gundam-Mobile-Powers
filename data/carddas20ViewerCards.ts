@@ -14,6 +14,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-059.jpg',
   },
   {
@@ -29,6 +30,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-060.jpg',
   },
   {
@@ -44,6 +46,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-061.jpg',
   },
   {
@@ -59,6 +62,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-062.jpg',
   },
   {
@@ -74,6 +78,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-063.jpg',
   },
   {
@@ -89,6 +94,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-064.jpg',
   },
   {
@@ -104,6 +110,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-065.jpg',
   },
   {
@@ -119,6 +126,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-066.jpg',
   },
   {
@@ -134,6 +142,7 @@ export const carddas20ViewerCards: Card[] = [
     factionAffiliation: '未整理',
     tags: 'Carddas20切り出し モビルパワーズブースター',
     gameVar: 'Carddas20',
+    sourceSet: 'モビルパワーズブースター',
     imageUrl: '/assets/carddas20-viewer/M-067.jpg',
   },
 ];

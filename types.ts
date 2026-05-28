@@ -22,6 +22,7 @@ export interface Card {
   tags: string; // Previously otherNotes, represents space-separated tags.
   effect?: string; // Effect text, primarily for C-Cards.
   gameVar: string; // Stores the 'Var' column from the TSV data (e.g., St1, Ki1)
+  sourceSet?: string; // Viewer/catalog classification such as starter or booster source.
   imageUrl?: string; // Optional: URL or path to the card image
   fieldOrder?: number; // Preserves the original squad order in mixed field displays.
   isDestroyed?: boolean; // Keeps a destroyed card visible on the battlefield until combat cleanup.

@@ -7,9 +7,10 @@ import { getCardBaseId } from '../utils/cardIdentity';
 export interface DisplayCard extends Card { // Exported for use in DeckEditorPage
   displayTerrain: string;
   pointsNum: number;
+  sourceSet?: string;
 }
 
-export type SortableCardKey = keyof Pick<DisplayCard, 'cardNumber' | 'cardName' | 'type' | 'factionAffiliation' | 'displayTerrain' | 'pointsNum' | 'tags'>;
+export type SortableCardKey = keyof Pick<DisplayCard, 'cardNumber' | 'cardName' | 'type' | 'factionAffiliation' | 'displayTerrain' | 'pointsNum' | 'sourceSet' | 'tags'>;
 
 
 interface CardDisplayTableProps {
@@ -18,6 +19,7 @@ interface CardDisplayTableProps {
   sortConfig: { key: SortableCardKey; direction: 'ascending' | 'descending' } | null;
   renderActions?: (card: DisplayCard) => React.ReactNode; // For custom actions/operations, now in the first column
   onCardImageClick?: (card: DisplayCard) => void; // New prop for image click
+  showSourceSet?: boolean;
 }
 
 const customScrollbarStyles = `
@@ -71,7 +73,7 @@ const isKiraCard = (card: Card): boolean => {
 };
 
 
-export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSortRequest, sortConfig, renderActions, onCardImageClick }) => {
+export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSortRequest, sortConfig, renderActions, onCardImageClick, showSourceSet = false }) => {
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
 
   if (!cards) { 
@@ -95,6 +97,9 @@ export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSor
             <TableHeader title="種別" sortKey="type" onSortRequest={onSortRequest} currentSortConfig={sortConfig} className="w-16" />
             <TableHeader title="P" sortKey="pointsNum" onSortRequest={onSortRequest} currentSortConfig={sortConfig} className="w-16" />
             <TableHeader title="所属" sortKey="factionAffiliation" onSortRequest={onSortRequest} currentSortConfig={sortConfig} className="min-w-[120px] sm:w-[15%]" />
+            {showSourceSet && (
+              <TableHeader title="収録" sortKey="sourceSet" onSortRequest={onSortRequest} currentSortConfig={sortConfig} className="min-w-[180px] sm:w-[16%]" />
+            )}
             <TableHeader title="地形" sortKey="displayTerrain" onSortRequest={onSortRequest} currentSortConfig={sortConfig} className="min-w-[100px] sm:w-[10%]" />
             <TableHeader title="テキスト" className="min-w-[320px] sm:w-[35%]" />
             <TableHeader title="タグ" sortKey="tags" onSortRequest={onSortRequest} currentSortConfig={sortConfig} className="min-w-[280px] sm:w-[25%]" />
@@ -175,6 +180,11 @@ export const CardDisplayTable: React.FC<CardDisplayTableProps> = ({ cards, onSor
                 <td className="px-3 py-3 text-sm text-slate-600 align-top">
                   <div className="max-w-xs break-words">{card.factionAffiliation}</div>
                 </td>
+                {showSourceSet && (
+                  <td className="px-3 py-3 text-sm text-slate-600 align-top">
+                    <div className="max-w-xs break-words">{card.sourceSet || '-'}</div>
+                  </td>
+                )}
                 <td className="px-3 py-3 text-sm text-slate-600 align-top">
                   <div className="max-w-xs break-words">{card.displayTerrain}</div>
                 </td>

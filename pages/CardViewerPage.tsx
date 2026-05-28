@@ -13,6 +13,7 @@ interface CardViewerPageProps {
 interface DisplayCard extends Card {
   displayTerrain: string;
   pointsNum: number;
+  sourceSet: string;
 }
 
 const isKiraCard = (card: Card): boolean => {
@@ -26,6 +27,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       ...card,
       displayTerrain: card.type === 'M' ? card.terrainTypeMCards : card.battlefieldTerrain,
       pointsNum: card.type === 'M' && card.points ? parseInt(card.points) : -1, // Use -1 for non-M or no points for sorting
+      sourceSet: card.sourceSet || 'モビルパワーズスターター Ver.1',
     }));
   }, []);
 
@@ -39,6 +41,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
   const [filterPoints, setFilterPoints] = useState('');
   const [draftFilterPoints, setDraftFilterPoints] = useState('');
   const [filterTags, setFilterTags] = useState('');
+  const [filterSourceSet, setFilterSourceSet] = useState('ALL');
 
   // Sort state
   const [sortConfig, setSortConfig] = useState<{ key: SortableCardKey; direction: 'ascending' | 'descending' } | null>({ key: 'cardNumber', direction: 'ascending' });
@@ -62,6 +65,14 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
   const terrainOptions = React.useMemo(() => {
     const terrainOrder = ['宇', '空', '陸', '海'];
     return terrainOrder.filter(terrain => allCards.some(card => card.displayTerrain.includes(terrain)));
+  }, [allCards]);
+
+  const sourceSetOptions = React.useMemo(() => {
+    const sourceSets = new Set<string>();
+    allCards.forEach(card => {
+      if (card.sourceSet) sourceSets.add(card.sourceSet);
+    });
+    return ['ALL', ...Array.from(sourceSets).sort((a, b) => a.localeCompare(b, 'ja'))];
   }, [allCards]);
 
   const tagOptions = React.useMemo(() => {
@@ -103,6 +114,9 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
     }
     if (filterTerrain) {
       filtered = filtered.filter(card => card.displayTerrain.includes(filterTerrain));
+    }
+    if (filterSourceSet !== 'ALL') {
+      filtered = filtered.filter(card => card.sourceSet === filterSourceSet);
     }
     if (filterPoints) {
       filtered = filtered.filter(card => {
@@ -166,7 +180,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       });
     }
     return filtered;
-  }, [allCards, filterName, filterType, filterFaction, filterTerrain, filterPoints, filterTags, sortConfig]);
+  }, [allCards, filterName, filterType, filterFaction, filterTerrain, filterSourceSet, filterPoints, filterTags, sortConfig]);
 
   const requestSort = (key: SortableCardKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -182,6 +196,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
     setFilterType('ALL');
     setFilterFaction('ALL');
     setFilterTerrain('');
+    setFilterSourceSet('ALL');
     setFilterPoints('');
     setDraftFilterPoints('');
     setFilterTags('');
@@ -273,6 +288,17 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
                 ))}
               </select>
             </FilterInput>
+            <FilterInput label="収録">
+              <select
+                className="p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm bg-white"
+                value={filterSourceSet}
+                onChange={e => setFilterSourceSet(e.target.value)}
+              >
+                {sourceSetOptions.map(sourceSet => (
+                  <option key={sourceSet} value={sourceSet}>{sourceSet === 'ALL' ? 'すべての収録' : sourceSet}</option>
+                ))}
+              </select>
+            </FilterInput>
             <FilterInput label="ポイント(P)">
               <input
                 type="text"
@@ -310,6 +336,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
           onSortRequest={requestSort} 
           sortConfig={sortConfig}
           onCardImageClick={openLargeCardModal} 
+          showSourceSet
         />
       </main>
       <footer className="w-full max-w-7xl mt-12 text-center text-slate-500 text-sm"> {/* Increased max-w */}
