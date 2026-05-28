@@ -49,7 +49,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   const isPendingDiscard = !!card.isPendingDiscard;
   const isPendingDefeat = !!card.isPendingDefeat;
   const hasPendingExit = isPendingDiscard || isPendingDefeat;
-  const showTextOverlay = !isFaceDown && (!showImage || location === 'hand' || location === 'deck' || location === 'discardPile');
+  const showTextOverlay = !isFaceDown && !showImage;
 
   const cardSizeSpecificClasses = 'game-card-size';
 
