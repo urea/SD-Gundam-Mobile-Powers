@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BattleSummary, Card, GameState, PlayerType, CPUAction, LogEntry, PlayedCCardSummary } from '../types';
-import { parseMobilePowersTsvData, tsvData as allCardsTsvData } from '../components/RulePage';
+import { parseMobilePowersTsvData } from '../data/cardTsvParser';
+import { starterVer1TsvData as allCardsTsvData } from '../data/starterVer1Cards';
 import { CardCollectionModal, GameOverModal, LargeCardModal } from '../components/game/GameModals';
 import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';

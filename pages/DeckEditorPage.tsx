@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { Card, SavedDeck } from '../types';
-import { parseMobilePowersTsvData, tsvData as allCardsTsvData } from '../components/RulePage';
+import { parseMobilePowersTsvData } from '../data/cardTsvParser';
+import { starterVer1TsvData as allCardsTsvData } from '../data/starterVer1Cards';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';

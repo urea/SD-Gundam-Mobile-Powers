@@ -1,18 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { CardDisplayTable, type SortableCardKey } from '../components/CardDisplayTable';
-import { parseMobilePowersTsvData, tsvData } from '../components/RulePage';
-import type { Card } from '../types';
+import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
+import { getStarterVer1CatalogCards, loadFullCardCatalog, type CatalogCard } from '../data/cardCatalog';
 
 interface CardViewerPageProps {
   onExit: () => void;
-}
-
-// Extend Card type for internal use with displayTerrain
-interface DisplayCard extends Card {
-  displayTerrain: string;
-  pointsNum: number;
-  sourceSet: string;
 }
 
 type CardTypeFilter = 'ALL' | 'M' | 'C';
@@ -26,33 +18,33 @@ const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({labe
   </div>
 );
 
-const isKiraCard = (card: Card): boolean => {
+const isKiraCard = (card: DisplayCard): boolean => {
   return card.tags.includes("キラ");
 };
 
 export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
-  const [carddasCards, setCarddasCards] = useState<Card[]>([]);
-  const [isCarddasLoading, setIsCarddasLoading] = useState(true);
-  const [carddasLoadError, setCarddasLoadError] = useState<string | null>(null);
+  const [allCards, setAllCards] = useState<CatalogCard[]>(() => getStarterVer1CatalogCards());
+  const [isCatalogLoading, setIsCatalogLoading] = useState(true);
+  const [catalogLoadError, setCatalogLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    import('../data/carddas20ViewerCards')
-      .then(module => {
+    loadFullCardCatalog()
+      .then(cards => {
         if (isMounted) {
-          setCarddasCards(module.carddas20ViewerCards);
+          setAllCards(cards);
         }
       })
       .catch(error => {
-        console.error('Failed to load Carddas20 viewer cards', error);
+        console.error('Failed to load card catalog', error);
         if (isMounted) {
-          setCarddasLoadError('Carddas20データの読み込みに失敗しました。');
+          setCatalogLoadError('追加カードカタログの読み込みに失敗しました。');
         }
       })
       .finally(() => {
         if (isMounted) {
-          setIsCarddasLoading(false);
+          setIsCatalogLoading(false);
         }
       });
 
@@ -60,16 +52,6 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
       isMounted = false;
     };
   }, []);
-
-  const allCards: DisplayCard[] = React.useMemo(() => {
-    const parsedCards = [...parseMobilePowersTsvData(tsvData), ...carddasCards];
-    return parsedCards.map(card => ({
-      ...card,
-      displayTerrain: card.type === 'M' ? card.terrainTypeMCards : card.battlefieldTerrain,
-      pointsNum: card.type === 'M' && card.points ? parseInt(card.points) : -1, // Use -1 for non-M or no points for sorting
-      sourceSet: card.sourceSet || 'スターター Ver.1',
-    }));
-  }, [carddasCards]);
 
   // Filter states
   const [filterName, setFilterName] = useState('');
@@ -389,14 +371,14 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
               100件まで表示しています。絞り込み条件を追加してください。
             </div>
           )}
-          {isCarddasLoading && (
+          {isCatalogLoading && (
             <div className="font-medium text-sky-700">
-              Carddas20データを読み込み中です。
+              追加カードカタログを読み込み中です。
             </div>
           )}
-          {carddasLoadError && (
+          {catalogLoadError && (
             <div className="font-medium text-red-700">
-              {carddasLoadError}
+              {catalogLoadError}
             </div>
           )}
         </div>
