@@ -1,6 +1,6 @@
 {
-  "name": "モビルパワーズ Mobile Powers App_v2",
-  "description": "A fan-made application for the Mobile Powers card game, featuring rules, CPU battles, a card viewer, and deck editing (planned).",
+  "name": "モビルパワーズ Mobile Powers App",
+  "description": "A fan-made web application for the Mobile Powers card game, featuring rules, card viewing, deck editing, and CPU battles.",
   "requestFramePermissions": [],
   "prompt": ""
 }
