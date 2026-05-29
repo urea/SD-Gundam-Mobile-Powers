@@ -1,7 +1,7 @@
 {
-  "name": "SD Gundam Mobile Powers",
+  "name": "モビルパワーズ Mobile Powers App",
   "short_name": "モビルパワーズ",
-  "description": "SD Gundam Mobile Powers fan-made battle utility.",
+  "description": "モビルパワーズ用ファンメイドWebアプリ。",
   "start_url": "/#/game",
   "scope": "/",
   "display": "fullscreen",

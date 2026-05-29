@@ -93,7 +93,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNavigate }) => {
         <header className="relative mb-3 lg:mb-8 text-center w-full max-w-5xl">
           <img
             src="/assets/mobile-powers-logo.png"
-            alt="SDガンダム モビルパワーズ シミュレーター"
+            alt="モビルパワーズ Mobile Powers App"
             className="mx-auto w-full max-w-4xl max-h-[30vh] lg:max-h-[40vh] object-contain drop-shadow-2xl"
           />
         </header>
