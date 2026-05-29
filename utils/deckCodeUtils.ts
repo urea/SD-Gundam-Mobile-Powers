@@ -34,20 +34,12 @@ export const createFullCardInstancePool = (baseCards: Card[]): Card[] => {
 };
 
 export const createLegacyShortIdToBaseCardMap = (baseCards: Card[]): Map<number, string> => {
-  const shortIdToBaseCardMap = new Map<number, string>();
-  const seenBaseIds = new Set<string>();
-
-  baseCards
+  const legacyBaseIds = Array.from(new Set(baseCards
     .filter(card => card.type === 'M' || card.type === 'C')
-    .forEach(card => {
-      const baseId = getCardBaseId(card);
-      if (seenBaseIds.has(baseId)) return;
+    .map(getCardBaseId)
+  )).sort((a, b) => a.localeCompare(b));
 
-      shortIdToBaseCardMap.set(shortIdToBaseCardMap.size, baseId);
-      seenBaseIds.add(baseId);
-    });
-
-  return shortIdToBaseCardMap;
+  return new Map(legacyBaseIds.map((baseId, index) => [index, baseId]));
 };
 
 /**
@@ -165,7 +157,7 @@ const parseLegacyNumericDeckCode = (
  * Parses a deck code string and reconstructs the deck.
  * v2 codes use stable card identities, while legacy codes use the old short numeric ID map.
  * @param code - The deck code string (e.g., "v2|M-001:2_C-001" or legacy "0:2_1_57:3").
- * @param shortIdToBaseCardMap - Legacy map from short ID (e.g., 0) to base card identity (e.g., "M-001").
+ * @param shortIdToBaseCardMap - Legacy map from short ID to the old sorted base-card identity.
  * @param fullCardInstancePool - Array of all possible card instances (e.g., instanceId "M-001#1", "M-001#2", ...).
  * @returns An array of Card objects for the deck, or null if parsing fails.
  */

@@ -7,7 +7,7 @@ import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';
 import * as cpuLogicService from '../services/cpuLogicService';
 import { createFullCardInstancePool, createLegacyShortIdToBaseCardMap, parseCompressedDeckCode } from '../utils/deckCodeUtils';
-import { getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
+import { getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { preloadGameImagesForDecks, preloadGameStaticImages } from '../utils/imagePreload';
 import { cpuDeckPresets } from '../data/cpuDecks'; // Import CPU presets to find by code if needed, though MainMenu should resolve ID to code.
 import {
