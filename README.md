@@ -32,30 +32,6 @@
 
 変更履歴は [CHANGELOG.md](./CHANGELOG.md) に記録します。
 
-## 開発
-
-前提:
-
-- Node.js
-
-セットアップ:
-
-```powershell
-npm install
-```
-
-開発サーバー:
-
-```powershell
-npm run dev
-```
-
-ビルド:
-
-```powershell
-npm run build
-```
-
 ## 注意事項
 
 - このアプリは非公式のファンメイドWebアプリです。
