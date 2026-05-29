@@ -531,7 +531,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
       <main className="w-full max-w-screen-2xl mx-auto flex-grow grid grid-cols-1 sm:grid-cols-4 gap-4">
         {/* Left Column: Deck Management */}
-        <div className="col-span-1 bg-white shadow-xl rounded-lg p-3 sm:p-4 flex flex-col max-h-[calc(100vh-120px)] space-y-3">
+        <div className="col-span-1 bg-white shadow-xl rounded-lg p-3 sm:p-4 flex flex-col max-h-[calc(100vh-120px)] min-h-0 overflow-y-auto custom-scrollbar space-y-3">
           
           <div>
             <SectionTitle>現在のデッキ</SectionTitle>
