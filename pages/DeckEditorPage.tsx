@@ -746,6 +746,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
                 renderActions={renderDeckCardOperations}
                 onCardImageClick={openLargeCardModal}
                 showSourceSet
+                compactRows
               />
             )}
           </div>
