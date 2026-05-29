@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { Card, SavedDeck } from '../types';
 import { compareSourceSets, getCardSourceSet, isPlayableCard, loadCardsByPredicate, STARTER_VER_1_SOURCE_SET } from '../data/cardCatalog';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
-import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
+import { createFullCardInstancePool, createLegacyShortIdToBaseCardMap, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { getSavedDecks, saveDeck, deleteDeck } from '../utils/localStorageUtils';
 import { cpuDeckPresets, PredefinedDeck } from '../data/cpuDecks'; // Import predefined decks
@@ -94,12 +94,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
         const instancePool = createFullCardInstancePool(gamePlayableBaseCards);
         setFullCardInstancePool(instancePool);
 
-        const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
-        const sToB = new Map<number, string>();
-        sortedBaseCardNumbers.forEach((num, idx) => {
-          sToB.set(idx, num);
-        });
-        setShortIdToBaseCardMap(sToB);
+        setShortIdToBaseCardMap(createLegacyShortIdToBaseCardMap(gamePlayableBaseCards));
 
         const factions = new Set<string>();
         gamePlayableBaseCards.forEach(card => {

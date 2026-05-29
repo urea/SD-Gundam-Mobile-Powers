@@ -33,6 +33,23 @@ export const createFullCardInstancePool = (baseCards: Card[]): Card[] => {
   return pool;
 };
 
+export const createLegacyShortIdToBaseCardMap = (baseCards: Card[]): Map<number, string> => {
+  const shortIdToBaseCardMap = new Map<number, string>();
+  const seenBaseIds = new Set<string>();
+
+  baseCards
+    .filter(card => card.type === 'M' || card.type === 'C')
+    .forEach(card => {
+      const baseId = getCardBaseId(card);
+      if (seenBaseIds.has(baseId)) return;
+
+      shortIdToBaseCardMap.set(shortIdToBaseCardMap.size, baseId);
+      seenBaseIds.add(baseId);
+    });
+
+  return shortIdToBaseCardMap;
+};
+
 /**
  * Generates a stable deck code string from an array of cards.
  * Uses Card.uniqueKey/cardNumber directly so new cards do not shift old deck codes.

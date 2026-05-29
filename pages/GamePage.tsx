@@ -6,7 +6,7 @@ import { CardCollectionModal, GameOverModal, LargeCardModal } from '../component
 import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';
 import * as cpuLogicService from '../services/cpuLogicService';
-import { createFullCardInstancePool, parseCompressedDeckCode } from '../utils/deckCodeUtils';
+import { createFullCardInstancePool, createLegacyShortIdToBaseCardMap, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { preloadGameImagesForDecks, preloadGameStaticImages } from '../utils/imagePreload';
 import { cpuDeckPresets } from '../data/cpuDecks'; // Import CPU presets to find by code if needed, though MainMenu should resolve ID to code.
@@ -2172,14 +2172,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
         const instancePool = createFullCardInstancePool(parsedBase);
         setFullInstancePool(instancePool);
 
-        const gamePlayableBaseCards = parsedBase.filter(c => c.type === 'M' || c.type === 'C');
-        const sortedBaseCardNumbers = Array.from(new Set(gamePlayableBaseCards.map(getCardBaseId))).sort();
-        
-        const sToB = new Map<number, string>();
-        sortedBaseCardNumbers.forEach((num, idx) => {
-            sToB.set(idx, num);
-        });
-        setShortIdToBaseCardMap(sToB);
+        setShortIdToBaseCardMap(createLegacyShortIdToBaseCardMap(parsedBase));
       })
       .catch(error => {
         console.error('Failed to load game card catalog', error);
