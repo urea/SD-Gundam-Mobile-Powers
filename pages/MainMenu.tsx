@@ -135,6 +135,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNavigate }) => {
 
         <footer className="relative mt-3 lg:mt-14 text-center text-xs lg:text-sm text-slate-200/75">
           <p>&copy; {new Date().getFullYear()} Fan-made Mobile Powers Utility.</p>
+          <a
+            href="https://github.com/urea/SD-Gundam-Mobile-Powers"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-block text-[11px] lg:text-xs text-slate-300/55 underline-offset-4 transition-colors hover:text-sky-200 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-300/50 focus:ring-offset-2 focus:ring-offset-slate-950"
+            aria-label="GitHubリポジトリを開く"
+          >
+            GitHub
+          </a>
         </footer>
       </div>
       {isGameSetupModalOpen && (
