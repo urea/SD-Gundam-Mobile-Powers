@@ -6,7 +6,7 @@ import { CardCollectionModal, GameOverModal, LargeCardModal } from '../component
 import { GamePageContext } from '../components/game/GamePageContext';
 import { GameTableLayout } from '../components/game/GameTableLayout';
 import * as cpuLogicService from '../services/cpuLogicService';
-import { createFullCardInstancePool, createLegacyShortIdToBaseCardMap, parseCompressedDeckCode } from '../utils/deckCodeUtils';
+import { createFullCardInstancePool, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { preloadGameImagesForDecks, preloadGameStaticImages } from '../utils/imagePreload';
 import { cpuDeckPresets } from '../data/cpuDecks'; // Import CPU presets to find by code if needed, though MainMenu should resolve ID to code.
@@ -2067,7 +2067,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   const gameScreenRef = useRef<HTMLDivElement | null>(null);
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
   const [fullInstancePool, setFullInstancePool] = useState<Card[]>([]);
-  const [shortIdToBaseCardMap, setShortIdToBaseCardMap] = useState<Map<number, string>>(new Map());
   const [cardCatalogLoadError, setCardCatalogLoadError] = useState<string | null>(null);
 
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -2165,14 +2164,11 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
         if (parsedBase.length === 0) {
           setFullInstancePool([]);
-          setShortIdToBaseCardMap(new Map());
           return;
         }
 
         const instancePool = createFullCardInstancePool(parsedBase);
         setFullInstancePool(instancePool);
-
-        setShortIdToBaseCardMap(createLegacyShortIdToBaseCardMap(parsedBase));
       })
       .catch(error => {
         console.error('Failed to load game card catalog', error);
@@ -2187,8 +2183,8 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
   }, []);
 
   const initializeGame = useCallback((playerDeckCodeToUse?: string, cpuDeckCodeToUse?: string) => {
-    if (allBaseCards.length === 0 || fullInstancePool.length === 0 || shortIdToBaseCardMap.size === 0) {
-        console.warn("Base cards, instance pool, or ID maps not loaded yet. Cannot initialize game.");
+    if (allBaseCards.length === 0 || fullInstancePool.length === 0) {
+        console.warn("Base cards or instance pool not loaded yet. Cannot initialize game.");
         addLogEntry("エラー: ゲーム初期化に必要なデータが不足しています。", "SYSTEM");
         return;
     }
@@ -2199,7 +2195,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
     // Player Deck Setup
     if (playerDeckCodeToUse && playerDeckCodeToUse.trim() !== '') {
-        const parsedPlayerDeck = parseCompressedDeckCode(playerDeckCodeToUse.trim(), shortIdToBaseCardMap, fullInstancePool);
+        const parsedPlayerDeck = parseCompressedDeckCode(playerDeckCodeToUse.trim(), fullInstancePool);
         if (parsedPlayerDeck) {
             playerDeckBase = parsedPlayerDeck; 
             gameLogMessages.push({ message: "提供されたデッキコードからプレイヤーのデッキを構築しました。", source: 'SYSTEM', timestamp: Date.now() });
@@ -2216,7 +2212,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
 
     // CPU Deck Setup
     if (cpuDeckCodeToUse && cpuDeckCodeToUse.trim() !== '') {
-        const parsedCpuDeck = parseCompressedDeckCode(cpuDeckCodeToUse.trim(), shortIdToBaseCardMap, fullInstancePool);
+        const parsedCpuDeck = parseCompressedDeckCode(cpuDeckCodeToUse.trim(), fullInstancePool);
         if (parsedCpuDeck) {
             cpuDeckBase = parsedCpuDeck;
             const presetName = cpuDeckPresets.find(p => p.code === cpuDeckCodeToUse)?.name;
@@ -2255,13 +2251,13 @@ export const GamePage: React.FC<GamePageProps> = ({ onExit, initialDeckCode, ini
     setCombatResultVisual(null);
     setIsVisualizingCombat(false);
     setImageLoadErrors({});
-  }, [allBaseCards, fullInstancePool, shortIdToBaseCardMap, addLogEntry]);
+  }, [allBaseCards, fullInstancePool, addLogEntry]);
 
   useEffect(() => {
-    if (allBaseCards.length > 0 && fullInstancePool.length > 0 && shortIdToBaseCardMap.size > 0 && !gameState) {
+    if (allBaseCards.length > 0 && fullInstancePool.length > 0 && !gameState) {
         initializeGame(initialDeckCode, initialCpuDeckCode);
     }
-  }, [allBaseCards, fullInstancePool, shortIdToBaseCardMap, initialDeckCode, initialCpuDeckCode, initializeGame, gameState]);
+  }, [allBaseCards, fullInstancePool, initialDeckCode, initialCpuDeckCode, initializeGame, gameState]);
 
   useEffect(() => {
     if (pendingTargetCCard && gameState?.phase !== 'COUNTER_SUPPORT_PLAYER_PLAY_C') {

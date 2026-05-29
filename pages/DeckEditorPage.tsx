@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { Card, SavedDeck } from '../types';
 import { compareSourceSets, getCardSourceSet, isPlayableCard, loadCardsByPredicate, STARTER_VER_1_SOURCE_SET } from '../data/cardCatalog';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
-import { createFullCardInstancePool, createLegacyShortIdToBaseCardMap, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
+import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
 import { getSavedDecks, saveDeck, deleteDeck } from '../utils/localStorageUtils';
 import { cpuDeckPresets, PredefinedDeck } from '../data/cpuDecks'; // Import predefined decks
@@ -33,7 +33,6 @@ const isKiraCard = (card: Card): boolean => {
 export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
   const [allBaseCards, setAllBaseCards] = useState<Card[]>([]);
   const [fullCardInstancePool, setFullCardInstancePool] = useState<Card[]>([]);
-  const [shortIdToBaseCardMap, setShortIdToBaseCardMap] = useState<Map<number, string>>(new Map());
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   
   const [currentDeck, setCurrentDeck] = useState<Card[]>([]);
@@ -86,15 +85,12 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
         if (gamePlayableBaseCards.length === 0) {
           setFullCardInstancePool([]);
-          setShortIdToBaseCardMap(new Map());
           setUniqueFactions(['ALL']);
           return;
         }
 
         const instancePool = createFullCardInstancePool(gamePlayableBaseCards);
         setFullCardInstancePool(instancePool);
-
-        setShortIdToBaseCardMap(createLegacyShortIdToBaseCardMap(gamePlayableBaseCards));
 
         const factions = new Set<string>();
         gamePlayableBaseCards.forEach(card => {
@@ -310,7 +306,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       setDeckCodeMessage({ type: 'error', text: '読み込むデッキコードを入力してください。' });
       return;
     }
-    const parsedDeck = parseCompressedDeckCode(deckCodeInput.trim(), shortIdToBaseCardMap, fullCardInstancePool);
+    const parsedDeck = parseCompressedDeckCode(deckCodeInput.trim(), fullCardInstancePool);
     if (parsedDeck) {
       setCurrentDeck(parsedDeck.sort(compareCardsByIdentity));
       setDeckCodeMessage({ type: 'success', text: 'デッキコードを正常に読み込みました。' });
@@ -378,7 +374,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
       setDeckCodeMessage({ type: 'error', text: 'カードカタログを読み込み中です。' });
       return;
     }
-    const parsedDeck = parseCompressedDeckCode(savedDeck.code, shortIdToBaseCardMap, fullCardInstancePool);
+    const parsedDeck = parseCompressedDeckCode(savedDeck.code, fullCardInstancePool);
     if (parsedDeck) {
       setCurrentDeck(parsedDeck.sort(compareCardsByIdentity));
       setCurrentDeckName(savedDeck.name);
@@ -435,7 +431,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     }
     const predefinedDeck = cpuDeckPresets.find(p => p.id === selectedPredefinedDeckId);
     if (predefinedDeck) {
-        const parsedDeck = parseCompressedDeckCode(predefinedDeck.code, shortIdToBaseCardMap, fullCardInstancePool);
+        const parsedDeck = parseCompressedDeckCode(predefinedDeck.code, fullCardInstancePool);
         if (parsedDeck) {
             setCurrentDeck(parsedDeck.sort(compareCardsByIdentity));
             setCurrentDeckName(predefinedDeck.name + " (コピー)"); // Indicate it's a copy
