@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { Card, SavedDeck } from '../types';
-import { getCardSourceSet, isPlayableCard, loadCardsByPredicate, STARTER_VER_1_SOURCE_SET } from '../data/cardCatalog';
+import { compareSourceSets, getCardSourceSet, isPlayableCard, loadCardsByPredicate, STARTER_VER_1_SOURCE_SET } from '../data/cardCatalog';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
 import { createFullCardInstancePool, generateCompressedDeckCode, parseCompressedDeckCode } from '../utils/deckCodeUtils';
 import { compareCardsByIdentity, getCardBaseId, getCardInstanceId, isSameCardInstance } from '../utils/cardIdentity';
@@ -143,7 +143,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
     allBaseCards.forEach(card => {
       sourceSets.add(card.sourceSet || DEFAULT_SOURCE_SET);
     });
-    return ['ALL', ...Array.from(sourceSets).sort((a, b) => a.localeCompare(b, 'ja'))];
+    return ['ALL', ...Array.from(sourceSets).sort(compareSourceSets)];
   }, [allBaseCards]);
 
   const availableCardsForDisplay: DisplayCard[] = useMemo(() => {

@@ -2,9 +2,24 @@ import type { Card } from '../types';
 
 export const STARTER_VER_1_SOURCE_SET = 'スターター Ver.1';
 
+export const SOURCE_SET_DISPLAY_ORDER = [
+  STARTER_VER_1_SOURCE_SET,
+  'ブースター Part1',
+  'ブースター Part2',
+  'スターター Ver.2',
+  'ブースター Part3',
+  'ブースター Part4',
+  '武者スペシャル',
+  'その他',
+] as const;
+
 const SOURCE_SET_BY_GAME_VAR: Record<string, string> = {
   St1: STARTER_VER_1_SOURCE_SET,
 };
+
+const sourceSetDisplayOrderIndex = new Map<string, number>(
+  SOURCE_SET_DISPLAY_ORDER.map((sourceSet, index) => [sourceSet, index]),
+);
 
 let carddas20CardsPromise: Promise<Card[]> | null = null;
 
@@ -29,6 +44,18 @@ export const toCatalogCard = (card: Card): CatalogCard => ({
 });
 
 export const isPlayableCard = (card: Card): boolean => card.type === 'M' || card.type === 'C';
+
+export const compareSourceSets = (a: string, b: string): number => {
+  const orderA = sourceSetDisplayOrderIndex.get(a);
+  const orderB = sourceSetDisplayOrderIndex.get(b);
+
+  if (orderA !== undefined && orderB !== undefined) {
+    return orderA - orderB;
+  }
+  if (orderA !== undefined) return -1;
+  if (orderB !== undefined) return 1;
+  return a.localeCompare(b, 'ja');
+};
 
 export const loadCarddas20Cards = async (): Promise<Card[]> => {
   carddas20CardsPromise ??= import('./carddas20Cards').then(module => module.carddas20Cards);

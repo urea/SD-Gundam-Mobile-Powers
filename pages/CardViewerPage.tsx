@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CardDisplayTable, type DisplayCard, type SortableCardKey } from '../components/CardDisplayTable';
-import { loadFullCardCatalog, type CatalogCard } from '../data/cardCatalog';
+import { compareSourceSets, loadFullCardCatalog, STARTER_VER_1_SOURCE_SET, type CatalogCard } from '../data/cardCatalog';
 
 interface CardViewerPageProps {
   onExit: () => void;
@@ -10,6 +10,8 @@ interface CardViewerPageProps {
 type CardTypeFilter = 'ALL' | 'M' | 'C';
 
 const VIEWER_DISPLAY_LIMIT = 100;
+const ALL_SOURCE_SET_FILTER = 'ALL';
+const DEFAULT_SOURCE_SET_FILTER = STARTER_VER_1_SOURCE_SET;
 
 const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
   <div className="flex flex-col">
@@ -67,8 +69,8 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
   const [draftFilterPoints, setDraftFilterPoints] = useState('');
   const [filterTags, setFilterTags] = useState('');
   const [draftFilterTags, setDraftFilterTags] = useState('');
-  const [filterSourceSet, setFilterSourceSet] = useState('ALL');
-  const [draftFilterSourceSet, setDraftFilterSourceSet] = useState('ALL');
+  const [filterSourceSet, setFilterSourceSet] = useState(DEFAULT_SOURCE_SET_FILTER);
+  const [draftFilterSourceSet, setDraftFilterSourceSet] = useState(DEFAULT_SOURCE_SET_FILTER);
 
   // Sort state
   const [sortConfig, setSortConfig] = useState<{ key: SortableCardKey; direction: 'ascending' | 'descending' } | null>({ key: 'cardNumber', direction: 'ascending' });
@@ -96,10 +98,11 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
 
   const sourceSetOptions = React.useMemo(() => {
     const sourceSets = new Set<string>();
+    sourceSets.add(DEFAULT_SOURCE_SET_FILTER);
     allCards.forEach(card => {
       if (card.sourceSet) sourceSets.add(card.sourceSet);
     });
-    return ['ALL', ...Array.from(sourceSets).sort((a, b) => a.localeCompare(b, 'ja'))];
+    return [ALL_SOURCE_SET_FILTER, ...Array.from(sourceSets).sort(compareSourceSets)];
   }, [allCards]);
 
   const tagOptions = React.useMemo(() => {
@@ -142,7 +145,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
     if (filterTerrain) {
       filtered = filtered.filter(card => card.displayTerrain.includes(filterTerrain));
     }
-    if (filterSourceSet !== 'ALL') {
+    if (filterSourceSet !== ALL_SOURCE_SET_FILTER) {
       filtered = filtered.filter(card => card.sourceSet === filterSourceSet);
     }
     if (filterPoints) {
@@ -232,8 +235,8 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
     setDraftFilterFaction('ALL');
     setFilterTerrain('');
     setDraftFilterTerrain('');
-    setFilterSourceSet('ALL');
-    setDraftFilterSourceSet('ALL');
+    setFilterSourceSet(DEFAULT_SOURCE_SET_FILTER);
+    setDraftFilterSourceSet(DEFAULT_SOURCE_SET_FILTER);
     setFilterPoints('');
     setDraftFilterPoints('');
     setFilterTags('');
@@ -315,7 +318,7 @@ export const CardViewerPage: React.FC<CardViewerPageProps> = ({ onExit }) => {
                 onChange={e => setDraftFilterSourceSet(e.target.value)}
               >
                 {sourceSetOptions.map(sourceSet => (
-                  <option key={sourceSet} value={sourceSet}>{sourceSet === 'ALL' ? 'すべての収録' : sourceSet}</option>
+                  <option key={sourceSet} value={sourceSet}>{sourceSet === ALL_SOURCE_SET_FILTER ? 'すべての収録' : sourceSet}</option>
                 ))}
               </select>
             </FilterInput>
