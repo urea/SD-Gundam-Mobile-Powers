@@ -16,6 +16,32 @@ const MIN_DECK_SIZE = 55;
 const MAX_DECK_SIZE = 100;
 const DEFAULT_SOURCE_SET = STARTER_VER_1_SOURCE_SET;
 
+const deckEditorScrollbarStyles = `
+  .deck-editor-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.8) transparent;
+    scrollbar-gutter: stable;
+  }
+  .deck-editor-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .deck-editor-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+  }
+  .deck-editor-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.55);
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+  }
+  .deck-editor-scroll:hover::-webkit-scrollbar-thumb,
+  .deck-editor-scroll:focus-within::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 85, 105, 0.78);
+  }
+`;
+
 type CardTypeFilter = 'ALL' | 'M' | 'C';
 
 const FilterInput: React.FC<{label: string, children: React.ReactNode}> = ({label, children}) => (
@@ -516,6 +542,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col p-2 sm:p-4">
+      <style>{deckEditorScrollbarStyles}</style>
       <header className="w-full max-w-screen-2xl mx-auto mb-4 text-center sm:text-left">
         <div className="flex flex-col sm:flex-row justify-between items-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-sky-600">デッキ編成</h1>
@@ -531,8 +558,8 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
 
       <main className="w-full max-w-screen-2xl mx-auto flex-grow grid grid-cols-1 sm:grid-cols-4 gap-4">
         {/* Left Column: Deck Management */}
-        <div className="col-span-1 bg-white shadow-xl rounded-lg p-3 sm:p-4 flex flex-col max-h-[calc(100vh-120px)] min-h-0 overflow-y-auto custom-scrollbar space-y-3">
-          
+        <div className="col-span-1 bg-white shadow-xl rounded-lg p-3 sm:p-4 flex flex-col max-h-[calc(100vh-120px)] min-h-0 overflow-hidden">
+          <div className="deck-editor-left-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain deck-editor-scroll pr-2 pb-1 space-y-3">
           <div>
             <SectionTitle>現在のデッキ</SectionTitle>
             <input
@@ -562,7 +589,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
             </div>
           </div>
 
-          <div className="flex-grow overflow-y-auto border border-slate-200 rounded p-2 bg-slate-50 custom-scrollbar min-h-[150px]">
+          <div className="flex-grow overflow-y-auto border border-slate-200 rounded p-2 bg-slate-50 deck-editor-scroll min-h-[150px]">
             <h3 className="text-sm font-semibold text-slate-600 mb-1.5 sticky top-0 bg-slate-50/90 backdrop-blur-sm z-10 pb-1 border-b">デッキ内容 ({currentDeck.length}枚)</h3>
             {currentDeck.length === 0 ? (
               <p className="text-slate-500 italic text-center py-3 text-xs">デッキにカードがありません。</p>
@@ -609,7 +636,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
                     readOnly
                     value={generatedDeckCodeOutput}
                     placeholder="デッキコードがここに表示されます"
-                    className="flex-grow p-1.5 border border-slate-300 rounded shadow-sm text-[10px] resize-none h-14 bg-slate-50 custom-scrollbar"
+                    className="flex-grow p-1.5 border border-slate-300 rounded shadow-sm text-[10px] resize-none h-14 bg-slate-50 deck-editor-scroll"
                     aria-label="生成されたデッキコード"
                   />
                   <ActionButton onClick={handleGenerateDeckCode} className="bg-emerald-500 hover:bg-emerald-600 self-start">生成</ActionButton>
@@ -631,7 +658,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
           
           <div className="mt-2 flex-grow flex flex-col min-h-[200px]">
             <SectionTitle>保存済みデッキ</SectionTitle>
-            <div className="flex-grow overflow-y-auto border p-1.5 rounded bg-slate-50 custom-scrollbar space-y-1.5">
+            <div className="flex-grow overflow-y-auto border p-1.5 rounded bg-slate-50 deck-editor-scroll space-y-1.5">
                 {savedDecks.length === 0 ? (
                     <p className="text-slate-500 italic text-center py-3 text-xs">保存されたデッキはありません。</p>
                 ) : (
@@ -667,6 +694,7 @@ export const DeckEditorPage: React.FC<DeckEditorPageProps> = ({ onExit }) => {
                 </select>
                 <ActionButton onClick={handleLoadPredefinedDeck} disabled={isCatalogLoading || !selectedPredefinedDeckId} className="bg-teal-500 hover:bg-teal-600">読込</ActionButton>
             </div>
+          </div>
           </div>
 
         </div>
